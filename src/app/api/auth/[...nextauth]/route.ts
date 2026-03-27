@@ -1,7 +1,7 @@
 import NextAuth, { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcrypt";
-import prisma from "@/src/app/lib/prisma";
+import prisma from "@/src/lib/prisma";
 
 export const authOptions: NextAuthOptions = {
     // 1. تحديد طريقة تسجيل الدخول (بالصلاحيات المخصصة: رقم الهاتف وكلمة المرور)
