@@ -2,14 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Ticket, Package, Receipt, Settings } from "lucide-react";
+import { LayoutDashboard, Ticket, Package, Receipt, Settings, Users } from "lucide-react";
 
 const menuItems = [
   { name: "الرئيسية", icon: LayoutDashboard, href: "/" },
   { name: "التذاكر والصيانة", icon: Ticket, href: "/tickets" },
   { name: "المخزون والقطع", icon: Package, href: "/inventory" },
   { name: "المشتريات والمصاريف", icon: Receipt, href: "/expenses" },
-  { name: "العمال", icon: Settings, href: "/workers" },
+  { name: "العمال", icon: Users, href: "/workers" },
   { name: "الإعدادات", icon: Settings, href: "/settings" },
 ];
 
