@@ -7,9 +7,7 @@ export default function Navbar() {
   const { data: session } = useSession();
 
   return (
-    <header className="bg-white border-b border-gray-200 h-16 flex items-center justify-between px-6 sticky top-0 z-10">
-      <div className="flex items-center gap-4">
-        {/* يمكننا وضع مسار الصفحة الحالية هنا لاحقاً */}
+<header className="print:hidden bg-white border-b border-gray-200 h-16 flex items-center justify-between px-6 sticky top-0 z-10">      <div className="flex items-center gap-4">
         <h2 className="text-xl font-semibold text-gray-800">نظام الإدارة</h2>
       </div>
 
@@ -21,7 +19,6 @@ export default function Navbar() {
               {session?.user?.name || "مستخدم"}
             </span>
             <span className="text-xs text-gray-500">
-              {/* @ts-ignore - سنتعامل مع الأنواع لاحقاً */}
               {session?.user?.role === "ADMIN" ? "مدير نظام" : "عامل"}
             </span>
           </div>
