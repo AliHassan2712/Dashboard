@@ -1,0 +1,3460 @@
+This file is a merged representation of the entire codebase, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of the entire repository's contents.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+5. Multiple file entries, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+</file_summary>
+
+<directory_structure>
+.agents/skills/neon-postgres/SKILL.md
+.gitignore
+eslint.config.mjs
+next.config.ts
+package.json
+postcss.config.mjs
+prisma.config.ts
+prisma/schema.prisma
+prisma/seed.ts
+public/file.svg
+public/globe.svg
+public/next.svg
+public/vercel.svg
+public/window.svg
+README.md
+skills-lock.json
+src/app/(auth)/login/page.tsx
+src/app/(dashboard)/inventory/loading.tsx
+src/app/(dashboard)/inventory/page.tsx
+src/app/(dashboard)/layout.tsx
+src/app/(dashboard)/page.tsx
+src/app/(dashboard)/tickets/[id]/page.tsx
+src/app/(dashboard)/tickets/new/page.tsx
+src/app/(dashboard)/tickets/page.tsx
+src/app/(dashboard)/workers/[id]/page.tsx
+src/app/(dashboard)/workers/page.tsx
+src/app/api/auth/[...nextauth]/route.ts
+src/app/api/uploadthing/core.ts
+src/app/api/uploadthing/route.ts
+src/app/favicon.ico
+src/app/globals.css
+src/app/layout.tsx
+src/app/not-found.tsx
+src/app/page.tsx
+src/components/shared/Navbar.tsx
+src/components/shared/Providers.tsx
+src/components/shared/Sidebar.tsx
+src/components/ui/Input.tsx
+src/components/ui/Textarea.tsx
+src/features/auth/login/components/LoginForm.tsx
+src/features/auth/login/validations.ts
+src/features/dashboard/actions.ts
+src/features/dashboard/components/DashboardCharts.tsx
+src/features/inventory/actions.ts
+src/features/inventory/components/EditSparePartModal.tsx
+src/features/inventory/components/InventoryTable.tsx
+src/features/inventory/hooks/useInventory.ts
+src/features/inventory/validations.ts
+src/features/tickets/actions.ts
+src/features/tickets/components/details/CustomerInfo.tsx
+src/features/tickets/components/details/FinancialSidebar.tsx
+src/features/tickets/components/details/PartsTable.tsx
+src/features/tickets/hooks/useTicketDetails.ts
+src/features/workers/actions.ts
+src/lib/auth.ts
+src/lib/prisma.ts
+src/lib/supabase.ts
+src/lib/uploadthing.ts
+src/lib/utils.ts
+src/middleware.ts
+tailwind.config.ts
+tsconfig.json
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path=".agents/skills/neon-postgres/SKILL.md">
+---
+name: neon-postgres
+description: Guides and best practices for working with Neon Serverless Postgres. Covers getting started, local development with Neon, choosing a connection method, Neon features, authentication (@neondatabase/auth), PostgREST-style data API (@neondatabase/neon-js), Neon CLI, and Neon's Platform API/SDKs. Use for any Neon-related questions.
+---
+
+# Neon Serverless Postgres
+
+Neon is a serverless Postgres platform that separates compute and storage to offer autoscaling, branching, instant restore, and scale-to-zero. It's fully compatible with Postgres and works with any language, framework, or ORM that supports Postgres.
+
+## Neon Documentation
+
+The Neon documentation is the source of truth for all Neon-related information. Always verify claims against the official docs before responding. Neon features and APIs evolve, so prefer fetching current docs over relying on training data.
+
+### Fetching Docs as Markdown
+
+Any Neon doc page can be fetched as markdown in two ways:
+
+1. **Append `.md` to the URL** (simplest): https://neon.com/docs/introduction/branching.md
+2. **Request `text/markdown`** on the standard URL: `curl -H "Accept: text/markdown" https://neon.com/docs/introduction/branching`
+
+Both return the same markdown content. Use whichever method your tools support.
+
+### Finding the Right Page
+
+The docs index lists every available page with its URL and a short description:
+
+```
+https://neon.com/docs/llms.txt
+```
+
+Common doc URLs are organized in the topic links below. If you need a page not listed here, search the docs index: https://neon.com/docs/llms.txt — don't guess URLs.
+
+## What Is Neon
+
+Use this for architecture explanations and terminology (organizations, projects, branches, endpoints) before giving implementation advice.
+
+Link: https://neon.com/docs/ai/skills/neon-postgres/references/what-is-neon.md
+
+## Getting Started
+
+Use this for first-time setup: org/project selection, connection strings, driver installation, optional auth, and initial schema setup.
+
+Link: https://neon.com/docs/ai/skills/neon-postgres/references/getting-started.md
+
+## Connection Methods & Drivers
+
+Use this when you need to pick the correct transport and driver based on runtime constraints (TCP, HTTP, WebSocket, edge, serverless, long-running).
+
+Link: https://neon.com/docs/ai/skills/neon-postgres/references/connection-methods.md
+
+### Serverless Driver
+
+Use this for `@neondatabase/serverless` patterns, including HTTP queries, WebSocket transactions, and runtime-specific optimizations.
+
+Link: https://neon.com/docs/ai/skills/neon-postgres/references/neon-serverless.md
+
+### Neon JS SDK
+
+Use this for combined Neon Auth + Data API workflows with PostgREST-style querying and typed client setup.
+
+Link: https://neon.com/docs/ai/skills/neon-postgres/references/neon-js.md
+
+## Developer Tools
+
+Use this for local development enablement with `npx neonctl@latest init`, VSCode extension setup, and Neon MCP server configuration.
+
+Link: https://neon.com/docs/ai/skills/neon-postgres/references/devtools.md
+
+### Neon CLI
+
+Use this for terminal-first workflows, scripts, and CI/CD automation with `neonctl`.
+
+Link: https://neon.com/docs/ai/skills/neon-postgres/references/neon-cli.md
+
+## Neon Admin API
+
+The Neon Admin API can be used to manage Neon resources programmatically. It is used behind the scenes by the Neon CLI and MCP server, but can also be used directly for more complex automation workflows or when embedding Neon in other applications.
+
+### Neon REST API
+
+Use this for direct HTTP automation, endpoint-level control, API key auth, rate-limit handling, and operation polling.
+
+Link: https://neon.com/docs/ai/skills/neon-postgres/references/neon-rest-api.md
+
+### Neon TypeScript SDK
+
+Use this when implementing typed programmatic control of Neon resources in TypeScript via `@neondatabase/api-client`.
+
+Link: https://neon.com/docs/ai/skills/neon-postgres/references/neon-typescript-sdk.md
+
+### Neon Python SDK
+
+Use this when implementing programmatic Neon management in Python with the `neon-api` package.
+
+Link: https://neon.com/docs/ai/skills/neon-postgres/references/neon-python-sdk.md
+
+## Neon Auth
+
+Use this for managed user authentication setup, UI components, auth methods, and Neon Auth integration pitfalls in Next.js and React apps.
+
+Link: https://neon.com/docs/ai/skills/neon-postgres/references/neon-auth.md
+
+Neon Auth is also embedded in the Neon JS SDK - so depending on your use case, you may want to use the Neon JS SDK instead of Neon Auth. See https://neon.com/docs/ai/skills/neon-postgres/references/connection-methods.md for more details.
+
+## Branching
+
+Use this when the user is planning isolated environments, schema migration testing, preview deployments, or branch lifecycle automation.
+
+Key points:
+
+- Branches are instant, copy-on-write clones (no full data copy).
+- Each branch has its own compute endpoint.
+- Use the neonctl CLI or MCP server to create, inspect, and compare branches.
+
+Link: https://neon.com/docs/ai/skills/neon-postgres/references/branching.md
+
+## Autoscaling
+
+Use this when the user needs compute to scale automatically with workload and wants guidance on CU sizing and runtime behavior.
+
+Link: https://neon.com/docs/introduction/autoscaling.md
+
+## Scale to Zero
+
+Use this when optimizing idle costs and discussing suspend/resume behavior, including cold-start trade-offs.
+
+Key points:
+
+- Idle computes suspend automatically (default 5 minutes, configurable) (unless disabled - launch & scale plan only)
+- First query after suspend typically has a cold-start penalty (around hundreds of ms)
+- Storage remains active while compute is suspended.
+
+Link: https://neon.com/docs/introduction/scale-to-zero.md
+
+## Instant Restore
+
+Use this when the user needs point-in-time recovery or wants to restore data state without traditional backup restore workflows.
+
+Key points:
+
+- Restore windows depend on plan limits.
+- Users can create branches from historical points-in-time.
+- Time Travel queries can be used for historical inspection workflows.
+
+Link: https://neon.com/docs/introduction/branch-restore.md
+
+## Read Replicas
+
+Use this for read-heavy workloads where the user needs dedicated read-only compute without duplicating storage.
+
+Key points:
+
+- Replicas are read-only compute endpoints sharing the same storage.
+- Creation is fast and scaling is independent from primary compute.
+- Typical use cases: analytics, reporting, and read-heavy APIs.
+
+Link: https://neon.com/docs/introduction/read-replicas.md
+
+## Connection Pooling
+
+Use this when the user is in serverless or high-concurrency environments and needs safe, scalable Postgres connection management.
+
+Key points:
+
+- Neon pooling uses PgBouncer.
+- Add `-pooler` to endpoint hostnames to use pooled connections.
+- Pooling is especially important in serverless runtimes with bursty concurrency.
+
+Link: https://neon.com/docs/connect/connection-pooling.md
+
+## IP Allow Lists
+
+Use this when the user needs to restrict database access by trusted networks, IPs, or CIDR ranges.
+
+Link: https://neon.com/docs/introduction/ip-allow.md
+
+## Logical Replication
+
+Use this when integrating CDC pipelines, external Postgres sync, or replication-based data movement.
+
+Key points:
+
+- Neon supports native logical replication workflows.
+- Useful for replicating to/from external Postgres systems.
+
+Link: https://neon.com/docs/guides/logical-replication-guide.md
+</file>
+
+<file path="eslint.config.mjs">
+import { dirname } from "path";
+import { fileURLToPath } from "url";
+import { FlatCompat } from "@eslint/eslintrc";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+const compat = new FlatCompat({
+  baseDirectory: __dirname,
+});
+
+const eslintConfig = [
+  ...compat.extends("next/core-web-vitals", "next/typescript"),
+  {
+    ignores: [
+      "node_modules/**",
+      ".next/**",
+      "out/**",
+      "build/**",
+      "next-env.d.ts",
+    ],
+  },
+];
+
+export default eslintConfig;
+</file>
+
+<file path="postcss.config.mjs">
+const config = {
+  plugins: ["@tailwindcss/postcss"],
+};
+
+export default config;
+</file>
+
+<file path="prisma/seed.ts">
+import 'dotenv/config'
+import { PrismaClient } from '@prisma/client'
+import { Pool } from 'pg'
+import { PrismaPg } from '@prisma/adapter-pg'
+import bcrypt from 'bcrypt'
+
+// 1. إعداد الاتصال باستخدام المحول (Adapter) كما يطلب Prisma 7
+const pool = new Pool({ connectionString: process.env.DATABASE_URL })
+const adapter = new PrismaPg(pool)
+const prisma = new PrismaClient({ adapter })
+
+async function main() {
+  // 2. تشفير كلمة المرور (123456)
+  const hashedPassword = await bcrypt.hash('123456', 10)
+
+  // 3. إنشاء المستخدم في قاعدة البيانات (حساب المدير)
+  const admin = await prisma.user.create({
+    data: {
+      name: 'المدير العام',
+      phone: '0599999999', // سنستخدم هذا الرقم لتسجيل الدخول
+      password: hashedPassword,
+      role: 'ADMIN', // إعطاء صلاحية المدير
+    },
+  })
+
+  console.log('🎉 تم إنشاء حساب المدير بنجاح:', admin.name)
+}
+
+main()
+  .catch((e) => {
+    console.error(e)
+    process.exit(1)
+  })
+  .finally(async () => {
+    await prisma.$disconnect()
+  })
+</file>
+
+<file path="public/file.svg">
+<svg fill="none" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="M14.5 13.5V5.41a1 1 0 0 0-.3-.7L9.8.29A1 1 0 0 0 9.08 0H1.5v13.5A2.5 2.5 0 0 0 4 16h8a2.5 2.5 0 0 0 2.5-2.5m-1.5 0v-7H8v-5H3v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1M9.5 5V2.12L12.38 5zM5.13 5h-.62v1.25h2.12V5zm-.62 3h7.12v1.25H4.5zm.62 3h-.62v1.25h7.12V11z" clip-rule="evenodd" fill="#666" fill-rule="evenodd"/></svg>
+</file>
+
+<file path="public/globe.svg">
+<svg fill="none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><g clip-path="url(#a)"><path fill-rule="evenodd" clip-rule="evenodd" d="M10.27 14.1a6.5 6.5 0 0 0 3.67-3.45q-1.24.21-2.7.34-.31 1.83-.97 3.1M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16m.48-1.52a7 7 0 0 1-.96 0H7.5a4 4 0 0 1-.84-1.32q-.38-.89-.63-2.08a40 40 0 0 0 3.92 0q-.25 1.2-.63 2.08a4 4 0 0 1-.84 1.31zm2.94-4.76q1.66-.15 2.95-.43a7 7 0 0 0 0-2.58q-1.3-.27-2.95-.43a18 18 0 0 1 0 3.44m-1.27-3.54a17 17 0 0 1 0 3.64 39 39 0 0 1-4.3 0 17 17 0 0 1 0-3.64 39 39 0 0 1 4.3 0m1.1-1.17q1.45.13 2.69.34a6.5 6.5 0 0 0-3.67-3.44q.65 1.26.98 3.1M8.48 1.5l.01.02q.41.37.84 1.31.38.89.63 2.08a40 40 0 0 0-3.92 0q.25-1.2.63-2.08a4 4 0 0 1 .85-1.32 7 7 0 0 1 .96 0m-2.75.4a6.5 6.5 0 0 0-3.67 3.44 29 29 0 0 1 2.7-.34q.31-1.83.97-3.1M4.58 6.28q-1.66.16-2.95.43a7 7 0 0 0 0 2.58q1.3.27 2.95.43a18 18 0 0 1 0-3.44m.17 4.71q-1.45-.12-2.69-.34a6.5 6.5 0 0 0 3.67 3.44q-.65-1.27-.98-3.1" fill="#666"/></g><defs><clipPath id="a"><path fill="#fff" d="M0 0h16v16H0z"/></clipPath></defs></svg>
+</file>
+
+<file path="public/next.svg">
+<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 394 80"><path fill="#000" d="M262 0h68.5v12.7h-27.2v66.6h-13.6V12.7H262V0ZM149 0v12.7H94v20.4h44.3v12.6H94v21h55v12.6H80.5V0h68.7zm34.3 0h-17.8l63.8 79.4h17.9l-32-39.7 32-39.6h-17.9l-23 28.6-23-28.6zm18.3 56.7-9-11-27.1 33.7h17.8l18.3-22.7z"/><path fill="#000" d="M81 79.3 17 0H0v79.3h13.6V17l50.2 62.3H81Zm252.6-.4c-1 0-1.8-.4-2.5-1s-1.1-1.6-1.1-2.6.3-1.8 1-2.5 1.6-1 2.6-1 1.8.3 2.5 1a3.4 3.4 0 0 1 .6 4.3 3.7 3.7 0 0 1-3 1.8zm23.2-33.5h6v23.3c0 2.1-.4 4-1.3 5.5a9.1 9.1 0 0 1-3.8 3.5c-1.6.8-3.5 1.3-5.7 1.3-2 0-3.7-.4-5.3-1s-2.8-1.8-3.7-3.2c-.9-1.3-1.4-3-1.4-5h6c.1.8.3 1.6.7 2.2s1 1.2 1.6 1.5c.7.4 1.5.5 2.4.5 1 0 1.8-.2 2.4-.6a4 4 0 0 0 1.6-1.8c.3-.8.5-1.8.5-3V45.5zm30.9 9.1a4.4 4.4 0 0 0-2-3.3 7.5 7.5 0 0 0-4.3-1.1c-1.3 0-2.4.2-3.3.5-.9.4-1.6 1-2 1.6a3.5 3.5 0 0 0-.3 4c.3.5.7.9 1.3 1.2l1.8 1 2 .5 3.2.8c1.3.3 2.5.7 3.7 1.2a13 13 0 0 1 3.2 1.8 8.1 8.1 0 0 1 3 6.5c0 2-.5 3.7-1.5 5.1a10 10 0 0 1-4.4 3.5c-1.8.8-4.1 1.2-6.8 1.2-2.6 0-4.9-.4-6.8-1.2-2-.8-3.4-2-4.5-3.5a10 10 0 0 1-1.7-5.6h6a5 5 0 0 0 3.5 4.6c1 .4 2.2.6 3.4.6 1.3 0 2.5-.2 3.5-.6 1-.4 1.8-1 2.4-1.7a4 4 0 0 0 .8-2.4c0-.9-.2-1.6-.7-2.2a11 11 0 0 0-2.1-1.4l-3.2-1-3.8-1c-2.8-.7-5-1.7-6.6-3.2a7.2 7.2 0 0 1-2.4-5.7 8 8 0 0 1 1.7-5 10 10 0 0 1 4.3-3.5c2-.8 4-1.2 6.4-1.2 2.3 0 4.4.4 6.2 1.2 1.8.8 3.2 2 4.3 3.4 1 1.4 1.5 3 1.5 5h-5.8z"/></svg>
+</file>
+
+<file path="public/vercel.svg">
+<svg fill="none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1155 1000"><path d="m577.3 0 577.4 1000H0z" fill="#fff"/></svg>
+</file>
+
+<file path="public/window.svg">
+<svg fill="none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path fill-rule="evenodd" clip-rule="evenodd" d="M1.5 2.5h13v10a1 1 0 0 1-1 1h-11a1 1 0 0 1-1-1zM0 1h16v11.5a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 0 12.5zm3.75 4.5a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5M7 4.75a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0m1.75.75a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5" fill="#666"/></svg>
+</file>
+
+<file path="README.md">
+This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+
+## Getting Started
+
+First, run the development server:
+
+```bash
+npm run dev
+# or
+yarn dev
+# or
+pnpm dev
+# or
+bun dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+
+You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+
+This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+
+## Learn More
+
+To learn more about Next.js, take a look at the following resources:
+
+- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
+- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+
+You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+
+## Deploy on Vercel
+
+The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+
+Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+</file>
+
+<file path="skills-lock.json">
+{
+  "version": 1,
+  "skills": {
+    "neon-postgres": {
+      "source": "neondatabase/agent-skills",
+      "sourceType": "github",
+      "computedHash": "574cf4b7c901ebc7d88d34e2c3e3d08fdec127bd0047f888de148ff0af787d4e"
+    }
+  }
+}
+</file>
+
+<file path="src/app/(dashboard)/inventory/loading.tsx">
+export default function InventoryLoading() {
+  return (
+    <div className="space-y-6 animate-pulse p-6">
+      {/* عنوان الصفحة الوهمي */}
+      <div className="flex items-center gap-3 mb-6">
+        <div className="w-12 h-12 bg-gray-200 rounded-lg"></div>
+        <div className="space-y-2">
+          <div className="h-6 w-48 bg-gray-200 rounded"></div>
+          <div className="h-4 w-64 bg-gray-200 rounded"></div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* نموذج الإضافة الوهمي */}
+        <div className="lg:col-span-1 bg-white p-6 rounded-xl border border-gray-100 h-96">
+          <div className="space-y-4">
+            <div className="h-6 w-1/2 bg-gray-200 rounded mb-4"></div>
+            <div className="h-10 bg-gray-200 rounded"></div>
+            <div className="h-10 bg-gray-200 rounded"></div>
+            <div className="h-10 bg-gray-200 rounded"></div>
+          </div>
+        </div>
+
+        {/* الجدول الوهمي */}
+        <div className="lg:col-span-2 bg-white rounded-xl border border-gray-100 h-96 p-4">
+           <div className="h-6 w-1/4 bg-gray-200 rounded mb-6"></div>
+           <div className="space-y-3">
+             {[1, 2, 3, 4, 5].map((i) => (
+               <div key={i} className="h-12 bg-gray-100 rounded"></div>
+             ))}
+           </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+</file>
+
+<file path="src/app/(dashboard)/inventory/page.tsx">
+"use client";
+
+import { Package, Plus, Search } from "lucide-react";
+import { useInventory } from "@/src/features/inventory/hooks/useInventory";
+import { InventoryTable } from "@/src/features/inventory/components/InventoryTable";
+import { Input } from "@/src/components/ui/Input"; //  استيراد المكون الموحد
+import { SparePartModal } from "@/src/features/inventory/components/EditSparePartModal";
+
+export default function InventoryPage() {
+  const { 
+    parts, 
+    isLoading, 
+    searchTerm, 
+    setSearchTerm, 
+    isModalOpen, 
+    setIsModalOpen, 
+    editingPart, 
+    isSaving, 
+    actions 
+  } = useInventory();
+
+  return (
+    <div className="space-y-6 max-w-7xl mx-auto pb-10">
+      
+      <div className="flex flex-col md:flex-row justify-between items-center gap-4 bg-white p-4 rounded-2xl border shadow-sm">
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 bg-indigo-50 text-indigo-600 rounded-xl">
+            <Package className="w-6 h-6" />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold text-gray-900">المخزون وقطع الغيار</h1>
+            <p className="text-xs text-gray-500 mt-1">إدارة الأصناف والكميات المتوفرة</p>
+          </div>
+        </div>
+        
+        <div className="flex items-center gap-3 w-full md:w-auto">
+          {/*  استخدام الـ Input الموحد مع أيقونة البحث */}
+          <Input 
+            placeholder="بحث عن قطعة..." 
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            rightIcon={<Search className="w-4 h-4" />}
+            wrapperClassName="w-full md:w-64"
+            className="bg-gray-50"
+          />
+          
+          <button 
+            onClick={() => actions.openModal(null)}
+            className="bg-indigo-600 text-white px-6 py-2.5 rounded-xl hover:bg-indigo-700 flex items-center gap-2 text-sm font-bold shadow-lg transition"
+          >
+            <Plus className="w-5 h-5" /> إضافة صنف
+          </button>
+        </div>
+      </div>
+
+      <InventoryTable 
+        parts={parts} 
+        isLoading={isLoading} 
+        onEdit={(part: any) => actions.openModal(part)} 
+        onDelete={actions.handleDelete} 
+      />
+
+      {isModalOpen && (
+        <SparePartModal
+          part={editingPart}
+          isSaving={isSaving}
+          onClose={() => setIsModalOpen(false)}
+          onSave={actions.handleSave}
+        />
+      )}
+      
+    </div>
+  );
+}
+</file>
+
+<file path="src/app/(dashboard)/layout.tsx">
+import Navbar from "@/src/components/shared/Navbar";
+import Sidebar from "@/src/components/shared/Sidebar";
+
+export default function DashboardLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="min-h-screen bg-gray-50 flex" dir="rtl">
+      {/* الشريط الجانبي ثابت هنا وسيطبق على كل صفحات لوحة التحكم */}
+      <Sidebar />
+
+      <main className="flex-1 print:p-0 print:m-0 mr-64 flex flex-col min-h-screen transition-all duration-300">
+        <Navbar />
+        
+        {/* هنا سيتم حقن محتوى الصفحات (المخزون، التذاكر، الخ) */}
+        <div className="p-6 ">
+          {children}
+        </div>
+      </main>
+    </div>
+  );
+}
+</file>
+
+<file path="src/app/(dashboard)/page.tsx">
+import Navbar from "@/src/components/shared/Navbar";
+import Sidebar from "@/src/components/shared/Sidebar";
+
+export default function DashboardPage() {
+  return (
+    <div className="min-h-screen bg-gray-50 flex" dir="rtl">
+      {/* الشريط الجانبي (ثابت على اليمين) */}
+      <Sidebar />
+
+      {/* المحتوى الرئيسي (يأخذ باقي المساحة) */}
+      <main className="flex-1 mr-64 flex flex-col min-h-screen transition-all duration-300">
+        <Navbar />
+        
+        <div className="p-6">
+          {/* محتوى الصفحة */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 text-center">
+            <h2 className="text-2xl font-bold text-gray-800 mb-4">أهلاً بك في نظام إدارة ورشة الكمبريسور</h2>
+            <p className="text-gray-500">تم تسجيل الدخول بنجاح. من هنا يمكنك إدارة جميع عمليات الورشة.</p>
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+}
+</file>
+
+<file path="src/app/(dashboard)/tickets/[id]/page.tsx">
+"use client";
+
+import { use } from "react";
+import Link from "next/link";
+import Image from "next/image";
+import { ArrowRight, Printer, Loader2, Camera, X } from "lucide-react";
+import { UploadButton } from "@/src/lib/uploadthing";
+
+// استدعاء الهوك والمكونات المنفصلة
+import { useTicketDetails } from "@/src/features/tickets/hooks/useTicketDetails";
+import { CustomerInfo } from "@/src/features/tickets/components/details/CustomerInfo";
+import { PartsTable } from "@/src/features/tickets/components/details/PartsTable";
+import { FinancialSidebar } from "@/src/features/tickets/components/details/FinancialSidebar";
+
+export default function TicketDetailsPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
+  
+  // استخراج كل الداتا والأكشنز من الهوك (عزل تام للمنطق)
+  const { 
+    ticketData, inventory, isLoadingData, isSaving, isUpdatingPart,
+    status, setStatus, laborCost, setLaborCost, discountPercentage, setDiscountPercentage,
+    finance, actions 
+  } = useTicketDetails(id);
+
+  if (isLoadingData || !ticketData) {
+    return <div className="flex justify-center min-h-[60vh] items-center"><Loader2 className="animate-spin text-indigo-600 w-12 h-12" /></div>;
+  }
+
+  return (
+    <div className="max-w-6xl mx-auto space-y-6 pb-20 print:bg-white print:p-0">
+      
+      {/* الترويسة وأزرار التحكم */}
+      <div className="print:hidden flex flex-col sm:flex-row justify-between items-center gap-4">
+        <div className="flex items-center gap-4">
+          <Link href="/tickets" className="p-2 hover:bg-gray-100 rounded-full text-gray-400"><ArrowRight className="w-6 h-6" /></Link>
+          <h1 className="text-2xl font-bold">تذكرة #{id.slice(-6).toUpperCase()}</h1>
+        </div>
+        <div className="flex gap-2 w-full sm:w-auto">
+          <button onClick={() => window.print()} className="p-2.5 bg-gray-800 text-white rounded-xl shadow-md"><Printer className="w-5 h-5" /></button>
+          <button onClick={actions.handleSaveTicket} disabled={isSaving} className="flex-1 sm:flex-none bg-indigo-600 text-white px-8 py-2.5 rounded-xl font-bold shadow-lg disabled:opacity-50">
+            {isSaving ? "جاري الحفظ..." : "حفظ التغييرات"}
+          </button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 space-y-6">
+          
+          <CustomerInfo ticket={ticketData} status={status} setStatus={setStatus} />
+          
+          <PartsTable parts={ticketData.partsUsed} inventory={inventory} isUpdating={isUpdatingPart} onAdd={actions.handleAddPart} onRemove={actions.handleRemovePart} />
+
+          {/* صورة الفاتورة (ممكن تفصلها لاحقاً لملف لحالها لو حبيت) */}
+          <div className="bg-white p-6 rounded-2xl border shadow-sm">
+             <h3 className="font-bold mb-4 flex items-center gap-2 text-sm text-indigo-600"><Camera className="w-4 h-4" /> أرشفة الفاتورة</h3>
+             {ticketData.invoiceImageUrl ? (
+               <div className="relative group aspect-[16/9] rounded-xl overflow-hidden border bg-gray-100">
+                 <Image src={ticketData.invoiceImageUrl} alt="Invoice Scan" fill className="object-contain" />
+                 <button onClick={() => { if(confirm("حذف؟")) actions.handleUpdateImage(""); }} className="absolute top-3 right-3 bg-red-500 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-all shadow-xl"><X className="w-5 h-5"/></button>
+               </div>
+             ) : (
+               <div className="flex justify-center p-10 border-2 border-dashed rounded-xl bg-gray-50 print:hidden">
+                  <UploadButton endpoint="imageUploader" onClientUploadComplete={(res: any) => actions.handleUpdateImage(res[0].url)} />
+               </div>
+             )}
+          </div>
+
+        </div>
+
+        <div className="space-y-6">
+          <FinancialSidebar 
+            finance={finance} laborCost={laborCost} setLaborCost={setLaborCost} discountPercentage={discountPercentage} setDiscountPercentage={setDiscountPercentage} 
+            payments={ticketData.payments} advancePayment={ticketData.advancePayment} onAddPayment={actions.handleAddPayment} 
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+</file>
+
+<file path="src/app/(dashboard)/tickets/new/page.tsx">
+"use client";
+
+import { useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { ArrowRight, User, Wrench, Save } from "lucide-react";
+import { toast } from "react-hot-toast";
+import { createTicket } from "@/src/features/tickets/actions";
+
+//  استيراد المكونات الموحدة
+import { Input } from "@/src/components/ui/Input";
+import { Textarea } from "@/src/components/ui/Textarea";
+
+const createTicketSchema = z.object({
+  customerName: z.string().min(2, "الرجاء إدخال اسم الزبون"),
+  customerPhone: z.string().min(9, "يجب أن يكون 9 أرقام على الأقل"),
+  compressorModel: z.string().min(2, "الرجاء تحديد موديل الكمبريسور"),
+  issueDescription: z.string().min(5, "الرجاء كتابة وصف المشكلة"),
+  advancePayment: z.coerce.number().min(0, "لا يمكن أن تكون سالبة").default(0),
+});
+
+type FormValues = z.infer<typeof createTicketSchema>;
+
+export default function NewTicketPage() {
+  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
+
+  const { register, handleSubmit, formState: { errors } } = useForm<FormValues>({
+    resolver: zodResolver(createTicketSchema),
+    defaultValues: { advancePayment: 0 }
+  });
+
+  const onSubmit = async (data: FormValues) => {
+    setIsLoading(true);
+    try {
+      const result = await createTicket(data);
+      if (result.error) toast.error(result.error); 
+      else if (result.success && result.data) {
+        toast.success("تم فتح التذكرة بنجاح!");
+        router.push(`/tickets/${result.data.id}`); 
+      }
+    } catch {
+      toast.error("حدث خطأ في الاتصال.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="max-w-4xl mx-auto space-y-6">
+      <div className="flex items-center gap-4 mb-8">
+        <Link href="/tickets" className="p-2 hover:bg-gray-100 rounded-lg text-gray-500"><ArrowRight className="w-6 h-6" /></Link>
+        <div><h1 className="text-2xl font-bold">إنشاء تذكرة صيانة</h1></div>
+      </div>
+
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        <div className="bg-white p-6 rounded-xl shadow-sm border">
+          <div className="flex items-center gap-2 mb-6 border-b pb-4">
+            <User className="w-5 h-5 text-indigo-500" />
+            <h2 className="text-lg font-semibold">بيانات الزبون</h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Input label="اسم الزبون" placeholder="شركة المجد أو أحمد..." error={errors.customerName?.message} {...register("customerName")} />
+            <Input label="رقم الهاتف" placeholder="059xxxxxxx" dir="ltr" className="text-right" error={errors.customerPhone?.message} {...register("customerPhone")} />
+          </div>
+        </div>
+
+        <div className="bg-white p-6 rounded-xl shadow-sm border">
+          <div className="flex items-center gap-2 mb-6 border-b pb-4">
+            <Wrench className="w-5 h-5 text-indigo-500" />
+            <h2 className="text-lg font-semibold">تفاصيل الكمبريسور</h2>
+          </div>
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Input label="نوع / موديل الكمبريسور" placeholder="ايطالي 200 لتر" error={errors.compressorModel?.message} {...register("compressorModel")} />
+              <Input label="دفعة مقدمة (تحت الحساب)" type="number" leftIcon="₪" error={errors.advancePayment?.message} {...register("advancePayment")} />
+            </div>
+            <Textarea label="وصف المشكلة المبدئي" rows={4} placeholder="الجهاز لا يضغط هواء..." error={errors.issueDescription?.message} {...register("issueDescription")} />
+          </div>
+        </div>
+
+        <div className="flex justify-end gap-4 mt-8">
+          <Link href="/tickets" className="px-6 py-2.5 text-gray-700 border rounded-lg hover:bg-gray-50 font-medium">إلغاء</Link>
+          <button type="submit" disabled={isLoading} className="flex items-center gap-2 px-8 py-2.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-70 font-bold shadow-sm">
+            <Save className="w-5 h-5" /> {isLoading ? "جاري الحفظ..." : "حفظ وفتح التذكرة"}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
+</file>
+
+<file path="src/app/(dashboard)/tickets/page.tsx">
+import { Ticket as TicketIcon, Plus, Search, Filter, AlertCircle } from "lucide-react";
+import Link from "next/link";
+import { getAllTickets } from "@/src/features/tickets/actions";
+
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
+export default async function TicketsPage() {
+  const result = await getAllTickets();
+
+  if (result.error) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-2xl font-bold text-gray-900">تذاكر الصيانة</h1>
+        </div>
+        <div className="bg-red-50 border border-red-200 text-red-700 p-6 rounded-xl flex flex-col items-center justify-center text-center space-y-3">
+          <AlertCircle className="w-10 h-10 text-red-500" />
+          <h2 className="text-lg font-bold">تعذر عرض التذاكر</h2>
+          <p className="text-sm">{result.error}</p>
+        </div>
+      </div>
+    );
+  }
+
+  const tickets = result.data || [];
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+        <div className="flex items-center gap-3">
+          <div className="p-3 bg-indigo-100 text-indigo-600 rounded-lg">
+            <TicketIcon className="w-6 h-6" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">تذاكر الصيانة</h1>
+            <p className="text-sm text-gray-500">إدارة ومتابعة طلبات صيانة الكمبريسورات</p>
+          </div>
+        </div>
+
+        <Link 
+          href="/tickets/new" 
+          className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2.5 rounded-lg hover:bg-indigo-700 transition font-medium shadow-sm"
+        >
+          <Plus className="w-5 h-5" />
+          تذكرة جديدة
+        </Link>
+      </div>
+
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        {tickets.length === 0 ? (
+          <div className="text-center py-12 text-gray-500">
+            <TicketIcon className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+            <p>لا توجد أي تذاكر صيانة حتى الآن.</p>
+            <Link href="/tickets/new" className="text-indigo-600 hover:underline text-sm mt-2 inline-block">
+              اضغط هنا لإنشاء أول تذكرة
+            </Link>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm text-right">
+              <thead className="bg-gray-50 text-gray-600 border-b border-gray-100">
+                <tr>
+                  <th className="px-4 py-3 font-medium">رقم التذكرة</th>
+                  <th className="px-4 py-3 font-medium">الزبون</th>
+                  <th className="px-4 py-3 font-medium">تاريخ الدخول</th>
+                  <th className="px-4 py-3 font-medium">الحالة</th>
+                  <th className="px-4 py-3 font-medium">عدد القطع المستهلكة</th>
+                  <th className="px-4 py-3 font-medium">إجراءات</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {tickets.map((ticket: any) => (
+                  <tr key={ticket.id} className="hover:bg-gray-50/50 transition">
+                    <td className="px-4 py-3 font-bold text-gray-900 text-xs">
+                      #{ticket.id.slice(-6).toUpperCase()}
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="font-medium text-gray-900">{ticket.customerName}</div>
+                      <div className="text-xs text-gray-500 dir-ltr text-right">{ticket.customerPhone}</div>
+                    </td>
+                    <td className="px-4 py-3 text-gray-600">
+                      {new Date(ticket.createdAt).toLocaleDateString('ar-EG')}
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className={`px-2.5 py-1 rounded-md text-xs font-medium ${
+                        ticket.status === 'OPEN' ? 'bg-yellow-100 text-yellow-800' :
+                        ticket.status === 'IN_PROGRESS' ? 'bg-blue-100 text-blue-800' :
+                        ticket.status === 'WAITING_FOR_PARTS' ? 'bg-orange-100 text-orange-800' :
+                        'bg-green-100 text-green-800'
+                      }`}>
+                        {ticket.status === 'OPEN' ? 'مفتوحة' : 
+                         ticket.status === 'IN_PROGRESS' ? 'قيد الصيانة' :
+                         ticket.status === 'WAITING_FOR_PARTS' ? 'بانتظار قطع' : 'مكتملة'}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 font-medium">
+                      {/*  التعديل هنا: partsUsed بدل ticketParts */}
+                      {ticket.partsUsed?.length || 0} قطع
+                    </td>
+                    <td className="px-4 py-3">
+                      <Link href={`/tickets/${ticket.id}`} className="text-indigo-600 hover:underline text-sm font-medium">
+                        عرض التفاصيل
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+</file>
+
+<file path="src/app/(dashboard)/workers/[id]/page.tsx">
+import { getWorkerDetails } from "@/src/features/workers/actions";
+import { 
+  ArrowRight, 
+  Calendar, 
+  ArrowUpCircle, 
+  ArrowDownCircle, 
+  User, 
+  Phone,
+  Wallet
+} from "lucide-react";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+
+export default async function WorkerProfilePage({ params }: { params: { id: string } }) {
+  const result = await getWorkerDetails(params.id);
+
+  if (result.error || !result.data) {
+    return notFound();
+  }
+
+  const worker = result.data;
+
+  return (
+    <div className="p-6 max-w-5xl mx-auto space-y-6 animate-in fade-in duration-500">
+      
+      {/* الترويسة وزر العودة */}
+      <div className="flex items-center justify-between">
+        <Link href="/workers" className="flex items-center gap-2 text-gray-500 hover:text-indigo-600 transition">
+          <ArrowRight className="w-5 h-5" /> رجوع لقائمة العمال
+        </Link>
+      </div>
+
+      {/* بطاقة تعريف العامل */}
+      <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+        <div className="flex items-center gap-5">
+          <div className="w-16 h-16 bg-indigo-100 text-indigo-600 rounded-2xl flex items-center justify-center font-black text-2xl">
+            {worker.name[0]}
+          </div>
+          <div>
+            <h1 className="text-2xl font-black text-gray-900">{worker.name}</h1>
+            <div className="flex gap-4 mt-1 text-sm text-gray-500">
+              <span className="flex items-center gap-1"><Phone className="w-3.5 h-3.5" /> {worker.phone}</span>
+              <span className="flex items-center gap-1"><User className="w-3.5 h-3.5" /> {worker.role}</span>
+            </div>
+          </div>
+        </div>
+        
+        <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 text-left min-w-[200px]">
+          <p className="text-xs font-bold text-gray-400 uppercase mb-1 text-right">الرصيد المستحق الحالي</p>
+          <div className={`text-3xl font-black flex items-center justify-end gap-2 ${worker.balance >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+            {worker.balance.toFixed(2)} ₪
+            <Wallet className="w-6 h-6" />
+          </div>
+        </div>
+      </div>
+
+      {/* سجل المعاملات المالية */}
+      <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+        <div className="p-6 border-b bg-gray-50/50 flex items-center gap-2 font-bold text-gray-700">
+          <Calendar className="w-5 h-5 text-indigo-500" /> كشف حساب الحركات المالية
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-right text-sm">
+            <thead className="bg-gray-50 text-gray-400 text-xs uppercase">
+              <tr>
+                <th className="p-4 font-medium">التاريخ</th>
+                <th className="p-4 font-medium">النوع</th>
+                <th className="p-4 font-medium">التفاصيل / ملاحظات</th>
+                <th className="p-4 font-medium">المبلغ</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {worker.transactions.length === 0 ? (
+                <tr>
+                  <td colSpan={4} className="p-10 text-center text-gray-400 font-medium">لا توجد حركات مالية مسجلة بعد لهذا العامل.</td>
+                </tr>
+              ) : (
+                worker.transactions.map((tx: any) => (
+                  <tr key={tx.id} className="hover:bg-gray-50/30 transition">
+                    <td className="p-4 text-gray-500 font-mono text-xs">
+                      {new Date(tx.date).toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' })}
+                    </td>
+                    <td className="p-4">
+                      {tx.type === "STAKE" || tx.type === "BONUS" ? (
+                        <span className="inline-flex items-center gap-1 text-emerald-600 font-bold">
+                          <ArrowUpCircle className="w-4 h-4" /> استحقاق/مكافأة
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 text-rose-600 font-bold">
+                          <ArrowDownCircle className="w-4 h-4" /> سحبيات/دفعات
+                        </span>
+                      )}
+                    </td>
+                    <td className="p-4 text-gray-600 font-medium">
+                      {tx.description || "---"}
+                    </td>
+                    <td className={`p-4 font-black text-lg ${tx.type === "STAKE" || tx.type === "BONUS" ? 'text-emerald-600' : 'text-rose-600'}`}>
+                      {tx.type === "STAKE" || tx.type === "BONUS" ? "+" : "-"}
+                      {tx.amount.toFixed(2)} ₪
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  );
+}
+</file>
+
+<file path="src/app/(dashboard)/workers/page.tsx">
+"use client";
+
+import { useState, useEffect } from "react";
+import Link from "next/link"; // 👈 استيراد Link للتنقل
+import { 
+  registerWorker, 
+  getWorkersWithBalance, 
+  addWorkerTransaction, 
+  deleteWorker 
+} from "@/src/features/workers/actions";
+import { Input } from "@/src/components/ui/Input";
+import { toast } from "react-hot-toast";
+import { 
+  Users, DollarSign, Plus, UserPlus, Trash2, 
+  Loader2, Wallet, X, Banknote, CreditCard,
+  ChevronLeft
+} from "lucide-react";
+
+export default function WorkersPage() {
+  const [workers, setWorkers] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [isPageLoading, setIsPageLoading] = useState(true);
+
+  // 🔹 State للمودال الجديد
+  const [txModal, setTxModal] = useState({ open: false, userId: '', type: '', name: '' });
+  const [txData, setTxData] = useState({ amount: '', method: 'كاش', notes: '' });
+
+  const loadWorkers = async () => {
+    setIsPageLoading(true);
+    const data = await getWorkersWithBalance();
+    setWorkers(data);
+    setIsPageLoading(false);
+  };
+
+  useEffect(() => { loadWorkers(); }, []);
+
+  const handleAddWorker = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setLoading(true);
+    const form = e.currentTarget;
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData);
+    const res = await registerWorker(data);
+    if (res.success) {
+      toast.success("تم تسجيل العامل بنجاح");
+      form.reset();
+      loadWorkers();
+    } else toast.error(res.error || "خطأ ما");
+    setLoading(false);
+  };
+
+  const handleConfirmTx = async () => {
+    if (!txData.amount || isNaN(Number(txData.amount))) {
+      toast.error("يرجى إدخال مبلغ صحيح");
+      return;
+    }
+
+    const typeLabel = txModal.type === 'STAKE' ? 'استحقاق' : txModal.type === 'ADVANCE' ? 'سلفة' : 'تصفية';
+    const finalDesc = `${typeLabel} - ${txData.method}${txData.notes ? `: ${txData.notes}` : ''}`;
+
+    const res = await addWorkerTransaction({
+      userId: txModal.userId,
+      amount: Number(txData.amount),
+      type: txModal.type,
+      description: finalDesc
+    });
+
+    if (res.success) {
+      toast.success("تم تحديث الحساب المالي");
+      setTxModal({ ...txModal, open: false });
+      setTxData({ amount: '', method: 'كاش', notes: '' });
+      loadWorkers();
+    }
+  };
+
+  const handleDelete = async (userId: string, name: string) => {
+    if (confirm(`حذف العامل (${name}) نهائياً؟`)) {
+      const res = await deleteWorker(userId);
+      if (res.success) { toast.success("تم الحذف"); loadWorkers(); }
+    }
+  };
+
+  return (
+    <div className="p-6 space-y-8 max-w-6xl mx-auto animate-in fade-in duration-500">
+      
+      {/* نموذج إضافة عامل */}
+      <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+        <h2 className="text-lg font-bold mb-6 flex items-center gap-2 text-indigo-600">
+          <UserPlus className="w-5 h-5" /> تسجيل فني جديد
+        </h2>
+        <form onSubmit={handleAddWorker} className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <Input label="الاسم" name="name" required />
+          <Input label="الهاتف" name="phone" required />
+          <Input label="كلمة المرور" name="password" type="password" required />
+          <div className="flex items-end pb-1">
+            <button disabled={loading} className="w-full bg-indigo-600 text-white h-[42px] rounded-xl font-bold hover:bg-indigo-700 transition flex items-center justify-center gap-2">
+              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+              إضافة
+            </button>
+          </div>
+        </form>
+      </div>
+
+      {/* جدول الحسابات */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        <table className="w-full text-right text-sm">
+          <thead className="bg-gray-50 text-gray-400 text-xs">
+            <tr>
+              <th className="p-4">الفني</th>
+              <th className="p-4">الرصيد الحالي</th>
+              <th className="p-4 text-center">إجراءات مالية</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-100">
+            {workers.map(worker => (
+              <tr key={worker.id} className="hover:bg-gray-50/50 transition group">
+                <td className="p-4">
+                   {/* 👈 رابط لصفحة كشف الحساب الشخصي */}
+                   <Link 
+                    href={`/workers/${worker.id}`} 
+                    className="flex flex-col group-hover:text-indigo-600 transition"
+                   >
+                     <span className="font-bold text-gray-800 decoration-indigo-200 group-hover:underline underline-offset-4">
+                        {worker.name}
+                     </span>
+                     <span className="text-[10px] text-gray-400 flex items-center gap-0.5">
+                        عرض كشف الحساب <ChevronLeft className="w-3 h-3" />
+                     </span>
+                   </Link>
+                </td>
+                <td className="p-4">
+                  <span className={`px-3 py-1 rounded-full font-black text-xs ${worker.currentBalance >= 0 ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'}`}>
+                    {worker.currentBalance.toFixed(2)} ₪
+                  </span>
+                </td>
+                <td className="p-4 flex justify-center gap-2">
+                  <button onClick={() => setTxModal({ open: true, userId: worker.id, type: 'STAKE', name: worker.name })} className="bg-emerald-50 text-emerald-700 px-3 py-1.5 rounded-lg text-xs font-bold border border-emerald-100 hover:bg-emerald-500 hover:text-white transition-all">استحقاق</button>
+                  <button onClick={() => setTxModal({ open: true, userId: worker.id, type: 'ADVANCE', name: worker.name })} className="bg-rose-50 text-rose-700 px-3 py-1.5 rounded-lg text-xs font-bold border border-rose-100 hover:bg-rose-500 hover:text-white transition-all">سلفة</button>
+                  <button onClick={() => setTxModal({ open: true, userId: worker.id, type: 'PAYOUT', name: worker.name })} className="bg-gray-800 text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-black transition">تصفية</button>
+                  <button onClick={() => handleDelete(worker.id, worker.name)} className="p-1.5 text-gray-300 hover:text-rose-600 transition-colors"><Trash2 className="w-4 h-4" /></button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* 🌟 مـودال الـدفع المطور 🌟 */}
+      {txModal.open && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-3xl p-6 w-full max-w-md shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="flex justify-between items-center mb-6 border-b pb-4">
+              <h3 className="font-black text-gray-800">
+                تسجيل {txModal.type === 'STAKE' ? 'استحقاق' : 'دفعة'} لـ <span className="text-indigo-600">{txModal.name}</span>
+              </h3>
+              <button onClick={() => setTxModal({...txModal, open: false})} className="p-1 hover:bg-gray-100 rounded-full transition"><X className="w-5 h-5 text-gray-400" /></button>
+            </div>
+            
+            <div className="space-y-5">
+              <Input label="المبلغ (₪)" type="number" value={txData.amount} onChange={(e) => setTxData({...txData, amount: e.target.value})} autoFocus />
+              
+              <div>
+                <label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-wider">طريقة التعامل</label>
+                <div className="grid grid-cols-2 gap-3">
+                  <button onClick={() => setTxData({...txData, method: 'كاش'})} className={`flex items-center justify-center gap-2 p-3 rounded-xl border-2 transition-all ${txData.method === 'كاش' ? 'border-indigo-600 bg-indigo-50 text-indigo-700' : 'border-gray-100 text-gray-500'}`}>
+                    <Banknote className="w-4 h-4" /> كاش
+                  </button>
+                  <button onClick={() => setTxData({...txData, method: 'بنكي'})} className={`flex items-center justify-center gap-2 p-3 rounded-xl border-2 transition-all ${txData.method === 'بنكي' ? 'border-indigo-600 bg-indigo-50 text-indigo-700' : 'border-gray-100 text-gray-500'}`}>
+                    <CreditCard className="w-4 h-4" /> بنكي
+                  </button>
+                </div>
+              </div>
+
+              <Input label="ملاحظات (اختياري)" value={txData.notes} onChange={(e) => setTxData({...txData, notes: e.target.value})} placeholder="مثلاً: بابت عمل كذا.." />
+
+              <button onClick={handleConfirmTx} className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black text-lg shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all active:scale-[0.98]">
+                تأكيد العملية المالية
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+</file>
+
+<file path="src/app/api/uploadthing/core.ts">
+import { createUploadthing, type FileRouter } from "uploadthing/next";
+
+const f = createUploadthing();
+
+export const ourFileRouter = {
+  // اسم مسار الرفع (سنستخدمه في الواجهة الأمامية)
+  imageUploader: f({ image: { maxFileSize: "4MB", maxFileCount: 1 } })
+    .onUploadComplete(async ({ metadata, file }) => {
+      // هذه الدالة تعمل بعد نجاح رفع الصورة
+      console.log("تم رفع الصورة بنجاح! الرابط:", file.url);
+      return { uploadedBy: "Admin" };
+    }),
+} satisfies FileRouter;
+
+export type OurFileRouter = typeof ourFileRouter;
+</file>
+
+<file path="src/app/api/uploadthing/route.ts">
+import { createRouteHandler } from "uploadthing/next";
+import { ourFileRouter } from "./core";
+
+export const { GET, POST } = createRouteHandler({
+  router: ourFileRouter,
+});
+</file>
+
+<file path="src/app/globals.css">
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+</file>
+
+<file path="src/app/not-found.tsx">
+import Link from 'next/link'
+ 
+export default function NotFound() {
+  return (
+    <div>
+      <h2>Not Found</h2>
+      <p>Could not find requested resource</p>
+      <Link href="/">Return Home</Link>
+    </div>
+  )
+}
+</file>
+
+<file path="src/components/shared/Providers.tsx">
+"use client";
+
+import { SessionProvider } from "next-auth/react";
+
+export default function Providers({ children }: { children: React.ReactNode }) {
+  return <SessionProvider>{children}</SessionProvider>;
+}
+</file>
+
+<file path="src/components/ui/Input.tsx">
+import { forwardRef, InputHTMLAttributes, ReactNode } from "react";
+
+interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
+  label?: string;
+  error?: string;
+  wrapperClassName?: string;
+  rightIcon?: ReactNode; // أيقونة في البداية (يمين)
+  leftIcon?: ReactNode;  // أيقونة في النهاية (يسار)
+}
+
+export const Input = forwardRef<HTMLInputElement, InputProps>(
+  ({ label, error, wrapperClassName = "w-full", rightIcon, leftIcon, className = "", ...props }, ref) => {
+    return (
+      <div className={wrapperClassName}>
+        {label && (
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            {label}
+          </label>
+        )}
+        <div className="relative">
+          {rightIcon && <div className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">{rightIcon}</div>}
+          <input
+            ref={ref}
+            className={`
+              w-full border rounded-lg outline-none transition
+              ${error ? "border-red-300 focus:ring-2 focus:ring-red-100" : "border-gray-300 focus:ring-2 focus:ring-indigo-100"}
+              disabled:bg-gray-50 disabled:text-gray-500
+              ${rightIcon ? "pr-10" : "pr-4"}
+              ${leftIcon ? "pl-10" : "pl-4"}
+              ${className.includes('py-') || className.includes('p-') ? '' : 'py-2.5'}
+              ${className}
+            `}
+            {...props}
+          />
+          {leftIcon && <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-bold">{leftIcon}</div>}
+        </div>
+        {error && <p className="mt-1.5 text-xs text-red-600 font-medium">{error}</p>}
+      </div>
+    );
+  }
+);
+
+Input.displayName = "Input";
+</file>
+
+<file path="src/components/ui/Textarea.tsx">
+import { forwardRef, TextareaHTMLAttributes } from "react";
+
+interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
+  label?: string;
+  error?: string;
+}
+
+export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
+  ({ label, error, className = "", ...props }, ref) => {
+    return (
+      <div className="w-full">
+        {label && <label className="block text-sm font-medium text-gray-700 mb-2">{label}</label>}
+        <textarea
+          ref={ref}
+          className={`
+            w-full px-4 py-3 border rounded-lg outline-none transition resize-none
+            ${error ? "border-red-300 focus:ring-2 focus:ring-red-100" : "border-gray-300 focus:ring-2 focus:ring-indigo-100"}
+            ${className}
+          `}
+          {...props}
+        />
+        {error && <p className="mt-1.5 text-xs text-red-600 font-medium">{error}</p>}
+      </div>
+    );
+  }
+);
+
+Textarea.displayName = "Textarea";
+</file>
+
+<file path="src/features/auth/login/validations.ts">
+import * as z from "zod";
+
+export const loginSchema = z.object({
+  phone: z.string().min(9, "رقم الهاتف يجب أن يكون 9 أرقام على الأقل"),
+  password: z.string().min(6, "كلمة المرور يجب أن تكون 6 أحرف على الأقل"),
+});
+
+export type LoginFormValues = z.infer<typeof loginSchema>;
+</file>
+
+<file path="src/features/dashboard/actions.ts">
+"use server";
+
+import prisma from "@/src/lib/prisma";
+
+export async function getDashboardStats() {
+  try {
+    const tickets = await prisma.ticket.findMany({
+      include: {
+        partsUsed: true,
+        payments: true,
+      },
+    });
+
+    const lowStockParts = await prisma.sparePart.findMany({
+      where: { quantity: { lte: prisma.sparePart.fields.lowStockAlert } },
+      select: { id: true, name: true, quantity: true, lowStockAlert: true },
+      take: 5 
+    });
+
+    let totalExpectedRevenue = 0; 
+    let totalPaid = 0; 
+    let todaysCash = 0; // 👈 المتغير الجديد للكاش اليومي
+    const statusCounts = { OPEN: 0, IN_PROGRESS: 0, WAITING_FOR_PARTS: 0, COMPLETED: 0 };
+
+    // تحديد بداية اليوم الحالي لحساب كاش اليوم فقط
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+
+    tickets.forEach(ticket => {
+      const partsTotal = ticket.partsUsed.reduce((sum, p) => sum + (p.priceAtTime * p.quantity), 0);
+      const subTotal = partsTotal + ticket.laborCost;
+      const discountAmount = subTotal * (ticket.discount / 100);
+      const grandTotal = subTotal - discountAmount;
+      
+      let ticketPaid = 0;
+      
+      // حساب الدفعة المقدمة وهل تمت اليوم؟
+      ticketPaid += ticket.advancePayment;
+      if (new Date(ticket.createdAt) >= todayStart) {
+        todaysCash += ticket.advancePayment;
+      }
+
+      // حساب الدفعات الإضافية وهل تمت اليوم؟
+      ticket.payments.forEach(p => {
+        ticketPaid += p.amount;
+        if (new Date(p.createdAt) >= todayStart) {
+          todaysCash += p.amount;
+        }
+      });
+      
+      totalExpectedRevenue += grandTotal;
+      totalPaid += ticketPaid;
+      
+      if (ticket.status === "OPEN") statusCounts.OPEN++;
+      if (ticket.status === "IN_PROGRESS") statusCounts.IN_PROGRESS++;
+      if (ticket.status === "WAITING_FOR_PARTS") statusCounts.WAITING_FOR_PARTS++;
+      if (ticket.status === "COMPLETED") statusCounts.COMPLETED++;
+    });
+
+    const totalDebts = totalExpectedRevenue - totalPaid;
+
+    const last7Days = Array.from({length: 7}).map((_, i) => {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      return d.toISOString().split('T')[0]; 
+    }).reverse();
+
+    const chartData = last7Days.map(date => {
+      const count = tickets.filter(t => t.createdAt.toISOString().split('T')[0] === date).length;
+      const shortDate = new Date(date).toLocaleDateString('ar-EG', { month: 'numeric', day: 'numeric' });
+      return { name: shortDate, "التذاكر": count };
+    });
+
+    const lowStockCount = await prisma.sparePart.count({
+      where: { quantity: { lte: prisma.sparePart.fields.lowStockAlert } }
+    });
+
+    // 👈 جلب أحدث 5 تذاكر فقط وترتيبهم من الأحدث للأقدم
+    const recentTickets = [...tickets]
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .slice(0, 5)
+      .map(t => ({
+        id: t.id,
+        customerName: t.customerName,
+        status: t.status,
+        createdAt: t.createdAt
+      }));
+
+    return {
+      success: true,
+      data: {
+        totalTickets: tickets.length,
+        totalDebts,
+        totalExpectedRevenue,
+        todaysCash, // 👈 إرجاع الكاش اليومي
+        statusCounts,
+        lowStockParts,
+        lowStockCount,
+        chartData,
+        recentTickets // 👈 إرجاع أحدث التذاكر
+      }
+    };
+  } catch (error) {
+    console.error("Dashboard Stats Error:", error);
+    return { error: "فشل في تحميل إحصائيات لوحة التحكم" };
+  }
+}
+</file>
+
+<file path="src/features/dashboard/components/DashboardCharts.tsx">
+"use client";
+
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { Activity } from 'lucide-react';
+
+export function DashboardCharts({ data }: { data: any[] }) {
+  return (
+    <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+      <div className="flex justify-between items-center mb-6 border-b pb-4">
+        <h3 className="font-bold flex items-center gap-2 text-gray-800">
+          <Activity className="w-5 h-5 text-indigo-500" /> نشاط الورشة (آخر 7 أيام)
+        </h3>
+      </div>
+      
+      {/* 👈 المخطط التفاعلي */}
+      <div className="h-72 w-full" dir="ltr">
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
+            <XAxis dataKey="name" stroke="#9ca3af" fontSize={12} tickLine={false} axisLine={false} />
+            <YAxis stroke="#9ca3af" fontSize={12} tickLine={false} axisLine={false} allowDecimals={false} />
+            <Tooltip 
+              cursor={{fill: '#f3f4f6'}} 
+              contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', textAlign: 'right'}} 
+            />
+            {/* الأنميشن الخاص بالأعمدة مبني داخل Recharts تلقائياً */}
+            <Bar dataKey="التذاكر" fill="#4f46e5" radius={[6, 6, 0, 0]} animationDuration={1500} />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
+  );
+}
+</file>
+
+<file path="src/features/inventory/components/EditSparePartModal.tsx">
+"use client";
+
+import { useState, useEffect } from "react";
+import { X, Image as ImageIcon, Loader2 } from "lucide-react";
+import Image from "next/image";
+import { UploadButton } from "@/src/lib/uploadthing";
+import { toast } from "react-hot-toast";
+import { SparePart } from "@prisma/client";
+import { Input } from "@/src/components/ui/Input"; //  استيراد المكون
+
+interface SparePartModalProps {
+  part: SparePart | null;
+  isSaving: boolean;
+  onClose: () => void;
+  onSave: (data: any) => void;
+}
+
+export function SparePartModal({ part, isSaving, onClose, onSave }: SparePartModalProps) {
+  const [formData, setFormData] = useState({
+    name: "",
+    quantity: 0,
+    averageCost: 0,
+    sellingPrice: 0,
+    lowStockAlert: 5,
+    imageUrl: ""
+  });
+
+  useEffect(() => {
+    if (part) {
+      setFormData({
+        name: part.name,
+        quantity: part.quantity,
+        averageCost: part.averageCost,
+        sellingPrice: part.sellingPrice,
+        lowStockAlert: part.lowStockAlert,
+        imageUrl: part.imageUrl || ""
+      });
+    } else {
+      setFormData({ name: "", quantity: 0, averageCost: 0, sellingPrice: 0, lowStockAlert: 5, imageUrl: "" });
+    }
+  }, [part]);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSave(formData);
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+      <div className="bg-white rounded-2xl w-full max-w-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+        
+        <div className="p-4 border-b flex justify-between items-center bg-gray-50">
+          <h2 className="font-bold text-lg text-gray-800">
+            {part ? "تعديل بيانات القطعة" : "إضافة قطعة للمخزون"}
+          </h2>
+          <button type="button" onClick={onClose} className="p-1 hover:bg-gray-200 rounded-full transition text-gray-500">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        
+        <form onSubmit={handleSubmit} className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-4">
+            {/*  استخدام الـ Input الموحد */}
+            <Input 
+              label="اسم الصنف" 
+              required 
+              value={formData.name} 
+              onChange={(e) => setFormData({...formData, name: e.target.value})} 
+            />
+            
+            <div className="grid grid-cols-2 gap-4">
+              <Input 
+                label="الكمية" 
+                type="number" 
+                required 
+                value={formData.quantity} 
+                onChange={(e) => setFormData({...formData, quantity: Number(e.target.value)})} 
+              />
+              <Input 
+                label="تنبيه النقص" 
+                type="number" 
+                required 
+                value={formData.lowStockAlert} 
+                onChange={(e) => setFormData({...formData, lowStockAlert: Number(e.target.value)})} 
+              />
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <Input 
+                label="التكلفة" 
+                type="number" 
+                step="0.01" 
+                leftIcon="₪" 
+                required 
+                value={formData.averageCost} 
+                onChange={(e) => setFormData({...formData, averageCost: Number(e.target.value)})} 
+              />
+              <Input 
+                label="البيع" 
+                type="number" 
+                step="0.01" 
+                leftIcon="₪" 
+                required 
+                className="font-bold text-green-600" 
+                value={formData.sellingPrice} 
+                onChange={(e) => setFormData({...formData, sellingPrice: Number(e.target.value)})} 
+              />
+            </div>
+          </div>
+
+          <div className="flex flex-col items-center justify-center border-2 border-dashed border-gray-200 rounded-2xl p-4 bg-gray-50 relative group">
+            {formData.imageUrl ? (
+              <div className="relative w-full aspect-square rounded-xl overflow-hidden shadow-md bg-white border">
+                <Image src={formData.imageUrl} alt="preview" fill className="object-cover" sizes="(max-width: 768px) 100vw, 33vw" />
+                <button type="button" onClick={() => setFormData({...formData, imageUrl: ""})} className="absolute top-2 right-2 bg-red-500 text-white p-1.5 rounded-full shadow-xl hover:scale-110 transition">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            ) : (
+              <div className="text-center w-full">
+                <ImageIcon className="w-12 h-12 text-gray-300 mx-auto mb-2" />
+                <UploadButton
+                  endpoint="imageUploader"
+                  onClientUploadComplete={(res) => { setFormData({...formData, imageUrl: res[0].url}); toast.success("تم الرفع بنجاح"); }}
+                  appearance={{ button: "bg-indigo-600 px-4 py-2 text-xs w-full rounded-xl" }}
+                  content={{ button: "ارفع صورة للصنف" }}
+                />
+              </div>
+            )}
+          </div>
+
+          <div className="md:col-span-2 border-t border-gray-100 pt-4 flex justify-end gap-3">
+            <button type="button" onClick={onClose} className="px-6 py-2.5 text-gray-600 hover:bg-gray-100 rounded-xl transition font-medium">إلغاء</button>
+            <button type="submit" disabled={isSaving} className="bg-indigo-600 text-white px-10 py-2.5 rounded-xl font-bold hover:bg-indigo-700 disabled:opacity-50 shadow-lg flex items-center gap-2 transition">
+              {isSaving && <Loader2 className="w-4 h-4 animate-spin" />}
+              {part ? "حفظ التعديلات" : "إضافة الصنف"}
+            </button>
+          </div>
+        </form>
+
+      </div>
+    </div>
+  );
+}
+</file>
+
+<file path="src/features/inventory/components/InventoryTable.tsx">
+import Image from "next/image";
+import { Image as ImageIcon, Edit2, Trash2, Loader2 } from "lucide-react";
+
+export const InventoryTable = ({ parts, isLoading, onEdit, onDelete }: any) => {
+  if (isLoading) return <div className="py-20 text-center"><Loader2 className="animate-spin mx-auto text-indigo-600 w-10 h-10" /></div>;
+
+  return (
+    <div className="bg-white rounded-2xl border shadow-sm overflow-hidden">
+      <table className="w-full text-sm text-right">
+        <thead className="bg-gray-50/50 text-gray-500 text-xs border-b">
+          <tr><th className="p-4 w-20 text-center">الصورة</th><th className="p-4">الاسم</th><th className="p-4 text-center">الكمية</th><th className="p-4">سعر التكلفة</th><th className="p-4">سعر البيع</th><th className="p-4 text-center">إجراءات</th></tr>
+        </thead>
+        <tbody className="divide-y divide-gray-100">
+          {parts.map((part: any) => (
+            <tr key={part.id} className="hover:bg-gray-50 transition">
+              <td className="p-3">
+                {part.imageUrl ? (
+                  <div className="relative w-12 h-12 rounded-lg overflow-hidden border mx-auto"><Image src={part.imageUrl} alt={part.name} fill className="object-cover" /></div>
+                ) : (
+                  <div className="w-12 h-12 rounded-lg bg-gray-50 border border-dashed flex items-center justify-center mx-auto text-gray-300"><ImageIcon className="w-5 h-5"/></div>
+                )}
+              </td>
+              <td className="p-4 font-bold text-gray-900">{part.name}</td>
+              <td className="p-4 text-center"><span className={`px-3 py-1 rounded-full text-xs font-black ${part.quantity <= part.lowStockAlert ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}`}>{part.quantity}</span></td>
+              <td className="p-4 text-gray-500">{part.averageCost} ₪</td>
+              <td className="p-4 font-black text-indigo-600">{part.sellingPrice} ₪</td>
+              <td className="p-4">
+                <div className="flex justify-center gap-2">
+                  <button onClick={() => onEdit(part)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"><Edit2 className="w-4 h-4" /></button>
+                  <button onClick={() => onDelete(part.id)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg"><Trash2 className="w-4 h-4" /></button>
+                </div>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+};
+</file>
+
+<file path="src/features/inventory/hooks/useInventory.ts">
+"use client";
+
+import { useState, useEffect } from "react";
+import { toast } from "react-hot-toast";
+import { getSpareParts, createSparePart, updateSparePart, deleteSparePart } from "../actions";
+import { SparePart } from "@prisma/client"; //  استيراد النوع الجاهز من قاعدة البيانات
+
+export function useInventory() {
+  //  تحديد نوع المصفوفة بشكل دقيق
+  const [parts, setParts] = useState<SparePart[]>([]); 
+  const [isLoading, setIsLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  
+  // حالات المودال (النافذة المنبثقة)
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  //  تحديد أن القطعة إما أن تكون من نوع SparePart أو null
+  const [editingPart, setEditingPart] = useState<SparePart | null>(null); 
+  const [isSaving, setIsSaving] = useState(false);
+
+  const loadData = async () => {
+    setIsLoading(true);
+    const result = await getSpareParts();
+    setParts((result?.data as SparePart[]) || []);
+    setIsLoading(false);
+  };
+
+  useEffect(() => { loadData(); }, []);
+
+  // فلترة ذكية
+  const filteredParts = parts.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()));
+
+  // الأكشنز
+  const handleSave = async (formData: any) => { 
+    setIsSaving(true);
+    const result = editingPart 
+      ? await updateSparePart(editingPart.id, formData) 
+      : await createSparePart(formData);
+    
+    if (result.success) {
+      toast.success(editingPart ? "تم التحديث بنجاح" : "تمت الإضافة بنجاح");
+      setIsModalOpen(false);
+      loadData();
+    } else {
+      toast.error(result.error as string);
+    }
+    setIsSaving(false);
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("هل أنت متأكد من حذف هذه القطعة؟")) return;
+    const result = await deleteSparePart(id);
+    if (result.success) {
+      toast.success("تم الحذف بنجاح");
+      loadData();
+    } else {
+      toast.error(result.error as string);
+    }
+  };
+
+  const openModal = (part: SparePart | null = null) => {
+    setEditingPart(part);
+    setIsModalOpen(true);
+  };
+
+  return {
+    parts: filteredParts, isLoading, searchTerm, setSearchTerm,
+    isModalOpen, setIsModalOpen, editingPart, isSaving,
+    actions: { handleSave, handleDelete, openModal }
+  };
+}
+</file>
+
+<file path="src/features/inventory/validations.ts">
+import * as z from "zod";
+
+// مخطط التحقق من بيانات قطعة الغيار
+export const sparePartSchema = z.object({
+  name: z.string().min(2, "اسم القطعة يجب أن يكون حرفين على الأقل"),
+  // نستخدم z.coerce.number() لأن حقول الإدخال في HTML ترسل البيانات كنصوص (Strings) 
+  // وهذه الدالة تحولها تلقائياً إلى أرقام (Numbers) وتتحقق منها
+  quantity: z.coerce.number().min(0, "الكمية لا يمكن أن تكون سالبة"),
+  averageCost: z.coerce.number().min(0, "التكلفة يجب أن تكون صفر أو أكثر"),
+  sellingPrice: z.coerce.number().min(0, "سعر البيع يجب أن يكون صفر أو أكثر"),
+  lowStockAlert: z.coerce.number().min(1, "حد التنبيه يجب أن يكون 1 على الأقل"),
+});
+
+// استخراج النوع (Type) لنستخدمه لاحقاً في الواجهات
+export type SparePartFormValues = z.infer<typeof sparePartSchema>;
+</file>
+
+<file path="src/features/tickets/components/details/CustomerInfo.tsx">
+import { Ticket } from "@prisma/client"; //  استيراد نوع التذكرة
+
+interface CustomerInfoProps {
+  ticket: Ticket;
+  status: string;
+  setStatus: (newStatus: string) => void;
+}
+
+export const CustomerInfo = ({ ticket, status, setStatus }: CustomerInfoProps) => (
+  <div className="bg-white p-6 rounded-2xl border shadow-sm grid grid-cols-1 sm:grid-cols-2 gap-6 relative overflow-hidden">
+    <div className="absolute top-0 right-0 w-1 h-full bg-indigo-500"></div>
+    <div>
+      <p className="text-xs text-gray-400 mb-1">اسم الزبون</p>
+      <p className="font-bold text-gray-900">{ticket.customerName}</p>
+      <p className="text-sm text-gray-500 mt-1">{ticket.customerPhone}</p>
+    </div>
+    <div>
+      <p className="text-xs text-gray-400 mb-1">موديل الجهاز</p>
+      <p className="font-bold text-gray-900">{ticket.compressorModel || "غير محدد"}</p>
+      <select 
+        value={status} 
+        onChange={(e) => setStatus(e.target.value)} 
+        className="mt-2 text-xs border rounded-md p-1 bg-gray-50 outline-none cursor-pointer hover:bg-gray-100 transition"
+      >
+        <option value="OPEN">مفتوحة</option>
+        <option value="IN_PROGRESS">قيد الصيانة</option>
+        <option value="WAITING_FOR_PARTS">بانتظار قطع</option>
+        <option value="COMPLETED">مكتملة</option>
+      </select>
+    </div>
+    <div className="col-span-1 sm:col-span-2 border-t pt-4 mt-2">
+      <p className="text-xs text-gray-400 mb-2">وصف العطل / شكوى الزبون:</p>
+      <p className="text-sm bg-gray-50 p-4 rounded-xl leading-relaxed italic text-gray-700 border border-gray-100">
+        "{ticket.issueDescription || "لا يوجد وصف مسجل"}"
+      </p>
+    </div>
+  </div>
+);
+</file>
+
+<file path="src/features/tickets/components/details/FinancialSidebar.tsx">
+import { Receipt, CreditCard, Plus, Percent } from "lucide-react";
+import { useState } from "react";
+import { Payment } from "@prisma/client";
+import { Input } from "@/src/components/ui/Input"; //  استيراد المكون الموحد
+
+interface FinanceData {
+  partsTotal: number;
+  subTotal: number;
+  discountAmount: number;
+  grandTotal: number;
+  totalPaid: number;
+  remainingAmount: number;
+}
+
+interface FinancialSidebarProps {
+  finance: FinanceData;
+  laborCost: number;
+  setLaborCost: (val: number) => void;
+  discountPercentage: number;
+  setDiscountPercentage: (val: number) => void;
+  payments: Payment[];
+  advancePayment: number;
+  onAddPayment: (amount: number) => void;
+}
+
+export const FinancialSidebar = ({ 
+  finance, laborCost, setLaborCost, discountPercentage, 
+  setDiscountPercentage, payments, advancePayment, onAddPayment 
+}: FinancialSidebarProps) => {
+  
+  const [newPayment, setNewPayment] = useState("");
+
+  return (
+    <div className="bg-white p-6 rounded-2xl border shadow-sm space-y-5 sticky top-6">
+      <h3 className="font-bold border-b pb-3 flex items-center gap-2 text-sm">
+        <Receipt className="w-4 h-4 text-green-500" /> الحساب المالي
+      </h3>
+      
+      <div className="space-y-4 text-sm">
+        <div className="flex justify-between items-center text-gray-500">
+          <span>إجمالي القطع:</span>
+          <span className="font-medium text-gray-900">{finance.partsTotal.toFixed(2)} ₪</span>
+        </div>
+        
+        {/*  حقل أجرة اليد بالمكون الموحد */}
+        <div className="flex justify-between items-center">
+          <span>أجرة اليد الصافية:</span>
+          <Input 
+            type="number" 
+            wrapperClassName="w-24" 
+            className="text-center font-bold !py-1.5" 
+            value={laborCost || ""} 
+            onChange={(e) => setLaborCost(Number(e.target.value))} 
+          />
+        </div>
+        
+        {/*  حقل الخصم بالمكون الموحد */}
+        <div className="flex justify-between items-center text-red-500">
+          <span className="flex items-center gap-1">الخصم <Percent className="w-3 h-3"/>:</span>
+          <Input 
+            type="number" 
+            wrapperClassName="w-24" 
+            className="text-center font-bold text-red-600 border-red-100 focus:ring-red-100 !py-1.5" 
+            value={discountPercentage || ""} 
+            onChange={(e) => setDiscountPercentage(Number(e.target.value))} 
+          />
+        </div>
+        
+        <div className="flex justify-between font-bold text-xl border-t pt-4 text-indigo-700 bg-indigo-50/50 p-2 rounded-lg">
+          <span>الإجمالي:</span>
+          <span>{finance.grandTotal.toFixed(2)} ₪</span>
+        </div>
+      </div>
+
+      <div className="pt-2 border-t space-y-4">
+        <h4 className="text-[10px] font-black text-gray-400 flex items-center gap-2 uppercase tracking-widest">
+          <CreditCard className="w-3 h-3" /> سجل الدفعات
+        </h4>
+        <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+          <div className="flex justify-between text-xs p-3 bg-orange-50 text-orange-700 rounded-xl border border-orange-100">
+            <div className="flex flex-col"><span className="font-bold">دفعة مقدمة</span></div>
+            <span className="font-black text-sm">{advancePayment.toFixed(2)} ₪</span>
+          </div>
+          {payments?.map((p) => (
+            <div key={p.id} className="flex justify-between text-xs p-3 bg-emerald-50 text-emerald-700 rounded-xl border border-emerald-100">
+              <div className="flex flex-col">
+                <span className="font-bold">دفعة إضافية</span>
+                <span className="text-[10px] opacity-70">{new Date(p.createdAt).toLocaleDateString('ar-EG')}</span>
+              </div>
+              <span className="font-black text-sm">{p.amount.toFixed(2)} ₪</span>
+            </div>
+          ))}
+        </div>
+        
+        {/*  حقل إضافة دفعة جديدة بالمكون الموحد */}
+        <div className="flex gap-2 print:hidden pt-2 items-center">
+          <Input 
+            type="number" 
+            leftIcon="₪" 
+            value={newPayment} 
+            onChange={(e) => setNewPayment(e.target.value)} 
+            placeholder="المبلغ..." 
+            wrapperClassName="flex-1" 
+            className="bg-gray-50 !py-2" 
+          />
+          <button 
+            onClick={() => { 
+              if (Number(newPayment) > 0) {
+                onAddPayment(Number(newPayment)); 
+                setNewPayment(""); 
+              }
+            }} 
+            className="p-2.5 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition h-fit"
+          >
+            <Plus className="w-5 h-5"/>
+          </button>
+        </div>
+        
+        <div className="bg-slate-900 text-white p-4 rounded-2xl mt-6 shadow-xl relative overflow-hidden">
+          <div className="flex justify-between text-xs opacity-60 mb-2">
+            <span>المدفوع:</span>
+            <span>{finance.totalPaid.toFixed(2)} ₪</span>
+          </div>
+          <div className="flex justify-between items-end">
+            <span className="font-bold text-sm">المتبقي:</span>
+            <span className={`font-black text-2xl ${finance.remainingAmount <= 0 ? "text-emerald-400" : "text-amber-400"}`}>
+              {finance.remainingAmount <= 0 ? "خالص (0)" : `${finance.remainingAmount.toFixed(2)} ₪`}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+</file>
+
+<file path="src/features/tickets/components/details/PartsTable.tsx">
+import { Trash2, Wrench } from "lucide-react";
+import Select from "react-select";
+import { SparePart, TicketPart } from "@prisma/client"; //  استيراد الأنواع
+
+//  تعريف نوع مخصص للقطعة المستهلكة لأنها تحتوي على بيانات القطعة الأصلية (Relation)
+type TicketPartWithDetails = TicketPart & {
+  sparePart: SparePart;
+};
+
+//  تعريف دقيق للخصائص (Props)
+interface PartsTableProps {
+  parts: TicketPartWithDetails[];
+  inventory: SparePart[];
+  isUpdating: boolean;
+  onAdd: (sparePartId: string) => void;
+  onRemove: (ticketPartId: string) => void;
+}
+
+export const PartsTable = ({ parts, inventory, isUpdating, onAdd, onRemove }: PartsTableProps) => {
+  // تحويل المخزون لصيغة تناسب react-select
+  const options = inventory.map((p) => ({
+    value: p.id,
+    label: `${p.name} (${p.sellingPrice} ₪) - متوفر: ${p.quantity}`,
+    isDisabled: p.quantity <= 0
+  }));
+
+  return (
+    <div className="bg-white rounded-2xl border shadow-sm overflow-hidden">
+      <div className="p-4 bg-gray-50 border-b flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <h3 className="font-bold flex items-center gap-2 text-sm text-gray-700">
+          <Wrench className="w-4 h-4 text-indigo-500" /> قطع الغيار المستخدمة
+        </h3>
+        <div className="w-full sm:w-64 print:hidden">
+          <Select
+            placeholder="ابحث عن قطعة..."
+            options={options}
+            isDisabled={isUpdating}
+            onChange={(opt: any) => { if (opt) onAdd(opt.value); }}
+            value={null}
+            styles={{ control: (base) => ({ ...base, fontSize: '0.875rem', borderRadius: '0.5rem' }) }}
+          />
+        </div>
+      </div>
+      <table className="w-full text-sm text-right">
+        <thead className="bg-gray-50/50 text-gray-400 text-xs border-b">
+          <tr>
+            <th className="p-3">القطعة</th>
+            <th className="p-3">الكمية</th>
+            <th className="p-3">السعر</th>
+            <th className="p-3 print:hidden text-center">حذف</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-gray-100">
+          {parts?.map((p) => (
+            <tr key={p.id} className="hover:bg-gray-50">
+              <td className="p-3 font-medium text-gray-800">{p.sparePart.name}</td>
+              <td className="p-3">{p.quantity} حبة</td>
+              <td className="p-3 font-bold text-indigo-600">{p.priceAtTime * p.quantity} ₪</td>
+              <td className="p-3 text-center print:hidden">
+                <button onClick={() => onRemove(p.id)} className="text-red-300 hover:text-red-500 transition">
+                  <Trash2 className="w-4 h-4 mx-auto"/>
+                </button>
+              </td>
+            </tr>
+          ))}
+          {(!parts || parts.length === 0) && (
+            <tr>
+              <td colSpan={4} className="p-8 text-center text-gray-400 italic">
+                لم يتم إضافة أي قطع حتى الآن
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+    </div>
+  );
+};
+</file>
+
+<file path="src/features/tickets/hooks/useTicketDetails.ts">
+"use client";
+
+import { useState, useEffect } from "react";
+import { toast } from "react-hot-toast";
+import { 
+  getTicketById, updateTicket, addPartToTicket, 
+  removePartFromTicket, addPaymentToTicket, updateTicketInvoiceImage 
+} from "../actions";
+import { getAllSparePartsForDropdown } from "@/src/features/inventory/actions";
+
+export function useTicketDetails(ticketId: string) {
+  const [ticketData, setTicketData] = useState<any>(null);
+  const [inventory, setInventory] = useState<any[]>([]);
+  const [isLoadingData, setIsLoadingData] = useState(true);
+  
+  const [status, setStatus] = useState<any>("OPEN");
+  const [laborCost, setLaborCost] = useState(0);
+  const [discountPercentage, setDiscountPercentage] = useState(0); 
+  const [isSaving, setIsSaving] = useState(false);
+  const [isUpdatingPart, setIsUpdatingPart] = useState(false);
+
+  const fetchData = async () => {
+    setIsLoadingData(true);
+    try {
+      const ticketResult = await getTicketById(ticketId);
+      if (ticketResult?.data) {
+        const t = ticketResult.data;
+        setTicketData(t);
+        setStatus(t.status);
+        setLaborCost(t.laborCost || 0);
+        setDiscountPercentage(t.discount || 0);
+      }
+      const inv = await getAllSparePartsForDropdown();
+      if (inv.data) setInventory(inv.data);
+    } catch (e) {
+      toast.error("خطأ في الاتصال بقاعدة البيانات");
+    } finally {
+      setIsLoadingData(false);
+    }
+  };
+
+  useEffect(() => { fetchData(); }, [ticketId]);
+
+  // الحسابات المالية
+  const partsTotal = ticketData?.partsUsed?.reduce((sum: number, p: any) => sum + (p.priceAtTime * p.quantity), 0) || 0;
+  const subTotal = partsTotal + laborCost;
+  const discountAmount = subTotal * (discountPercentage / 100);
+  const grandTotal = subTotal - discountAmount;
+  const totalPaid = (ticketData?.advancePayment || 0) + (ticketData?.payments?.reduce((sum: number, p: any) => sum + p.amount, 0) || 0);
+  const remainingAmount = grandTotal - totalPaid;
+
+  const finance = { partsTotal, subTotal, discountAmount, grandTotal, totalPaid, remainingAmount };
+
+  // الأكشنز
+  const handleSaveTicket = async () => {
+    setIsSaving(true);
+    const result = await updateTicket(ticketId, { status, laborCost, discount: discountPercentage });
+    if (result.success) toast.success("تم الحفظ");
+    setIsSaving(false);
+  };
+
+  const handleAddPart = async (sparePartId: string) => {
+    if (!sparePartId) return;
+    setIsUpdatingPart(true);
+    const result = await addPartToTicket({ ticketId, sparePartId, quantity: 1 });
+    if (result.success) { toast.success("تمت الإضافة"); fetchData(); }
+    setIsUpdatingPart(false);
+  };
+
+  const handleRemovePart = async (tpId: string) => {
+    setIsUpdatingPart(true);
+    await removePartFromTicket(tpId, ticketId);
+    fetchData();
+    setIsUpdatingPart(false);
+  };
+
+  const handleAddPayment = async (amount: number) => {
+    const res = await addPaymentToTicket(ticketId, amount);
+    if (res.success) { toast.success("تم تسجيل الدفعة"); fetchData(); }
+  };
+
+  const handleUpdateImage = async (url: string) => {
+    await updateTicketInvoiceImage(ticketId, url);
+    fetchData();
+  };
+
+  return {
+    ticketData, inventory, isLoadingData, isSaving, isUpdatingPart,
+    status, setStatus, laborCost, setLaborCost, discountPercentage, setDiscountPercentage,
+    finance,
+    actions: { handleSaveTicket, handleAddPart, handleRemovePart, handleAddPayment, handleUpdateImage }
+  };
+}
+</file>
+
+<file path="src/features/workers/actions.ts">
+"use server";
+
+import prisma from "@/src/lib/prisma";
+import bcrypt from "bcrypt";
+import { revalidatePath } from "next/cache";
+
+export async function registerWorker(data: any) {
+  try {
+    const hashedPassword = await bcrypt.hash(data.password, 10);
+    await prisma.user.create({
+      data: {
+        name: data.name,
+        phone: data.phone,
+        password: hashedPassword,
+        baseSalary: Number(data.baseSalary || 0),
+        role: "WORKER",
+      },
+    });
+    revalidatePath("/workers");
+    return { success: true };
+  } catch (error: any) {
+    return { error: "فشل إضافة العامل: " + (error.code === 'P2002' ? "الرقم مسجل مسبقاً" : "خطأ تقني") };
+  }
+}
+
+export async function getWorkersWithBalance() {
+  try {
+    const workers = await prisma.user.findMany({
+      where: { role: "WORKER" },
+      include: { transactions: true },
+    });
+
+    return workers.map(worker => {
+      const currentBalance = worker.transactions.reduce((acc, t) => {
+        if (t.type === "STAKE" || t.type === "BONUS") return acc + t.amount;
+        if (t.type === "ADVANCE" || t.type === "PAYOUT") return acc - t.amount;
+        return acc;
+      }, 0);
+      return { ...worker, currentBalance };
+    });
+  } catch (error) { return []; }
+}
+
+export async function addWorkerTransaction(data: { 
+  userId: string, 
+  amount: number, 
+  type: string, 
+  description: string,
+}) {
+  try {
+    await prisma.workerTransaction.create({
+      data: {
+        userId: data.userId,
+        amount: data.amount,
+        type: data.type,
+        description: data.description,
+      }
+    });
+    revalidatePath("/workers");
+    return { success: true };
+  } catch (error) {
+    return { error: "فشل تسجيل العملية" };
+  }
+}
+
+export async function deleteWorker(userId: string) {
+  try {
+    await prisma.user.delete({ where: { id: userId } });
+    revalidatePath("/workers");
+    return { success: true };
+  } catch (error) { return { error: "فشل الحذف" }; }
+}
+
+
+export async function getWorkerDetails(userId: string) {
+  try {
+    const worker = await prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        transactions: {
+          orderBy: { date: 'desc' } // الأحدث أولاً
+        }
+      }
+    });
+
+    if (!worker) return { error: "العامل غير موجود" };
+
+    // حساب الرصيد الحالي
+    const balance = worker.transactions.reduce((acc, t) => {
+      if (t.type === "STAKE" || t.type === "BONUS") return acc + t.amount;
+      if (t.type === "ADVANCE" || t.type === "PAYOUT") return acc - t.amount;
+      return acc;
+    }, 0);
+
+    return { success: true, data: { ...worker, balance } };
+  } catch (error) {
+    return { error: "فشل في جلب سجل العامل" };
+  }
+}
+</file>
+
+<file path="src/lib/auth.ts">
+import { NextAuthOptions } from "next-auth";
+import CredentialsProvider from "next-auth/providers/credentials";
+import bcrypt from "bcrypt";
+import prisma from "@/src/lib/prisma";
+
+export const authOptions: NextAuthOptions = {
+  providers: [
+    CredentialsProvider({
+      name: "Phone Number",
+      credentials: {
+        phone: { label: "Phone", type: "text", placeholder: "05XXXXXXXX" },
+        password: { label: "Password", type: "password" }
+      },
+      async authorize(credentials) {
+        if (!credentials?.phone || !credentials?.password) {
+          throw new Error("الرجاء إدخال رقم الهاتف وكلمة المرور");
+        }
+
+        const user = await prisma.user.findUnique({
+          where: { phone: credentials.phone },
+        });
+
+        if (!user) throw new Error("رقم الهاتف غير مسجل في النظام");
+
+        const isPasswordValid = await bcrypt.compare(credentials.password, user.password);
+
+        if (!isPasswordValid) throw new Error("كلمة المرور غير صحيحة");
+
+        return {
+          id: user.id,
+          name: user.name,
+          phone: user.phone,
+          role: user.role,
+        };
+      }
+    })
+  ],
+  session: { strategy: "jwt" },
+  callbacks: {
+    async jwt({ token, user }) {
+      if (user) {
+        token.id = user.id;
+        token.role = user.role;
+      }
+      return token;
+    },
+    async session({ session, token }) {
+      if (token && session.user) {
+        session.user.id = token.id as string;
+        session.user.role = token.role as string;
+      }
+      return session;
+    }
+  },
+  pages: { signIn: "/login" },
+};
+</file>
+
+<file path="src/lib/uploadthing.ts">
+import {
+  generateUploadButton,
+  generateUploadDropzone,
+} from "@uploadthing/react";
+import { OurFileRouter } from "../app/api/uploadthing/core";
+
+// توليد المكونات وربطها بالراوتر الخاص بنا
+export const UploadButton = generateUploadButton<OurFileRouter>();
+export const UploadDropzone = generateUploadDropzone<OurFileRouter>();
+</file>
+
+<file path="tailwind.config.ts">
+import type { Config } from "tailwindcss";
+import { withUt } from "uploadthing/tw";
+
+const config: Config = {
+  content: [
+    "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
+    "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
+    "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
+    "./src/features/**/*.{js,ts,jsx,tsx,mdx}",
+  ],
+  theme: {
+    extend: {},
+  },
+  plugins: [],
+};
+
+export default withUt(config);
+</file>
+
+<file path=".gitignore">
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# env files (can opt-in for committing if needed)
+.env*
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+/src/generated/prisma
+</file>
+
+<file path="next.config.ts">
+import type { NextConfig } from "next";
+
+const nextConfig: NextConfig = {
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "utfs.io",
+        port: "",
+        pathname: "/**",
+      },
+    ],
+  },
+};
+
+export default nextConfig;
+</file>
+
+<file path="prisma.config.ts">
+import 'dotenv/config' // هذا السطر الجديد هو الذي سيقرأ ملف .env
+import { defineConfig } from '@prisma/config'
+
+export default defineConfig({
+  datasource: {
+    url: process.env.DATABASE_URL,
+  }
+})
+</file>
+
+<file path="src/app/(auth)/login/page.tsx">
+import { LoginForm } from "@/src/features/auth/login/components/LoginForm";
+import { getServerSession } from "next-auth"; //  استيراد جلب الجلسة
+import { authOptions } from "@/src/lib/auth"; //  استيراد إعدادات المصادقة
+import { redirect } from "next/navigation"; //  استيراد التوجيه
+
+export default async function LoginPage() {
+  // 1. فحص هل المستخدم مسجل دخول أصلاً؟
+  const session = await getServerSession(authOptions);
+
+  // 2. إذا كان مسجلاً، اطرده فوراً إلى لوحة التحكم (الرئيسية)
+  if (session) {
+    redirect("/"); 
+  }
+
+  // 3. إذا لم يكن مسجلاً، اعرض له صفحة تسجيل الدخول
+  return (
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4" dir="rtl">
+      <div className="max-w-md w-full bg-white rounded-2xl shadow-lg p-8">
+        <div className="text-center mb-8">
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">ورشة الكمبريسور</h1>
+          <p className="text-gray-500 text-sm">تسجيل الدخول للنظام</p>
+        </div>
+
+        {/* استدعاء الواجهة المفصولة هنا */}
+        <LoginForm />
+        
+      </div>
+    </div>
+  );
+}
+</file>
+
+<file path="src/components/shared/Navbar.tsx">
+"use client";
+
+import { signOut, useSession } from "next-auth/react";
+import { LogOut, User } from "lucide-react";
+
+export default function Navbar() {
+  const { data: session } = useSession();
+
+  return (
+<header className="print:hidden bg-white border-b border-gray-200 h-16 flex items-center justify-between px-6 sticky top-0 z-10">      <div className="flex items-center gap-4">
+        <h2 className="text-xl font-semibold text-gray-800">نظام الإدارة</h2>
+      </div>
+
+      <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-100">
+          <User className="w-5 h-5 text-gray-500" />
+          <div className="flex flex-col">
+            <span className="text-sm font-medium text-gray-700">
+              {session?.user?.name || "مستخدم"}
+            </span>
+            <span className="text-xs text-gray-500">
+              {session?.user?.role === "ADMIN" ? "مدير نظام" : "عامل"}
+            </span>
+          </div>
+        </div>
+
+        <button
+          onClick={() => signOut({ callbackUrl: "/login" })}
+          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition flex items-center gap-2"
+          title="تسجيل الخروج"
+        >
+          <LogOut className="w-5 h-5" />
+          <span className="text-sm font-medium hidden sm:block">خروج</span>
+        </button>
+      </div>
+    </header>
+  );
+}
+</file>
+
+<file path="src/features/auth/login/components/LoginForm.tsx">
+"use client";
+
+import { useState } from "react";
+import { signIn } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { loginSchema, type LoginFormValues } from "../validations";
+//  استيراد مكون الـ Input النظيف
+import { Input } from "@/src/components/ui/Input"; 
+
+export function LoginForm() {
+  const router = useRouter();
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<LoginFormValues>({
+    resolver: zodResolver(loginSchema),
+  });
+
+  const onSubmit = async (data: LoginFormValues) => {
+    setIsLoading(true);
+    setError(null);
+    const result = await signIn("credentials", { ...data, redirect: false });
+    setIsLoading(false);
+
+    if (result?.error) setError(result.error);
+    else { router.push("/"); router.refresh(); }
+  };
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      {error && (
+        <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm text-center border border-red-200">
+          {error}
+        </div>
+      )}
+
+      {/* 👇 شوف النظافة والترتيب هنا! سطر واحد بيعمل Label و Input و Error */}
+      <Input
+        label="رقم الهاتف"
+        placeholder="0599999999"
+        dir="ltr"
+        className="text-right"
+        error={errors.phone?.message}
+        {...register("phone")}
+      />
+
+      <Input
+        label="كلمة المرور"
+        type="password"
+        placeholder="••••••"
+        dir="ltr"
+        className="text-right"
+        error={errors.password?.message}
+        {...register("password")}
+      />
+
+      <button
+        type="submit"
+        disabled={isLoading}
+        className="w-full bg-indigo-600 text-white py-2.5 rounded-lg font-bold hover:bg-indigo-700 focus:ring-4 focus:ring-indigo-100 transition disabled:opacity-70"
+      >
+        {isLoading ? "جاري التحقق..." : "تسجيل الدخول"}
+      </button>
+    </form>
+  );
+}
+</file>
+
+<file path="src/features/inventory/actions.ts">
+"use server"; //  هذا السطر السحري يخبر Next.js أن كل الدوال هنا تعمل على السيرفر فقط ولا تصل للمتصفح (أمان عالي)
+
+import prisma from "@/src/lib/prisma";
+import { sparePartSchema, type SparePartFormValues } from "./validations";
+import { revalidatePath } from "next/cache";
+
+// 1. دالة إضافة قطعة غيار جديدة
+export async function createSparePart(data: SparePartFormValues) {
+  try {
+    // تحقق أمني إضافي في السيرفر (Server-side Validation)
+    // حتى لو حاول شخص تجاوز الـ Frontend، السيرفر سيوقفه هنا
+    const parsedData = sparePartSchema.safeParse(data);
+    
+    if (!parsedData.success) {
+      return { error: "بيانات غير صالحة تم إرسالها للسيرفر" };
+    }
+
+    // إدخال البيانات في قاعدة بيانات Neon عبر Prisma
+    const newPart = await prisma.sparePart.create({
+      data: parsedData.data,
+    });
+
+    // تحديث الصفحة "وراء الكواليس" لكي تظهر القطعة الجديدة فوراً في الجدول
+    revalidatePath("/inventory");
+
+    return { success: true, data: newPart };
+  } catch (error) {
+    console.error("Error creating spare part:", error);
+    return { error: "حدث خطأ في قاعدة البيانات أثناء إضافة القطعة" };
+  }
+}
+
+// 2. دالة جلب كل قطع الغيار
+export async function getSpareParts() {
+  try {
+    const parts = await prisma.sparePart.findMany({
+      orderBy: { name: 'asc' }, // ترتيب أبجدي حسب الاسم
+    });
+    
+    return { success: true, data: parts };
+  } catch (error) {
+    console.error("Error fetching spare parts:", error);
+    return { error: "حدث خطأ أثناء جلب المخزون" };
+  }
+}
+
+// 3. دالة تعديل قطعة غيار
+export async function updateSparePart(id: string, data: Partial<SparePartFormValues> & { imageUrl?: string }) {
+  try {
+    const updatedPart = await prisma.sparePart.update({
+      where: { id },
+      data: data,
+    });
+
+    revalidatePath("/inventory");
+    return { success: true, data: updatedPart };
+  } catch (error) {
+    console.error("Error updating spare part:", error);
+    return { error: "حدث خطأ أثناء تعديل القطعة" };
+  }
+}
+
+// 4. دالة حذف قطعة غيار
+export async function deleteSparePart(id: string) {
+  try {
+    await prisma.sparePart.delete({
+      where: { id },
+    });
+
+    revalidatePath("/inventory");
+    return { success: true };
+  } catch (error) {
+    console.error("Error deleting spare part:", error);
+    // ملاحظة أمنية: إذا كانت القطعة مستخدمة في تذكرة سابقة، Prisma سترفض الحذف لحماية الحسابات المالية
+    return { error: "لا يمكن حذف القطعة لأنها قد تكون مرتبطة بتذاكر أو فواتير سابقة." };
+  }
+}
+
+
+// 🟡 دالة جلب كل قطع الغيار (لعرضها في القائمة المنسدلة داخل التذكرة)
+export async function getAllSparePartsForDropdown() {
+  try {
+    const parts = await prisma.sparePart.findMany({
+      // نختار فقط الحقول التي نحتاجها لتقليل حجم البيانات (أسرع)
+      select: {
+        id: true,
+        name: true,
+        sellingPrice: true,
+        quantity: true, // مهم لنعرف إذا كانت القطعة متوفرة أم لا
+      },
+      orderBy: { name: 'asc' } // ترتيب أبجدي ليسهل على العامل البحث
+    });
+    return { success: true, data: parts };
+  } catch (error) {
+    console.error("خطأ في جلب قطع الغيار:", error);
+    return { error: "تعذر جلب قائمة قطع الغيار من المستودع." };
+  }
+}
+</file>
+
+<file path="src/features/tickets/actions.ts">
+"use server"; 
+
+import prisma from "@/src/lib/prisma";
+import { revalidatePath } from "next/cache";
+import { getServerSession } from "next-auth"; 
+import { authOptions } from "@/src/lib/auth"; // تأكد من إنشاء هذا الملف كما اتفقنا
+
+// ==========================================
+// 1. الأنواع (Types)
+// ==========================================
+type CreateTicketInput = {
+  customerName: string;
+  customerPhone: string;
+  compressorModel: string;
+  issueDescription: string;
+  advancePayment: number;
+};
+
+type UpdateTicketInput = {
+  customerName?: string;
+  customerPhone?: string;
+  compressorModel?: string;
+  issueDescription?: string;
+  advancePayment?: number;
+  status?: "OPEN" | "IN_PROGRESS" | "WAITING_FOR_PARTS" | "COMPLETED";
+  laborCost?: number;
+  discount?: number;
+  invoiceImageUrl?: string;
+};
+
+// ==========================================
+// 2. دوال السيرفر الأساسية (CRUD)
+// ==========================================
+
+export async function createTicket(data: any) {
+  const session = await getServerSession(authOptions); // جلب المستخدم الحالي
+  
+  if (!session) return { error: "يجب تسجيل الدخول أولاً" };
+
+  try {
+    const ticket = await prisma.ticket.create({
+      data: {
+        ...data,
+        workerId: session.user.id, // 👈 هنا يتم ربط التذكرة بالعامل اللي سجلها
+      }
+    });
+    return { success: true, data: ticket };
+  } catch (e) {
+    return { error: "خطأ في الحفظ" };
+  }
+}
+export async function updateTicket(ticketId: string, data: UpdateTicketInput) {
+  try {
+    const updatedTicket = await prisma.ticket.update({
+      where: { id: ticketId },
+      data: data,
+    });
+    revalidatePath(`/tickets/${ticketId}`);
+    revalidatePath("/tickets");
+    return { success: true, data: updatedTicket };
+  } catch (error) {
+    console.error("Update Ticket Error:", error);
+    return { error: "حدث خطأ أثناء تعديل بيانات التذكرة." };
+  }
+}
+
+export async function getTicketById(ticketId: string) {
+  try {
+    const ticket = await prisma.ticket.findUnique({
+      where: { id: ticketId },
+      include: {
+        partsUsed: { include: { sparePart: true } },
+        worker: { select: { name: true } },
+        payments: { orderBy: { createdAt: 'desc' } } 
+      }
+    });
+    
+    if (!ticket) return { error: "لم يتم العثور على هذه التذكرة." };
+    
+    return { success: true, data: ticket };
+  } catch (error) {
+    console.error("Get Ticket Error:", error);
+    return { error: "حدث خطأ أثناء قراءة التذكرة من قاعدة البيانات." };
+  }
+}
+
+export async function getAllTickets() {
+  try {
+    const tickets = await prisma.ticket.findMany({
+      orderBy: { createdAt: 'desc' },
+      include: { 
+        partsUsed: true,
+        worker: { select: { name: true } } // مفيد لو أردنا عرض اسم الموظف في الجدول الرئيسي
+      } 
+    });
+    return { success: true, data: tickets };
+  } catch (error) {
+    console.error("Get All Tickets Error:", error);
+    return { error: "تعذر جلب التذاكر." };
+  }
+}
+
+// ==========================================
+// 3. دوال الدفعات وصورة الفاتورة
+// ==========================================
+
+export async function addPaymentToTicket(ticketId: string, amount: number) {
+  try {
+    await prisma.payment.create({
+      data: {
+        ticketId,
+        amount,
+        notes: "دفعة إضافية"
+      }
+    });
+    revalidatePath(`/tickets/${ticketId}`);
+    return { success: true };
+  } catch (error) {
+    console.error("Add Payment Error:", error);
+    return { error: "فشل تسجيل الدفعة." };
+  }
+}
+
+export async function updateTicketInvoiceImage(ticketId: string, imageUrl: string) {
+  try {
+    await prisma.ticket.update({
+      where: { id: ticketId },
+      data: { invoiceImageUrl: imageUrl }
+    });
+    revalidatePath(`/tickets/${ticketId}`);
+    return { success: true };
+  } catch (error) {
+    console.error("Update Invoice Image Error:", error);
+    return { error: "فشل حفظ صورة الفاتورة." };
+  }
+}
+
+// ==========================================
+// 4. دوال الجرد (سحب وإرجاع القطع)
+// ==========================================
+
+export async function addPartToTicket(data: { ticketId: string; sparePartId: string; quantity: number }) {
+  try {
+    const sparePart = await prisma.sparePart.findUnique({ where: { id: data.sparePartId } });
+    if (!sparePart || sparePart.quantity < data.quantity) {
+      return { error: "الكمية غير كافية بالمخزون." };
+    }
+
+    const result = await prisma.$transaction(async (tx) => {
+      const ticketPart = await tx.ticketPart.create({
+        data: {
+          ticketId: data.ticketId,
+          sparePartId: data.sparePartId,
+          quantity: data.quantity,
+          priceAtTime: sparePart.sellingPrice, 
+        }
+      });
+      await tx.sparePart.update({
+        where: { id: data.sparePartId },
+        data: { quantity: { decrement: data.quantity } }
+      });
+      return ticketPart;
+    });
+
+    revalidatePath(`/tickets/${data.ticketId}`);
+    return { success: true, data: result };
+  } catch (error) {
+    console.error("Add Part To Ticket Error:", error);
+    return { error: "حدث خطأ أثناء سحب القطعة من المخزون." };
+  }
+}
+
+export async function removePartFromTicket(ticketPartId: string, ticketId: string) {
+  try {
+    const ticketPart = await prisma.ticketPart.findUnique({ where: { id: ticketPartId } });
+    if (!ticketPart) return { error: "القطعة غير موجودة." };
+
+    await prisma.$transaction(async (tx) => {
+      await tx.ticketPart.delete({ where: { id: ticketPartId } });
+      await tx.sparePart.update({
+        where: { id: ticketPart.sparePartId },
+        data: { quantity: { increment: ticketPart.quantity } }
+      });
+    });
+
+    revalidatePath(`/tickets/${ticketId}`);
+    return { success: true };
+  } catch (error) {
+    console.error("Remove Part From Ticket Error:", error);
+    return { error: "حدث خطأ أثناء إرجاع القطعة للمخزون." };
+  }
+}
+</file>
+
+<file path="src/lib/prisma.ts">
+//في Next.js (بسبب الـ Hot Reloading في بيئة التطوير)،
+//  قد يتم إنشاء اتصالات متعددة بقاعدة البيانات مما يسبب أخطاء.
+//  لنتجنب ذلك،  ملف إعداد الاتصال.
+
+import { PrismaClient } from '@prisma/client'
+import { Pool } from 'pg'
+import { PrismaPg } from '@prisma/adapter-pg'
+
+const prismaClientSingleton = () => {
+  // ننشئ اتصالاً باستخدام الرابط الموجود في ملف .env
+  const pool = new Pool({ connectionString: process.env.DATABASE_URL })
+  const adapter = new PrismaPg(pool)
+  
+  // نمرر الـ adapter للـ PrismaClient كما طلب التحديث الجديد
+  return new PrismaClient({ adapter })
+}
+
+declare global {
+  var prismaGlobal: undefined | ReturnType<typeof prismaClientSingleton>
+}
+
+const prisma = globalThis.prismaGlobal ?? prismaClientSingleton()
+
+export default prisma
+
+if (process.env.NODE_ENV !== 'production') globalThis.prismaGlobal = prisma
+</file>
+
+<file path="src/middleware.ts">
+import { withAuth } from "next-auth/middleware";
+
+// نستخدم withAuth من NextAuth لحماية المسارات
+export default withAuth({
+  pages: {
+    signIn: "/login", // إذا لم يكن مسجل دخول، اذهب به إلى هنا
+  },
+});
+
+// هنا نحدد ما هي الصفحات التي يجب حمايتها
+export const config = {
+  matcher: [
+    /*
+     * قم بحماية كل المسارات في الموقع باستثناء:
+     * 1. /api (مسارات الواجهة الخلفية)
+     * 2. /_next (ملفات النظام الداخلية لـ Next.js)
+     * 3. /login (صفحة تسجيل الدخول نفسها، لا يعقل أن نحميها من الزوار!)
+     * 4. الصور والملفات الثابتة
+     */
+    "/((?!api|_next/static|_next/image|favicon.ico|login).*)",
+  ],
+};
+</file>
+
+<file path="tsconfig.json">
+{
+  "compilerOptions": {
+    "target": "ES2017",
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "preserve",
+    "incremental": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "paths": {
+      "@/*": ["./*"]
+    }
+  },
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "src/app/products/[productId]"],
+  "exclude": ["node_modules"]
+}
+</file>
+
+<file path="prisma/schema.prisma">
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ================= الأدوار والمستخدمين =================
+model User {
+  id            String              @id @default(cuid())
+  name          String
+  phone         String              @unique
+  password      String
+  role          String              @default("WORKER") // ADMIN أو WORKER
+  baseSalary    Float               @default(0)        // الراتب المرجعي
+
+  //  العلاقات المصححة مع أسماء الربط (Relation Names)
+  tickets       Ticket[]            @relation("WorkerTickets")
+  trialItems    TrialItem[]         @relation("WorkerTrials")
+  transactions  WorkerTransaction[]
+  
+  createdAt     DateTime            @default(now())
+}
+
+// ================= المخزون والقطع =================
+model SparePart {
+  id            String         @id @default(cuid())
+  name          String
+  quantity      Int            @default(0)
+  averageCost   Float          @default(0.0)
+  sellingPrice  Float          @default(0.0)
+  lowStockAlert Int            @default(5)
+  imageUrl      String?
+
+  ticketParts   TicketPart[]
+  trialItems    TrialItem[]
+  purchaseItems PurchaseItem[]
+}
+
+model Compressor {
+  id             String      @id @default(cuid())
+  serialNumber   String      @unique
+  modelName      String
+  productionCost Float       @default(0.0)
+  sellingPrice   Float       @default(0.0)
+  status         String      @default("READY")
+
+  trialItems     TrialItem[]
+}
+
+// ================= القطع التجريبية =================
+enum TrialStatus {
+  ACTIVE
+  RETURNED
+  EXPIRED
+}
+
+model TrialItem {
+  id             String      @id @default(cuid())
+  notes          String?
+  status         TrialStatus @default(ACTIVE)
+  givenAt        DateTime    @default(now())
+  expectedReturn DateTime?
+  returnedAt     DateTime?
+
+  sparePartId    String?
+  sparePart      SparePart?  @relation(fields: [sparePartId], references: [id])
+  qty            Int         @default(1)
+
+  compressorId   String?
+  compressor     Compressor? @relation(fields: [compressorId], references: [id])
+
+  //  ربط العلاقة مع User بنفس الاسم "WorkerTrials"
+  workerId       String?
+  worker         User?       @relation("WorkerTrials", fields: [workerId], references: [id])
+  
+  ticketId       String?
+  ticket         Ticket?     @relation(fields: [ticketId], references: [id])
+}
+
+// ================= نظام التذاكر =================
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  COMPLETED
+  CANCELED
+}
+
+model Ticket {
+  id               String       @id @default(cuid())
+  customerName     String
+  customerPhone    String
+  compressorModel  String?
+  issueDescription String?
+  invoiceImageUrl  String?      
+  advancePayment   Float        @default(0.0)
+  discount         Float        @default(0.0)
+  status           TicketStatus @default(OPEN)
+  laborCost        Float        @default(0.0)
+  commission       Float        @default(0.0)
+  totalCost        Float        @default(0.0)
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  //  ربط العلاقة مع User بنفس الاسم "WorkerTickets"
+  workerId         String?
+  worker           User?        @relation("WorkerTickets", fields: [workerId], references: [id])
+  
+  partsUsed        TicketPart[]
+  payments         Payment[]    
+  trialItems       TrialItem[]
+  expenses         Expense[]
+}
+
+// ================= الدفعات والمعاملات =================
+model Payment {
+  id        String   @id @default(cuid())
+  amount    Float
+  notes     String?
+  createdAt DateTime @default(now())
+
+  ticketId  String
+  ticket    Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+}
+
+model TicketPart {
+  id          String    @id @default(cuid())
+  ticketId    String
+  ticket      Ticket    @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  sparePartId String
+  sparePart   SparePart @relation(fields: [sparePartId], references: [id])
+  quantity    Int
+  priceAtTime Float
+}
+
+model WorkerTransaction {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amount      Float    
+  type        String   // ADVANCE, STAKE, BONUS, PAYOUT
+  description String?  
+  date        DateTime @default(now())
+}
+
+// ================= المشتريات والموردين =================
+model Supplier {
+  id        String            @id @default(cuid())
+  name      String
+  phone     String?
+  totalDebt Float             @default(0.0)
+  invoices  PurchaseInvoice[]
+}
+
+model PurchaseInvoice {
+  id          String         @id @default(cuid())
+  supplierId  String
+  supplier    Supplier       @relation(fields: [supplierId], references: [id])
+  totalAmount Float
+  paidAmount  Float          @default(0.0)
+  date        DateTime       @default(now())
+
+  items       PurchaseItem[]
+}
+
+model PurchaseItem {
+  id          String          @id @default(cuid())
+  invoiceId   String
+  invoice     PurchaseInvoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  sparePartId String
+  sparePart   SparePart       @relation(fields: [sparePartId], references: [id])
+  quantity    Int
+  unitCost    Float
+}
+
+// ================= المصاريف التشغيلية =================
+enum ExpenseCategory {
+  STANDARD
+  EXTRA
+}
+
+model Expense {
+  id       String          @id @default(cuid())
+  title    String
+  amount   Float
+  category ExpenseCategory @default(STANDARD)
+  date     DateTime        @default(now())
+  notes    String?
+
+  ticketId String?
+  ticket   Ticket?         @relation(fields: [ticketId], references: [id])
+}
+</file>
+
+<file path="src/app/api/auth/[...nextauth]/route.ts">
+import NextAuth from "next-auth";
+import { authOptions } from "@/src/lib/auth";
+
+const handler = NextAuth(authOptions);
+
+export { handler as GET, handler as POST };
+</file>
+
+<file path="src/app/layout.tsx">
+import type { Metadata } from "next";
+import { Inter } from "next/font/google";
+import "./globals.css";
+import Providers from "../components/shared/Providers";
+import { Toaster } from "react-hot-toast"; //  استدعاء المكتبة
+const inter = Inter({ subsets: ["latin", "arabic"] });
+
+export const metadata: Metadata = {
+  title: "نظام إدارة ورشة الكمبريسور",
+  description: "نظام إداري مخصص لورش صيانة وتجميع الكمبريسورات",
+};
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <html lang="ar" dir="rtl">
+      <body className={inter.className}>
+        {/* تغليف التطبيق بمزود المصادقة */}
+        <Providers>
+          <Toaster position="top-center" />
+          {children}
+        </Providers>
+      </body>
+    </html>
+  );
+}
+</file>
+
+<file path="src/components/shared/Sidebar.tsx">
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { LayoutDashboard, Ticket, Package, Receipt, Settings } from "lucide-react";
+
+const menuItems = [
+  { name: "الرئيسية", icon: LayoutDashboard, href: "/" },
+  { name: "التذاكر والصيانة", icon: Ticket, href: "/tickets" },
+  { name: "المخزون والقطع", icon: Package, href: "/inventory" },
+  { name: "المشتريات والمصاريف", icon: Receipt, href: "/expenses" },
+  { name: "العمال", icon: Settings, href: "/workers" },
+  { name: "الإعدادات", icon: Settings, href: "/settings" },
+];
+
+export default function Sidebar() {
+  const pathname = usePathname();
+
+  return (
+    <aside className="print:hidden w-64 bg-slate-900 text-white min-h-screen flex flex-col fixed right-0 top-0 bottom-0 z-20">
+      <div className="h-16 flex items-center justify-center border-b border-slate-800">
+        <h1 className="text-xl font-bold tracking-wider text-blue-400">
+          COMPRESSOR<span className="text-white">PRO</span>
+        </h1>
+      </div>
+
+      <nav className="flex-1 py-6 px-3 space-y-2">
+        {menuItems.map((item) => {
+          const isActive = pathname === item.href;
+          const Icon = item.icon;
+
+          return (
+            <Link
+              key={item.name}
+              href={item.href}
+              className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${isActive
+                ? "bg-blue-600 text-white shadow-md"
+                : "text-slate-400 hover:bg-slate-800 hover:text-white"
+                }`}
+            >
+              <Icon className="w-5 h-5" />
+              <span className="font-medium">{item.name}</span>
+            </Link>
+          );
+        })}
+      </nav>
+    </aside>
+  );
+}
+</file>
+
+<file path="src/app/page.tsx">
+import { getDashboardStats } from "@/src/features/dashboard/actions";
+import { DashboardCharts } from "@/src/features/dashboard/components/DashboardCharts";
+import { 
+  Wallet, Wrench, AlertTriangle, 
+  Ticket as TicketIcon, TrendingUp, AlertCircle, Banknote
+} from "lucide-react";
+import Link from "next/link";
+
+export const dynamic = "force-dynamic";
+
+// دالة مساعدة لتنسيق وتلوين حالة التذكرة
+const getStatusLabel = (status: string) => {
+  const map: Record<string, { label: string, color: string }> = {
+    OPEN: { label: "مفتوحة", color: "bg-yellow-100 text-yellow-800" },
+    IN_PROGRESS: { label: "قيد الصيانة", color: "bg-blue-100 text-blue-800" },
+    WAITING_FOR_PARTS: { label: "بانتظار قطع", color: "bg-orange-100 text-orange-800" },
+    COMPLETED: { label: "مكتملة", color: "bg-green-100 text-green-800" }
+  };
+  return map[status] || { label: status, color: "bg-gray-100 text-gray-800" };
+};
+
+export default async function DashboardPage() {
+  const result = await getDashboardStats();
+
+  if (result.error || !result.data) {
+    return (
+      <div className="p-6 text-center text-red-500 bg-red-50 rounded-2xl border border-red-100">
+        <AlertCircle className="w-10 h-10 mx-auto mb-2" />
+        <p className="font-bold">تعذر تحميل الإحصائيات</p>
+      </div>
+    );
+  }
+
+  const stats = result.data;
+
+  // 👈 تم وضع "الكاش اليومي" كأول بطاقة لأنها الأهم لصاحب العمل
+  const kpiCards = [
+    { title: "الكاش اليومي (الصندوق)", value: `${stats.todaysCash.toFixed(2)} ₪`, icon: Banknote, color: "text-emerald-600", bg: "bg-emerald-50", border: "border-emerald-100" },
+    { title: "الديون المتبقية بالسوق", value: `${stats.totalDebts.toFixed(2)} ₪`, icon: Wallet, color: "text-rose-600", bg: "bg-rose-50", border: "border-rose-100" },
+    { title: "إجمالي إيرادات متوقعة", value: `${stats.totalExpectedRevenue.toFixed(2)} ₪`, icon: TrendingUp, color: "text-blue-600", bg: "bg-blue-50", border: "border-blue-100" },
+    { title: "تذاكر قيد الصيانة", value: stats.statusCounts.IN_PROGRESS, icon: Wrench, color: "text-amber-600", bg: "bg-amber-50", border: "border-amber-100" }
+  ];
+
+  return (
+    <div className="space-y-8 max-w-7xl mx-auto pb-10">
+      
+      <div className="animate-in fade-in slide-in-from-top-4 duration-500">
+        <h1 className="text-2xl font-bold text-gray-900">نظرة عامة</h1>
+        <p className="text-gray-500 text-sm mt-1">ملخص أداء الورشة والحالة المالية اليوم</p>
+      </div>
+
+      {/* بطاقات الإحصائيات العلوية */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {kpiCards.map((card, i) => (
+          <div 
+            key={i} 
+            className={`bg-white p-6 rounded-2xl border ${card.border} shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow animate-in fade-in slide-in-from-bottom-8 duration-700`}
+            style={{ animationFillMode: "backwards", animationDelay: `${i * 150}ms` }}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div className={`p-3 rounded-xl ${card.bg} ${card.color}`}>
+                <card.icon className="w-6 h-6" />
+              </div>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500 font-medium">{card.title}</p>
+              <h3 className={`text-2xl font-black mt-1 ${card.color}`}>{card.value}</h3>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* المخطط والنواقص */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-500" style={{ animationFillMode: "backwards" }}>
+           <DashboardCharts data={stats.chartData} />
+        </div>
+
+        <div className="bg-white p-6 rounded-2xl border border-red-100 shadow-sm relative overflow-hidden animate-in fade-in slide-in-from-bottom-8 duration-700 delay-700" style={{ animationFillMode: "backwards" }}>
+          <div className="absolute top-0 right-0 w-1 h-full bg-red-500"></div>
+          <div className="flex justify-between items-center mb-4 border-b pb-4">
+            <h3 className="font-bold flex items-center gap-2 text-red-600">
+              <AlertTriangle className="w-5 h-5" /> نواقص المخزون
+            </h3>
+            <span className="bg-red-100 text-red-700 px-2 py-1 rounded-md text-xs font-bold">{stats.lowStockCount} صنف</span>
+          </div>
+
+          {stats.lowStockParts.length === 0 ? (
+            <p className="text-sm text-gray-500 text-center py-6">المخزون بوضع ممتاز، لا توجد نواقص.</p>
+          ) : (
+            <div className="space-y-3">
+              {stats.lowStockParts.map((part: any) => (
+                <div key={part.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-xl border border-gray-100 hover:bg-red-50 transition-colors">
+                  <span className="text-sm font-medium text-gray-800">{part.name}</span>
+                  <span className="text-xs font-black px-2 py-1 bg-white border border-red-200 text-red-600 rounded-lg shadow-sm">
+                    متبقي: {part.quantity}
+                  </span>
+                </div>
+              ))}
+              <div className="pt-2 text-center">
+                <Link href="/inventory" className="text-xs text-gray-500 hover:text-indigo-600 hover:underline">إدارة المخزون &rarr;</Link>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* 🌟 القسم الجديد: أحدث التذاكر المستلمة */}
+        <div className="lg:col-span-3 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm animate-in fade-in slide-in-from-bottom-8 duration-700 delay-1000" style={{ animationFillMode: "backwards" }}>
+          <div className="flex justify-between items-center mb-6 border-b pb-4">
+            <h3 className="font-bold flex items-center gap-2 text-gray-800">
+              <TicketIcon className="w-5 h-5 text-indigo-500" /> أحدث التذاكر
+            </h3>
+            <Link href="/tickets" className="text-sm text-indigo-600 hover:underline font-medium">كل التذاكر</Link>
+          </div>
+          
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm text-right">
+              <thead className="bg-gray-50 text-gray-500 text-xs">
+                <tr>
+                  <th className="p-3 font-medium rounded-r-lg">رقم التذكرة</th>
+                  <th className="p-3 font-medium">اسم الزبون</th>
+                  <th className="p-3 font-medium">تاريخ الاستلام</th>
+                  <th className="p-3 font-medium rounded-l-lg">الحالة</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {stats.recentTickets.map((ticket: any) => {
+                  const statusInfo = getStatusLabel(ticket.status);
+                  return (
+                    <tr key={ticket.id} className="hover:bg-gray-50/50 transition-colors">
+                      <td className="p-3 font-bold text-gray-900 text-xs">
+                        <Link href={`/tickets/${ticket.id}`} className="hover:text-indigo-600 hover:underline">
+                          #{ticket.id.slice(-6).toUpperCase()}
+                        </Link>
+                      </td>
+                      <td className="p-3 font-medium text-gray-800">{ticket.customerName}</td>
+                      <td className="p-3 text-gray-500">{new Date(ticket.createdAt).toLocaleDateString('ar-EG')}</td>
+                      <td className="p-3">
+                        <span className={`px-2.5 py-1 rounded-md text-xs font-bold ${statusInfo.color}`}>
+                          {statusInfo.label}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+            {stats.recentTickets.length === 0 && (
+              <p className="text-center text-gray-500 py-6 text-sm">لا توجد تذاكر مسجلة بعد.</p>
+            )}
+          </div>
+        </div>
+
+      </div>
+    </div>
+  );
+}
+</file>
+
+<file path="package.json">
+{
+  "name": "my-next-app",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --turbopack",
+    "build": "next build --turbopack",
+    "start": "next start",
+    "lint": "eslint"
+  },
+  "dependencies": {
+    "@hookform/resolvers": "^5.2.2",
+    "@prisma/adapter-pg": "^7.6.0",
+    "@prisma/client": "^7.6.0",
+    "@uploadthing/react": "^7.3.3",
+    "bcrypt": "^6.0.0",
+    "lucide-react": "^1.7.0",
+    "next": "15.5.3",
+    "next-auth": "^4.24.13",
+    "pg": "^8.20.0",
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
+    "react-hook-form": "^7.72.0",
+    "react-hot-toast": "^2.6.0",
+    "react-select": "^5.10.2",
+    "recharts": "^3.8.1",
+    "uploadthing": "^7.7.4",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3",
+    "@tailwindcss/postcss": "^4",
+    "@types/bcrypt": "^6.0.0",
+    "@types/node": "^20",
+    "@types/pg": "^8.20.0",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "dotenv": "^17.3.1",
+    "eslint": "^9",
+    "eslint-config-next": "15.5.3",
+    "prisma": "^7.6.0",
+    "tailwindcss": "^4",
+    "tsx": "^4.21.0",
+    "typescript": "^5"
+  }
+}
+</file>
+
+</files>

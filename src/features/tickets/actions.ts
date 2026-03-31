@@ -32,36 +32,23 @@ type UpdateTicketInput = {
 // 2. دوال السيرفر الأساسية (CRUD)
 // ==========================================
 
-export async function createTicket(data: CreateTicketInput) {
+export async function createTicket(data: any) {
+  const session = await getServerSession(authOptions); // جلب المستخدم الحالي
+  
+  if (!session) return { error: "يجب تسجيل الدخول أولاً" };
+
   try {
-    // 1. حماية الدالة: جلب الجلسة للمستخدم الحالي
-    const session = await getServerSession(authOptions);
-    
-    // 2. التحقق الأمني: إذا لم يكن مسجلاً للدخول، نرفض العملية
-    if (!session || !session.user) {
-      return { error: "غير مصرح لك بإجراء هذه العملية. الرجاء تسجيل الدخول أولاً." };
-    }
-
-    // 3. إنشاء التذكرة وربطها بالـ ID الحقيقي للمستخدم (workerId)
-    const newTicket = await prisma.ticket.create({
+    const ticket = await prisma.ticket.create({
       data: {
-        customerName: data.customerName,
-        customerPhone: data.customerPhone,
-        compressorModel: data.compressorModel,
-        issueDescription: data.issueDescription,
-        advancePayment: data.advancePayment,
-        workerId: session.user.id, 
-      },
+        ...data,
+        workerId: session.user.id, // 👈 هنا يتم ربط التذكرة بالعامل اللي سجلها
+      }
     });
-
-    revalidatePath("/tickets");
-    return { success: true, data: newTicket };
-  } catch (error) {
-    console.error("Create Ticket Error:", error);
-    return { error: "حدث خطأ في السيرفر أثناء حفظ التذكرة." };
+    return { success: true, data: ticket };
+  } catch (e) {
+    return { error: "خطأ في الحفظ" };
   }
 }
-
 export async function updateTicket(ticketId: string, data: UpdateTicketInput) {
   try {
     const updatedTicket = await prisma.ticket.update({
