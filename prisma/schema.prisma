@@ -13,41 +13,42 @@ enum Role {
 }
 
 model User {
-  id           String        @id @default(cuid())
-  name         String
-  phone        String        @unique
-  password     String        // الباسورد سيكون مشفراً
-  role         Role          @default(WORKER)
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
+  id        String   @id @default(cuid())
+  name      String
+  phone     String   @unique
+  password  String
+  role      Role     @default(WORKER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  tickets      Ticket[]      @relation("WorkerTickets")
-  trialItems   TrialItem[]   @relation("WorkerTrials")
+  tickets    Ticket[]    @relation("WorkerTickets")
+  trialItems TrialItem[] @relation("WorkerTrials")
 }
 
 // ================= المخزون والقطع =================
 model SparePart {
-  id           String        @id @default(cuid())
-  name         String
-  quantity     Int           @default(0)
-  averageCost  Float         @default(0.0)
-  sellingPrice Float         @default(0.0)
-  lowStockAlert Int          @default(5)
-  
-  ticketParts  TicketPart[]
-  trialItems   TrialItem[]
+  id            String  @id @default(cuid())
+  name          String
+  quantity      Int     @default(0)
+  averageCost   Float   @default(0.0)
+  sellingPrice  Float   @default(0.0)
+  lowStockAlert Int     @default(5)
+  imageUrl      String?
+
+  ticketParts   TicketPart[]
+  trialItems    TrialItem[]
   purchaseItems PurchaseItem[]
 }
 
 model Compressor {
-  id           String        @id @default(cuid())
-  serialNumber String        @unique
-  modelName    String
-  productionCost Float       @default(0.0)
-  sellingPrice Float         @default(0.0)
-  status       String        @default("READY") 
-  
-  trialItems   TrialItem[]
+  id             String @id @default(cuid())
+  serialNumber   String @unique
+  modelName      String
+  productionCost Float  @default(0.0)
+  sellingPrice   Float  @default(0.0)
+  status         String @default("READY")
+
+  trialItems TrialItem[]
 }
 
 // ================= القطع التجريبية =================
@@ -58,24 +59,24 @@ enum TrialStatus {
 }
 
 model TrialItem {
-  id           String        @id @default(cuid())
-  notes        String?
-  status       TrialStatus   @default(ACTIVE)
-  givenAt      DateTime      @default(now())
+  id             String      @id @default(cuid())
+  notes          String?
+  status         TrialStatus @default(ACTIVE)
+  givenAt        DateTime    @default(now())
   expectedReturn DateTime?
-  returnedAt   DateTime?
+  returnedAt     DateTime?
 
-  sparePartId  String?
-  sparePart    SparePart?    @relation(fields: [sparePartId], references: [id])
-  qty          Int           @default(1) 
-  
+  sparePartId String?
+  sparePart   SparePart? @relation(fields: [sparePartId], references: [id])
+  qty         Int        @default(1)
+
   compressorId String?
-  compressor   Compressor?   @relation(fields: [compressorId], references: [id])
+  compressor   Compressor? @relation(fields: [compressorId], references: [id])
 
-  workerId     String?
-  worker       User?         @relation("WorkerTrials", fields: [workerId], references: [id])
-  ticketId     String?
-  ticket       Ticket?       @relation(fields: [ticketId], references: [id])
+  workerId String?
+  worker   User?   @relation("WorkerTrials", fields: [workerId], references: [id])
+  ticketId String?
+  ticket   Ticket? @relation(fields: [ticketId], references: [id])
 }
 
 // ================= نظام التذاكر =================
@@ -87,77 +88,100 @@ enum TicketStatus {
 }
 
 model Ticket {
-  id           String        @id @default(cuid())
-  customerName String
-  customerPhone String
-  status       TicketStatus  @default(OPEN)
-  laborCost    Float         @default(0.0) 
-  commission   Float         @default(0.0) 
-  totalCost    Float         @default(0.0)
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
+  id               String       @id @default(cuid())
+  customerName     String
+  customerPhone    String
+  compressorModel  String?
+  issueDescription String?
+  
+  //  إضافة حقل صورة الفاتورة
+  invoiceImageUrl  String?      
+  
+  advancePayment   Float        @default(0.0)
+  discount         Float        @default(0.0)
+  status           TicketStatus @default(OPEN)
+  laborCost        Float        @default(0.0)
+  commission       Float        @default(0.0)
+  totalCost        Float        @default(0.0)
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
 
-  workerId     String?
-  worker       User?         @relation("WorkerTickets", fields: [workerId], references: [id])
-  partsUsed    TicketPart[]
-  trialItems   TrialItem[]
-  expenses     Expense[]     
+  workerId  String?
+  worker    User?        @relation("WorkerTickets", fields: [workerId], references: [id])
+  partsUsed TicketPart[]
+  
+  //  إضافة علاقة الدفعات
+  payments  Payment[]    
+  
+  trialItems TrialItem[]
+  expenses   Expense[]
+}
+
+//  الموديل الجديد للدفعات
+model Payment {
+  id        String   @id @default(cuid())
+  amount    Float
+  notes     String?
+  createdAt DateTime @default(now())
+
+  ticketId String
+  ticket   Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
 }
 
 model TicketPart {
-  id           String        @id @default(cuid())
-  ticketId     String
-  ticket       Ticket        @relation(fields: [ticketId], references: [id], onDelete: Cascade)
-  sparePartId  String
-  sparePart    SparePart     @relation(fields: [sparePartId], references: [id])
-  quantity     Int
-  priceAtTime  Float         
+  id          String    @id @default(cuid())
+  ticketId    String
+  ticket      Ticket    @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  sparePartId String
+  sparePart   SparePart @relation(fields: [sparePartId], references: [id])
+  quantity    Int
+  priceAtTime Float
 }
 
 // ================= المشتريات والموردين =================
 model Supplier {
-  id           String        @id @default(cuid())
-  name         String
-  phone        String?
-  totalDebt    Float         @default(0.0)
-  invoices     PurchaseInvoice[]
+  id        String            @id @default(cuid())
+  name      String
+  phone     String?
+  totalDebt Float             @default(0.0)
+  invoices  PurchaseInvoice[]
 }
 
 model PurchaseInvoice {
-  id           String        @id @default(cuid())
-  supplierId   String
-  supplier     Supplier      @relation(fields: [supplierId], references: [id])
-  totalAmount  Float
-  paidAmount   Float         @default(0.0)
-  date         DateTime      @default(now())
-  
-  items        PurchaseItem[]
+  id          String   @id @default(cuid())
+  supplierId  String
+  supplier    Supplier @relation(fields: [supplierId], references: [id])
+  totalAmount Float
+  paidAmount  Float    @default(0.0)
+  date        DateTime @default(now())
+
+  items PurchaseItem[]
 }
 
 model PurchaseItem {
-  id           String        @id @default(cuid())
-  invoiceId    String
-  invoice      PurchaseInvoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
-  sparePartId  String
-  sparePart    SparePart     @relation(fields: [sparePartId], references: [id])
-  quantity     Int
-  unitCost     Float
+  id          String          @id @default(cuid())
+  invoiceId   String
+  invoice     PurchaseInvoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  sparePartId String
+  sparePart   SparePart       @relation(fields: [sparePartId], references: [id])
+  quantity    Int
+  unitCost    Float
 }
 
 // ================= المصاريف التشغيلية =================
 enum ExpenseCategory {
-  STANDARD     
-  EXTRA        
+  STANDARD
+  EXTRA
 }
 
 model Expense {
-  id           String        @id @default(cuid())
-  title        String
-  amount       Float
-  category     ExpenseCategory @default(STANDARD)
-  date         DateTime      @default(now())
-  notes        String?
+  id       String          @id @default(cuid())
+  title    String
+  amount   Float
+  category ExpenseCategory @default(STANDARD)
+  date     DateTime        @default(now())
+  notes    String?
 
-  ticketId     String?
-  ticket       Ticket?       @relation(fields: [ticketId], references: [id])
+  ticketId String?
+  ticket   Ticket? @relation(fields: [ticketId], references: [id])
 }

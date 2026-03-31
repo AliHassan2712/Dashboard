@@ -1,3 +1,7 @@
+//في Next.js (بسبب الـ Hot Reloading في بيئة التطوير)،
+//  قد يتم إنشاء اتصالات متعددة بقاعدة البيانات مما يسبب أخطاء.
+//  لنتجنب ذلك،  ملف إعداد الاتصال.
+
 import { PrismaClient } from '@prisma/client'
 import { Pool } from 'pg'
 import { PrismaPg } from '@prisma/adapter-pg'

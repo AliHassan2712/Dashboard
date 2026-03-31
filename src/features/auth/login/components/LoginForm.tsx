@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { loginSchema, type LoginFormValues } from "../validations";
+//  استيراد مكون الـ Input النظيف
+import { Input } from "@/src/components/ui/Input"; 
 
 export function LoginForm() {
   const router = useRouter();
@@ -23,21 +25,11 @@ export function LoginForm() {
   const onSubmit = async (data: LoginFormValues) => {
     setIsLoading(true);
     setError(null);
-
-    const result = await signIn("credentials", {
-      phone: data.phone,
-      password: data.password,
-      redirect: false,
-    });
-
+    const result = await signIn("credentials", { ...data, redirect: false });
     setIsLoading(false);
 
-    if (result?.error) {
-      setError(result.error);
-    } else {
-      router.push("/");
-      router.refresh();
-    }
+    if (result?.error) setError(result.error);
+    else { router.push("/"); router.refresh(); }
   };
 
   return (
@@ -48,32 +40,30 @@ export function LoginForm() {
         </div>
       )}
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">رقم الهاتف</label>
-        <input
-          {...register("phone")}
-          type="text"
-          placeholder="0599999999"
-          className="block w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition text-right dir-ltr"
-        />
-        {errors.phone && <p className="mt-1 text-sm text-red-600">{errors.phone.message}</p>}
-      </div>
+      {/* 👇 شوف النظافة والترتيب هنا! سطر واحد بيعمل Label و Input و Error */}
+      <Input
+        label="رقم الهاتف"
+        placeholder="0599999999"
+        dir="ltr"
+        className="text-right"
+        error={errors.phone?.message}
+        {...register("phone")}
+      />
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">كلمة المرور</label>
-        <input
-          {...register("password")}
-          type="password"
-          placeholder="••••••"
-          className="block w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition text-right dir-ltr"
-        />
-        {errors.password && <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>}
-      </div>
+      <Input
+        label="كلمة المرور"
+        type="password"
+        placeholder="••••••"
+        dir="ltr"
+        className="text-right"
+        error={errors.password?.message}
+        {...register("password")}
+      />
 
       <button
         type="submit"
         disabled={isLoading}
-        className="w-full bg-blue-600 text-white py-2.5 rounded-lg font-medium hover:bg-blue-700 focus:ring-4 focus:ring-blue-200 transition disabled:opacity-70"
+        className="w-full bg-indigo-600 text-white py-2.5 rounded-lg font-bold hover:bg-indigo-700 focus:ring-4 focus:ring-indigo-100 transition disabled:opacity-70"
       >
         {isLoading ? "جاري التحقق..." : "تسجيل الدخول"}
       </button>

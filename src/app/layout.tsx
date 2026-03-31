@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import Providers from "../components/shared/Providers";
-
+import { Toaster } from "react-hot-toast"; //  استدعاء المكتبة
 const inter = Inter({ subsets: ["latin", "arabic"] });
 
 export const metadata: Metadata = {
@@ -20,6 +20,7 @@ export default function RootLayout({
       <body className={inter.className}>
         {/* تغليف التطبيق بمزود المصادقة */}
         <Providers>
+          <Toaster position="top-center" />
           {children}
         </Providers>
       </body>
