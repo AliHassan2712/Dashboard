@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Link from "next/link"; // 👈 استيراد Link للتنقل
+import Link from "next/link"; //  استيراد Link للتنقل
 import { 
   registerWorker, 
   getWorkersWithBalance, 
@@ -11,8 +11,8 @@ import {
 import { Input } from "@/src/components/ui/Input";
 import { toast } from "react-hot-toast";
 import { 
-  Users, DollarSign, Plus, UserPlus, Trash2, 
-  Loader2, Wallet, X, Banknote, CreditCard,
+  Plus, UserPlus, Trash2, 
+  Loader2, X, Banknote, CreditCard,
   ChevronLeft
 } from "lucide-react";
 
