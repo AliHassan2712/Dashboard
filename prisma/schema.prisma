@@ -7,32 +7,30 @@ datasource db {
 }
 
 // ================= الأدوار والمستخدمين =================
-enum Role {
-  ADMIN
-  WORKER
-}
-
 model User {
-  id        String   @id @default(cuid())
-  name      String
-  phone     String   @unique
-  password  String
-  role      Role     @default(WORKER)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id            String              @id @default(cuid())
+  name          String
+  phone         String              @unique
+  password      String
+  role          String              @default("WORKER") // ADMIN أو WORKER
+  baseSalary    Float               @default(0)        // الراتب المرجعي
 
-  tickets    Ticket[]    @relation("WorkerTickets")
-  trialItems TrialItem[] @relation("WorkerTrials")
+  //  العلاقات المصححة مع أسماء الربط (Relation Names)
+  tickets       Ticket[]            @relation("WorkerTickets")
+  trialItems    TrialItem[]         @relation("WorkerTrials")
+  transactions  WorkerTransaction[]
+  
+  createdAt     DateTime            @default(now())
 }
 
 // ================= المخزون والقطع =================
 model SparePart {
-  id            String  @id @default(cuid())
+  id            String         @id @default(cuid())
   name          String
-  quantity      Int     @default(0)
-  averageCost   Float   @default(0.0)
-  sellingPrice  Float   @default(0.0)
-  lowStockAlert Int     @default(5)
+  quantity      Int            @default(0)
+  averageCost   Float          @default(0.0)
+  sellingPrice  Float          @default(0.0)
+  lowStockAlert Int            @default(5)
   imageUrl      String?
 
   ticketParts   TicketPart[]
@@ -41,14 +39,14 @@ model SparePart {
 }
 
 model Compressor {
-  id             String @id @default(cuid())
-  serialNumber   String @unique
+  id             String      @id @default(cuid())
+  serialNumber   String      @unique
   modelName      String
-  productionCost Float  @default(0.0)
-  sellingPrice   Float  @default(0.0)
-  status         String @default("READY")
+  productionCost Float       @default(0.0)
+  sellingPrice   Float       @default(0.0)
+  status         String      @default("READY")
 
-  trialItems TrialItem[]
+  trialItems     TrialItem[]
 }
 
 // ================= القطع التجريبية =================
@@ -66,17 +64,19 @@ model TrialItem {
   expectedReturn DateTime?
   returnedAt     DateTime?
 
-  sparePartId String?
-  sparePart   SparePart? @relation(fields: [sparePartId], references: [id])
-  qty         Int        @default(1)
+  sparePartId    String?
+  sparePart      SparePart?  @relation(fields: [sparePartId], references: [id])
+  qty            Int         @default(1)
 
-  compressorId String?
-  compressor   Compressor? @relation(fields: [compressorId], references: [id])
+  compressorId   String?
+  compressor     Compressor? @relation(fields: [compressorId], references: [id])
 
-  workerId String?
-  worker   User?   @relation("WorkerTrials", fields: [workerId], references: [id])
-  ticketId String?
-  ticket   Ticket? @relation(fields: [ticketId], references: [id])
+  //  ربط العلاقة مع User بنفس الاسم "WorkerTrials"
+  workerId       String?
+  worker         User?       @relation("WorkerTrials", fields: [workerId], references: [id])
+  
+  ticketId       String?
+  ticket         Ticket?     @relation(fields: [ticketId], references: [id])
 }
 
 // ================= نظام التذاكر =================
@@ -93,10 +93,7 @@ model Ticket {
   customerPhone    String
   compressorModel  String?
   issueDescription String?
-  
-  //  إضافة حقل صورة الفاتورة
   invoiceImageUrl  String?      
-  
   advancePayment   Float        @default(0.0)
   discount         Float        @default(0.0)
   status           TicketStatus @default(OPEN)
@@ -106,26 +103,25 @@ model Ticket {
   createdAt        DateTime     @default(now())
   updatedAt        DateTime     @updatedAt
 
-  workerId  String?
-  worker    User?        @relation("WorkerTickets", fields: [workerId], references: [id])
-  partsUsed TicketPart[]
+  //  ربط العلاقة مع User بنفس الاسم "WorkerTickets"
+  workerId         String?
+  worker           User?        @relation("WorkerTickets", fields: [workerId], references: [id])
   
-  //  إضافة علاقة الدفعات
-  payments  Payment[]    
-  
-  trialItems TrialItem[]
-  expenses   Expense[]
+  partsUsed        TicketPart[]
+  payments         Payment[]    
+  trialItems       TrialItem[]
+  expenses         Expense[]
 }
 
-//  الموديل الجديد للدفعات
+// ================= الدفعات والمعاملات =================
 model Payment {
   id        String   @id @default(cuid())
   amount    Float
   notes     String?
   createdAt DateTime @default(now())
 
-  ticketId String
-  ticket   Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  ticketId  String
+  ticket    Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
 }
 
 model TicketPart {
@@ -138,6 +134,16 @@ model TicketPart {
   priceAtTime Float
 }
 
+model WorkerTransaction {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amount      Float    
+  type        String   // ADVANCE, STAKE, BONUS, PAYOUT
+  description String?  
+  date        DateTime @default(now())
+}
+
 // ================= المشتريات والموردين =================
 model Supplier {
   id        String            @id @default(cuid())
@@ -148,14 +154,14 @@ model Supplier {
 }
 
 model PurchaseInvoice {
-  id          String   @id @default(cuid())
+  id          String         @id @default(cuid())
   supplierId  String
-  supplier    Supplier @relation(fields: [supplierId], references: [id])
+  supplier    Supplier       @relation(fields: [supplierId], references: [id])
   totalAmount Float
-  paidAmount  Float    @default(0.0)
-  date        DateTime @default(now())
+  paidAmount  Float          @default(0.0)
+  date        DateTime       @default(now())
 
-  items PurchaseItem[]
+  items       PurchaseItem[]
 }
 
 model PurchaseItem {
@@ -183,5 +189,5 @@ model Expense {
   notes    String?
 
   ticketId String?
-  ticket   Ticket? @relation(fields: [ticketId], references: [id])
+  ticket   Ticket?         @relation(fields: [ticketId], references: [id])
 }

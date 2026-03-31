@@ -9,6 +9,7 @@ const menuItems = [
   { name: "التذاكر والصيانة", icon: Ticket, href: "/tickets" },
   { name: "المخزون والقطع", icon: Package, href: "/inventory" },
   { name: "المشتريات والمصاريف", icon: Receipt, href: "/expenses" },
+  { name: "العمال", icon: Settings, href: "/workers" },
   { name: "الإعدادات", icon: Settings, href: "/settings" },
 ];
 
