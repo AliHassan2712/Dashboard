@@ -11,8 +11,14 @@ import {
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-export default async function WorkerProfilePage({ params }: { params: { id: string } }) {
-  const result = await getWorkerDetails(params.id);
+// 1. هنا التعديل: تحويل params إلى Promise
+export default async function WorkerProfilePage({ params }: { params: Promise<{ id: string }> }) {
+  
+  // 2. فك الـ Promise للحصول على الـ id
+  const { id } = await params;
+
+  // 3. تمرير الـ id لدالة جلب البيانات
+  const result = await getWorkerDetails(id);
 
   if (result.error || !result.data) {
     return notFound();
