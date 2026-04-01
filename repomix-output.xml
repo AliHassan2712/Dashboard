@@ -61,6 +61,7 @@ src/app/(dashboard)/inventory/loading.tsx
 src/app/(dashboard)/inventory/page.tsx
 src/app/(dashboard)/layout.tsx
 src/app/(dashboard)/page.tsx
+src/app/(dashboard)/settings/page.tsx
 src/app/(dashboard)/tickets/[id]/page.tsx
 src/app/(dashboard)/tickets/new/page.tsx
 src/app/(dashboard)/tickets/page.tsx
@@ -73,7 +74,6 @@ src/app/favicon.ico
 src/app/globals.css
 src/app/layout.tsx
 src/app/not-found.tsx
-src/app/page.tsx
 src/components/shared/Navbar.tsx
 src/components/shared/Providers.tsx
 src/components/shared/Sidebar.tsx
@@ -88,6 +88,7 @@ src/features/inventory/components/EditSparePartModal.tsx
 src/features/inventory/components/InventoryTable.tsx
 src/features/inventory/hooks/useInventory.ts
 src/features/inventory/validations.ts
+src/features/settings/actions.ts
 src/features/tickets/actions.ts
 src/features/tickets/components/details/CustomerInfo.tsx
 src/features/tickets/components/details/FinancialSidebar.tsx
@@ -106,6 +107,259 @@ tsconfig.json
 
 <files>
 This section contains the contents of the repository's files.
+
+<file path="src/app/(dashboard)/settings/page.tsx">
+"use client";
+
+import { useState, useEffect } from "react";
+import { getUserProfile, updateProfile, changePassword } from "@/src/features/settings/actions";
+import { Input } from "@/src/components/ui/Input";
+import { toast } from "react-hot-toast";
+import { User, ShieldCheck, Save, Lock, Loader2 } from "lucide-react";
+
+export default function SettingsPage() {
+  const [isLoading, setIsLoading] = useState(true);
+  const [profileData, setProfileData] = useState({ name: "", phone: "", role: "" });
+  
+  // States لحالة الحفظ
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const [isSavingPass, setIsSavingPass] = useState(false);
+
+  // تحميل البيانات عند فتح الصفحة
+  useEffect(() => {
+    const loadProfile = async () => {
+      const res = await getUserProfile();
+      if (res.success && res.data) {
+        setProfileData({
+          name: res.data.name,
+          phone: res.data.phone,
+          role: res.data.role
+        });
+      } else {
+        toast.error(res.error || "تعذر تحميل البيانات");
+      }
+      setIsLoading(false);
+    };
+    loadProfile();
+  }, []);
+
+  // دالة حفظ الملف الشخصي
+  const handleProfileUpdate = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsSavingProfile(true);
+    
+    const res = await updateProfile({ name: profileData.name, phone: profileData.phone });
+    if (res.success) {
+      toast.success("تم تحديث البيانات الشخصية بنجاح");
+      if (profileData.phone !== profileData.phone) {
+         toast.success("ملاحظة: ستحتاج لاستخدام رقم الهاتف الجديد في تسجيل الدخول القادم", { duration: 5000 });
+      }
+    } else {
+      toast.error(res.error);
+    }
+    setIsSavingProfile(false);
+  };
+
+  // دالة تغيير كلمة المرور
+  const handlePasswordChange = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsSavingPass(true);
+    
+    const form = e.currentTarget;
+    const formData = new FormData(form);
+    const currentPass = formData.get("currentPass") as string;
+    const newPass = formData.get("newPass") as string;
+    const confirmPass = formData.get("confirmPass") as string;
+
+    if (newPass !== confirmPass) {
+      toast.error("كلمة المرور الجديدة غير متطابقة");
+      setIsSavingPass(false);
+      return;
+    }
+
+    if (newPass.length < 6) {
+      toast.error("كلمة المرور يجب أن تكون 6 أحرف على الأقل");
+      setIsSavingPass(false);
+      return;
+    }
+
+    const res = await changePassword({ currentPass, newPass });
+    if (res.success) {
+      toast.success("تم تغيير كلمة المرور بنجاح");
+      form.reset();
+    } else {
+      toast.error(res.error);
+    }
+    setIsSavingPass(false);
+  };
+
+  if (isLoading) {
+    return <div className="flex justify-center py-20"><Loader2 className="w-10 h-10 animate-spin text-indigo-600" /></div>;
+  }
+
+  return (
+    <div className="max-w-4xl mx-auto space-y-8 p-6 animate-in fade-in duration-500">
+      
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900">إعدادات الحساب</h1>
+        <p className="text-gray-500 text-sm mt-1">تحديث معلوماتك الشخصية وإعدادات الأمان</p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        
+        {/* قسم البيانات الشخصية */}
+        <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm h-fit">
+          <div className="flex items-center gap-3 mb-6 border-b pb-4">
+            <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg"><User className="w-5 h-5" /></div>
+            <h2 className="text-lg font-bold text-gray-800">المعلومات الشخصية</h2>
+          </div>
+
+          <form onSubmit={handleProfileUpdate} className="space-y-5">
+            <Input 
+              label="الاسم الكامل" 
+              value={profileData.name} 
+              onChange={(e) => setProfileData({...profileData, name: e.target.value})} 
+              required 
+            />
+            <Input 
+              label="رقم الهاتف (للدخول)" 
+              value={profileData.phone} 
+              onChange={(e) => setProfileData({...profileData, phone: e.target.value})} 
+              dir="ltr" 
+              className="text-right" 
+              required 
+            />
+            
+            <div className="pt-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">الدور / الصلاحية</label>
+              <div className="w-full bg-gray-50 border border-gray-200 text-gray-500 px-4 py-3 rounded-lg flex items-center gap-2 font-bold cursor-not-allowed">
+                <ShieldCheck className="w-4 h-4 text-emerald-500" />
+                {profileData.role === "ADMIN" ? "مدير النظام" : "فني / عامل"}
+              </div>
+              <p className="text-[10px] text-gray-400 mt-1">* لا يمكنك تغيير صلاحيتك بنفسك.</p>
+            </div>
+
+            <button disabled={isSavingProfile} className="w-full mt-4 bg-indigo-600 text-white py-3 rounded-xl font-bold hover:bg-indigo-700 transition flex justify-center items-center gap-2">
+              {isSavingProfile ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
+              حفظ البيانات
+            </button>
+          </form>
+        </div>
+
+        {/* قسم تغيير كلمة المرور */}
+        <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm h-fit">
+          <div className="flex items-center gap-3 mb-6 border-b pb-4">
+            <div className="p-2 bg-rose-50 text-rose-600 rounded-lg"><Lock className="w-5 h-5" /></div>
+            <h2 className="text-lg font-bold text-gray-800">الأمان وكلمة المرور</h2>
+          </div>
+
+          <form onSubmit={handlePasswordChange} className="space-y-5">
+            <Input 
+              label="كلمة المرور الحالية" 
+              name="currentPass" 
+              type="password" 
+              required 
+            />
+            <div className="border-t border-gray-100 pt-5 space-y-5">
+              <Input 
+                label="كلمة المرور الجديدة" 
+                name="newPass" 
+                type="password" 
+                required 
+              />
+              <Input 
+                label="تأكيد كلمة المرور الجديدة" 
+                name="confirmPass" 
+                type="password" 
+                required 
+              />
+            </div>
+
+            <button disabled={isSavingPass} className="w-full mt-4 bg-gray-900 text-white py-3 rounded-xl font-bold hover:bg-black transition flex justify-center items-center gap-2">
+              {isSavingPass ? <Loader2 className="w-5 h-5 animate-spin" /> : <ShieldCheck className="w-5 h-5" />}
+              تحديث كلمة المرور
+            </button>
+          </form>
+        </div>
+
+      </div>
+    </div>
+  );
+}
+</file>
+
+<file path="src/features/settings/actions.ts">
+"use server";
+
+import prisma from "@/src/lib/prisma";
+import bcrypt from "bcrypt";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/src/lib/auth";
+import { revalidatePath } from "next/cache";
+
+// 1. جلب بيانات المستخدم الحالي
+export async function getUserProfile() {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) return { error: "غير مصرح لك" };
+
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { name: true, phone: true, role: true }
+    });
+    
+    if (!user) return { error: "المستخدم غير موجود" };
+    return { success: true, data: user };
+  } catch (error) {
+    return { error: "فشل جلب البيانات" };
+  }
+}
+
+// 2. تحديث الاسم ورقم الهاتف
+export async function updateProfile(data: { name: string; phone: string }) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) return { error: "غير مصرح لك" };
+
+  try {
+    await prisma.user.update({
+      where: { id: session.user.id },
+      data: { name: data.name, phone: data.phone }
+    });
+    
+    revalidatePath("/settings");
+    return { success: true };
+  } catch (error: any) {
+    if (error.code === 'P2002') return { error: "رقم الهاتف هذا مستخدم لحساب آخر!" };
+    return { error: "حدث خطأ أثناء حفظ البيانات" };
+  }
+}
+
+// 3. تغيير كلمة المرور
+export async function changePassword(data: { currentPass: string; newPass: string }) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) return { error: "غير مصرح لك" };
+
+  try {
+    const user = await prisma.user.findUnique({ where: { id: session.user.id } });
+    if (!user) return { error: "المستخدم غير موجود" };
+
+    // التحقق من كلمة المرور القديمة
+    const isValid = await bcrypt.compare(data.currentPass, user.password);
+    if (!isValid) return { error: "كلمة المرور الحالية غير صحيحة" };
+
+    // تشفير وحفظ الجديدة
+    const hashedNewPassword = await bcrypt.hash(data.newPass, 10);
+    await prisma.user.update({
+      where: { id: session.user.id },
+      data: { password: hashedNewPassword }
+    });
+
+    return { success: true };
+  } catch (error) {
+    return { error: "فشل تغيير كلمة المرور" };
+  }
+}
+</file>
 
 <file path=".agents/skills/neon-postgres/SKILL.md">
 ---
@@ -586,33 +840,6 @@ export default function DashboardLayout({
 }
 </file>
 
-<file path="src/app/(dashboard)/page.tsx">
-import Navbar from "@/src/components/shared/Navbar";
-import Sidebar from "@/src/components/shared/Sidebar";
-
-export default function DashboardPage() {
-  return (
-    <div className="min-h-screen bg-gray-50 flex" dir="rtl">
-      {/* الشريط الجانبي (ثابت على اليمين) */}
-      <Sidebar />
-
-      {/* المحتوى الرئيسي (يأخذ باقي المساحة) */}
-      <main className="flex-1 mr-64 flex flex-col min-h-screen transition-all duration-300">
-        <Navbar />
-        
-        <div className="p-6">
-          {/* محتوى الصفحة */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 text-center">
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">أهلاً بك في نظام إدارة ورشة الكمبريسور</h2>
-            <p className="text-gray-500">تم تسجيل الدخول بنجاح. من هنا يمكنك إدارة جميع عمليات الورشة.</p>
-          </div>
-        </div>
-      </main>
-    </div>
-  );
-}
-</file>
-
 <file path="src/app/(dashboard)/tickets/[id]/page.tsx">
 "use client";
 
@@ -905,309 +1132,6 @@ export default async function TicketsPage() {
           </div>
         )}
       </div>
-    </div>
-  );
-}
-</file>
-
-<file path="src/app/(dashboard)/workers/[id]/page.tsx">
-import { getWorkerDetails } from "@/src/features/workers/actions";
-import { 
-  ArrowRight, 
-  Calendar, 
-  ArrowUpCircle, 
-  ArrowDownCircle, 
-  User, 
-  Phone,
-  Wallet
-} from "lucide-react";
-import Link from "next/link";
-import { notFound } from "next/navigation";
-
-export default async function WorkerProfilePage({ params }: { params: { id: string } }) {
-  const result = await getWorkerDetails(params.id);
-
-  if (result.error || !result.data) {
-    return notFound();
-  }
-
-  const worker = result.data;
-
-  return (
-    <div className="p-6 max-w-5xl mx-auto space-y-6 animate-in fade-in duration-500">
-      
-      {/* الترويسة وزر العودة */}
-      <div className="flex items-center justify-between">
-        <Link href="/workers" className="flex items-center gap-2 text-gray-500 hover:text-indigo-600 transition">
-          <ArrowRight className="w-5 h-5" /> رجوع لقائمة العمال
-        </Link>
-      </div>
-
-      {/* بطاقة تعريف العامل */}
-      <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-        <div className="flex items-center gap-5">
-          <div className="w-16 h-16 bg-indigo-100 text-indigo-600 rounded-2xl flex items-center justify-center font-black text-2xl">
-            {worker.name[0]}
-          </div>
-          <div>
-            <h1 className="text-2xl font-black text-gray-900">{worker.name}</h1>
-            <div className="flex gap-4 mt-1 text-sm text-gray-500">
-              <span className="flex items-center gap-1"><Phone className="w-3.5 h-3.5" /> {worker.phone}</span>
-              <span className="flex items-center gap-1"><User className="w-3.5 h-3.5" /> {worker.role}</span>
-            </div>
-          </div>
-        </div>
-        
-        <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 text-left min-w-[200px]">
-          <p className="text-xs font-bold text-gray-400 uppercase mb-1 text-right">الرصيد المستحق الحالي</p>
-          <div className={`text-3xl font-black flex items-center justify-end gap-2 ${worker.balance >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
-            {worker.balance.toFixed(2)} ₪
-            <Wallet className="w-6 h-6" />
-          </div>
-        </div>
-      </div>
-
-      {/* سجل المعاملات المالية */}
-      <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
-        <div className="p-6 border-b bg-gray-50/50 flex items-center gap-2 font-bold text-gray-700">
-          <Calendar className="w-5 h-5 text-indigo-500" /> كشف حساب الحركات المالية
-        </div>
-
-        <div className="overflow-x-auto">
-          <table className="w-full text-right text-sm">
-            <thead className="bg-gray-50 text-gray-400 text-xs uppercase">
-              <tr>
-                <th className="p-4 font-medium">التاريخ</th>
-                <th className="p-4 font-medium">النوع</th>
-                <th className="p-4 font-medium">التفاصيل / ملاحظات</th>
-                <th className="p-4 font-medium">المبلغ</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {worker.transactions.length === 0 ? (
-                <tr>
-                  <td colSpan={4} className="p-10 text-center text-gray-400 font-medium">لا توجد حركات مالية مسجلة بعد لهذا العامل.</td>
-                </tr>
-              ) : (
-                worker.transactions.map((tx: any) => (
-                  <tr key={tx.id} className="hover:bg-gray-50/30 transition">
-                    <td className="p-4 text-gray-500 font-mono text-xs">
-                      {new Date(tx.date).toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' })}
-                    </td>
-                    <td className="p-4">
-                      {tx.type === "STAKE" || tx.type === "BONUS" ? (
-                        <span className="inline-flex items-center gap-1 text-emerald-600 font-bold">
-                          <ArrowUpCircle className="w-4 h-4" /> استحقاق/مكافأة
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 text-rose-600 font-bold">
-                          <ArrowDownCircle className="w-4 h-4" /> سحبيات/دفعات
-                        </span>
-                      )}
-                    </td>
-                    <td className="p-4 text-gray-600 font-medium">
-                      {tx.description || "---"}
-                    </td>
-                    <td className={`p-4 font-black text-lg ${tx.type === "STAKE" || tx.type === "BONUS" ? 'text-emerald-600' : 'text-rose-600'}`}>
-                      {tx.type === "STAKE" || tx.type === "BONUS" ? "+" : "-"}
-                      {tx.amount.toFixed(2)} ₪
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-    </div>
-  );
-}
-</file>
-
-<file path="src/app/(dashboard)/workers/page.tsx">
-"use client";
-
-import { useState, useEffect } from "react";
-import Link from "next/link"; // 👈 استيراد Link للتنقل
-import { 
-  registerWorker, 
-  getWorkersWithBalance, 
-  addWorkerTransaction, 
-  deleteWorker 
-} from "@/src/features/workers/actions";
-import { Input } from "@/src/components/ui/Input";
-import { toast } from "react-hot-toast";
-import { 
-  Users, DollarSign, Plus, UserPlus, Trash2, 
-  Loader2, Wallet, X, Banknote, CreditCard,
-  ChevronLeft
-} from "lucide-react";
-
-export default function WorkersPage() {
-  const [workers, setWorkers] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [isPageLoading, setIsPageLoading] = useState(true);
-
-  // 🔹 State للمودال الجديد
-  const [txModal, setTxModal] = useState({ open: false, userId: '', type: '', name: '' });
-  const [txData, setTxData] = useState({ amount: '', method: 'كاش', notes: '' });
-
-  const loadWorkers = async () => {
-    setIsPageLoading(true);
-    const data = await getWorkersWithBalance();
-    setWorkers(data);
-    setIsPageLoading(false);
-  };
-
-  useEffect(() => { loadWorkers(); }, []);
-
-  const handleAddWorker = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setLoading(true);
-    const form = e.currentTarget;
-    const formData = new FormData(form);
-    const data = Object.fromEntries(formData);
-    const res = await registerWorker(data);
-    if (res.success) {
-      toast.success("تم تسجيل العامل بنجاح");
-      form.reset();
-      loadWorkers();
-    } else toast.error(res.error || "خطأ ما");
-    setLoading(false);
-  };
-
-  const handleConfirmTx = async () => {
-    if (!txData.amount || isNaN(Number(txData.amount))) {
-      toast.error("يرجى إدخال مبلغ صحيح");
-      return;
-    }
-
-    const typeLabel = txModal.type === 'STAKE' ? 'استحقاق' : txModal.type === 'ADVANCE' ? 'سلفة' : 'تصفية';
-    const finalDesc = `${typeLabel} - ${txData.method}${txData.notes ? `: ${txData.notes}` : ''}`;
-
-    const res = await addWorkerTransaction({
-      userId: txModal.userId,
-      amount: Number(txData.amount),
-      type: txModal.type,
-      description: finalDesc
-    });
-
-    if (res.success) {
-      toast.success("تم تحديث الحساب المالي");
-      setTxModal({ ...txModal, open: false });
-      setTxData({ amount: '', method: 'كاش', notes: '' });
-      loadWorkers();
-    }
-  };
-
-  const handleDelete = async (userId: string, name: string) => {
-    if (confirm(`حذف العامل (${name}) نهائياً؟`)) {
-      const res = await deleteWorker(userId);
-      if (res.success) { toast.success("تم الحذف"); loadWorkers(); }
-    }
-  };
-
-  return (
-    <div className="p-6 space-y-8 max-w-6xl mx-auto animate-in fade-in duration-500">
-      
-      {/* نموذج إضافة عامل */}
-      <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-        <h2 className="text-lg font-bold mb-6 flex items-center gap-2 text-indigo-600">
-          <UserPlus className="w-5 h-5" /> تسجيل فني جديد
-        </h2>
-        <form onSubmit={handleAddWorker} className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Input label="الاسم" name="name" required />
-          <Input label="الهاتف" name="phone" required />
-          <Input label="كلمة المرور" name="password" type="password" required />
-          <div className="flex items-end pb-1">
-            <button disabled={loading} className="w-full bg-indigo-600 text-white h-[42px] rounded-xl font-bold hover:bg-indigo-700 transition flex items-center justify-center gap-2">
-              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
-              إضافة
-            </button>
-          </div>
-        </form>
-      </div>
-
-      {/* جدول الحسابات */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-        <table className="w-full text-right text-sm">
-          <thead className="bg-gray-50 text-gray-400 text-xs">
-            <tr>
-              <th className="p-4">الفني</th>
-              <th className="p-4">الرصيد الحالي</th>
-              <th className="p-4 text-center">إجراءات مالية</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100">
-            {workers.map(worker => (
-              <tr key={worker.id} className="hover:bg-gray-50/50 transition group">
-                <td className="p-4">
-                   {/* 👈 رابط لصفحة كشف الحساب الشخصي */}
-                   <Link 
-                    href={`/workers/${worker.id}`} 
-                    className="flex flex-col group-hover:text-indigo-600 transition"
-                   >
-                     <span className="font-bold text-gray-800 decoration-indigo-200 group-hover:underline underline-offset-4">
-                        {worker.name}
-                     </span>
-                     <span className="text-[10px] text-gray-400 flex items-center gap-0.5">
-                        عرض كشف الحساب <ChevronLeft className="w-3 h-3" />
-                     </span>
-                   </Link>
-                </td>
-                <td className="p-4">
-                  <span className={`px-3 py-1 rounded-full font-black text-xs ${worker.currentBalance >= 0 ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'}`}>
-                    {worker.currentBalance.toFixed(2)} ₪
-                  </span>
-                </td>
-                <td className="p-4 flex justify-center gap-2">
-                  <button onClick={() => setTxModal({ open: true, userId: worker.id, type: 'STAKE', name: worker.name })} className="bg-emerald-50 text-emerald-700 px-3 py-1.5 rounded-lg text-xs font-bold border border-emerald-100 hover:bg-emerald-500 hover:text-white transition-all">استحقاق</button>
-                  <button onClick={() => setTxModal({ open: true, userId: worker.id, type: 'ADVANCE', name: worker.name })} className="bg-rose-50 text-rose-700 px-3 py-1.5 rounded-lg text-xs font-bold border border-rose-100 hover:bg-rose-500 hover:text-white transition-all">سلفة</button>
-                  <button onClick={() => setTxModal({ open: true, userId: worker.id, type: 'PAYOUT', name: worker.name })} className="bg-gray-800 text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-black transition">تصفية</button>
-                  <button onClick={() => handleDelete(worker.id, worker.name)} className="p-1.5 text-gray-300 hover:text-rose-600 transition-colors"><Trash2 className="w-4 h-4" /></button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {/* 🌟 مـودال الـدفع المطور 🌟 */}
-      {txModal.open && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-3xl p-6 w-full max-w-md shadow-2xl animate-in zoom-in-95 duration-200">
-            <div className="flex justify-between items-center mb-6 border-b pb-4">
-              <h3 className="font-black text-gray-800">
-                تسجيل {txModal.type === 'STAKE' ? 'استحقاق' : 'دفعة'} لـ <span className="text-indigo-600">{txModal.name}</span>
-              </h3>
-              <button onClick={() => setTxModal({...txModal, open: false})} className="p-1 hover:bg-gray-100 rounded-full transition"><X className="w-5 h-5 text-gray-400" /></button>
-            </div>
-            
-            <div className="space-y-5">
-              <Input label="المبلغ (₪)" type="number" value={txData.amount} onChange={(e) => setTxData({...txData, amount: e.target.value})} autoFocus />
-              
-              <div>
-                <label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-wider">طريقة التعامل</label>
-                <div className="grid grid-cols-2 gap-3">
-                  <button onClick={() => setTxData({...txData, method: 'كاش'})} className={`flex items-center justify-center gap-2 p-3 rounded-xl border-2 transition-all ${txData.method === 'كاش' ? 'border-indigo-600 bg-indigo-50 text-indigo-700' : 'border-gray-100 text-gray-500'}`}>
-                    <Banknote className="w-4 h-4" /> كاش
-                  </button>
-                  <button onClick={() => setTxData({...txData, method: 'بنكي'})} className={`flex items-center justify-center gap-2 p-3 rounded-xl border-2 transition-all ${txData.method === 'بنكي' ? 'border-indigo-600 bg-indigo-50 text-indigo-700' : 'border-gray-100 text-gray-500'}`}>
-                    <CreditCard className="w-4 h-4" /> بنكي
-                  </button>
-                </div>
-              </div>
-
-              <Input label="ملاحظات (اختياري)" value={txData.notes} onChange={(e) => setTxData({...txData, notes: e.target.value})} placeholder="مثلاً: بابت عمل كذا.." />
-
-              <button onClick={handleConfirmTx} className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black text-lg shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all active:scale-[0.98]">
-                تأكيد العملية المالية
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
@@ -2463,6 +2387,475 @@ export default async function LoginPage() {
 }
 </file>
 
+<file path="src/app/(dashboard)/page.tsx">
+import { getDashboardStats } from "@/src/features/dashboard/actions";
+import { DashboardCharts } from "@/src/features/dashboard/components/DashboardCharts";
+import { 
+  Wallet, Wrench, AlertTriangle, 
+  Ticket as TicketIcon, TrendingUp, AlertCircle, Banknote
+} from "lucide-react";
+import Link from "next/link";
+
+export const dynamic = "force-dynamic";
+
+// دالة مساعدة لتنسيق وتلوين حالة التذكرة
+const getStatusLabel = (status: string) => {
+  const map: Record<string, { label: string, color: string }> = {
+    OPEN: { label: "مفتوحة", color: "bg-yellow-100 text-yellow-800" },
+    IN_PROGRESS: { label: "قيد الصيانة", color: "bg-blue-100 text-blue-800" },
+    WAITING_FOR_PARTS: { label: "بانتظار قطع", color: "bg-orange-100 text-orange-800" },
+    COMPLETED: { label: "مكتملة", color: "bg-green-100 text-green-800" }
+  };
+  return map[status] || { label: status, color: "bg-gray-100 text-gray-800" };
+};
+
+export default async function DashboardPage() {
+  const result = await getDashboardStats();
+
+  if (result.error || !result.data) {
+    return (
+      <div className="p-6 text-center text-red-500 bg-red-50 rounded-2xl border border-red-100">
+        <AlertCircle className="w-10 h-10 mx-auto mb-2" />
+        <p className="font-bold">تعذر تحميل الإحصائيات</p>
+      </div>
+    );
+  }
+
+  const stats = result.data;
+
+  // بطاقات الـ KPI
+  const kpiCards = [
+    { title: "الكاش اليومي (الصندوق)", value: `${stats.todaysCash.toFixed(2)} ₪`, icon: Banknote, color: "text-emerald-600", bg: "bg-emerald-50", border: "border-emerald-100" },
+    { title: "الديون المتبقية بالسوق", value: `${stats.totalDebts.toFixed(2)} ₪`, icon: Wallet, color: "text-rose-600", bg: "bg-rose-50", border: "border-rose-100" },
+    { title: "إجمالي إيرادات متوقعة", value: `${stats.totalExpectedRevenue.toFixed(2)} ₪`, icon: TrendingUp, color: "text-blue-600", bg: "bg-blue-50", border: "border-blue-100" },
+    { title: "تذاكر قيد الصيانة", value: stats.statusCounts.IN_PROGRESS, icon: Wrench, color: "text-amber-600", bg: "bg-amber-50", border: "border-amber-100" }
+  ];
+
+  return (
+    <div className="space-y-8 max-w-7xl mx-auto pb-10">
+      
+      <div className="animate-in fade-in slide-in-from-top-4 duration-500">
+        <h1 className="text-2xl font-bold text-gray-900">نظرة عامة</h1>
+        <p className="text-gray-500 text-sm mt-1">ملخص أداء الورشة والحالة المالية اليوم</p>
+      </div>
+
+      {/* بطاقات الإحصائيات العلوية */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {kpiCards.map((card, i) => (
+          <div 
+            key={i} 
+            className={`bg-white p-6 rounded-2xl border ${card.border} shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow animate-in fade-in slide-in-from-bottom-8 duration-700`}
+            style={{ animationFillMode: "backwards", animationDelay: `${i * 150}ms` }}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div className={`p-3 rounded-xl ${card.bg} ${card.color}`}>
+                <card.icon className="w-6 h-6" />
+              </div>
+            </div>
+            <div>
+              <p className="text-sm text-gray-500 font-medium">{card.title}</p>
+              <h3 className={`text-2xl font-black mt-1 ${card.color}`}>{card.value}</h3>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* المخطط والنواقص */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-500" style={{ animationFillMode: "backwards" }}>
+           <DashboardCharts data={stats.chartData} />
+        </div>
+
+        <div className="bg-white p-6 rounded-2xl border border-red-100 shadow-sm relative overflow-hidden animate-in fade-in slide-in-from-bottom-8 duration-700 delay-700" style={{ animationFillMode: "backwards" }}>
+          <div className="absolute top-0 right-0 w-1 h-full bg-red-500"></div>
+          <div className="flex justify-between items-center mb-4 border-b pb-4">
+            <h3 className="font-bold flex items-center gap-2 text-red-600">
+              <AlertTriangle className="w-5 h-5" /> نواقص المخزون
+            </h3>
+            <span className="bg-red-100 text-red-700 px-2 py-1 rounded-md text-xs font-bold">{stats.lowStockCount} صنف</span>
+          </div>
+
+          {stats.lowStockParts.length === 0 ? (
+            <p className="text-sm text-gray-500 text-center py-6">المخزون بوضع ممتاز، لا توجد نواقص.</p>
+          ) : (
+            <div className="space-y-3">
+              {stats.lowStockParts.map((part: any) => (
+                <div key={part.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-xl border border-gray-100 hover:bg-red-50 transition-colors">
+                  <span className="text-sm font-medium text-gray-800">{part.name}</span>
+                  <span className="text-xs font-black px-2 py-1 bg-white border border-red-200 text-red-600 rounded-lg shadow-sm">
+                    متبقي: {part.quantity}
+                  </span>
+                </div>
+              ))}
+              <div className="pt-2 text-center">
+                <Link href="/inventory" className="text-xs text-gray-500 hover:text-indigo-600 hover:underline">إدارة المخزون &rarr;</Link>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* أحدث التذاكر المستلمة */}
+        <div className="lg:col-span-3 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm animate-in fade-in slide-in-from-bottom-8 duration-700 delay-1000" style={{ animationFillMode: "backwards" }}>
+          <div className="flex justify-between items-center mb-6 border-b pb-4">
+            <h3 className="font-bold flex items-center gap-2 text-gray-800">
+              <TicketIcon className="w-5 h-5 text-indigo-500" /> أحدث التذاكر
+            </h3>
+            <Link href="/tickets" className="text-sm text-indigo-600 hover:underline font-medium">كل التذاكر</Link>
+          </div>
+          
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm text-right">
+              <thead className="bg-gray-50 text-gray-500 text-xs">
+                <tr>
+                  <th className="p-3 font-medium rounded-r-lg">رقم التذكرة</th>
+                  <th className="p-3 font-medium">اسم الزبون</th>
+                  <th className="p-3 font-medium">تاريخ الاستلام</th>
+                  <th className="p-3 font-medium rounded-l-lg">الحالة</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {stats.recentTickets.map((ticket: any) => {
+                  const statusInfo = getStatusLabel(ticket.status);
+                  return (
+                    <tr key={ticket.id} className="hover:bg-gray-50/50 transition-colors">
+                      <td className="p-3 font-bold text-gray-900 text-xs">
+                        <Link href={`/tickets/${ticket.id}`} className="hover:text-indigo-600 hover:underline">
+                          #{ticket.id.slice(-6).toUpperCase()}
+                        </Link>
+                      </td>
+                      <td className="p-3 font-medium text-gray-800">{ticket.customerName}</td>
+                      <td className="p-3 text-gray-500">{new Date(ticket.createdAt).toLocaleDateString('ar-EG')}</td>
+                      <td className="p-3">
+                        <span className={`px-2.5 py-1 rounded-md text-xs font-bold ${statusInfo.color}`}>
+                          {statusInfo.label}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+            {stats.recentTickets.length === 0 && (
+              <p className="text-center text-gray-500 py-6 text-sm">لا توجد تذاكر مسجلة بعد.</p>
+            )}
+          </div>
+        </div>
+
+      </div>
+    </div>
+  );
+}
+</file>
+
+<file path="src/app/(dashboard)/workers/[id]/page.tsx">
+import { getWorkerDetails } from "@/src/features/workers/actions";
+import { 
+  ArrowRight, 
+  Calendar, 
+  ArrowUpCircle, 
+  ArrowDownCircle, 
+  User, 
+  Phone,
+  Wallet
+} from "lucide-react";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+
+// 1. هنا التعديل: تحويل params إلى Promise
+export default async function WorkerProfilePage({ params }: { params: Promise<{ id: string }> }) {
+  
+  // 2. فك الـ Promise للحصول على الـ id
+  const { id } = await params;
+
+  // 3. تمرير الـ id لدالة جلب البيانات
+  const result = await getWorkerDetails(id);
+
+  if (result.error || !result.data) {
+    return notFound();
+  }
+
+  const worker = result.data;
+
+  return (
+    <div className="p-6 max-w-5xl mx-auto space-y-6 animate-in fade-in duration-500">
+      
+      {/* الترويسة وزر العودة */}
+      <div className="flex items-center justify-between">
+        <Link href="/workers" className="flex items-center gap-2 text-gray-500 hover:text-indigo-600 transition">
+          <ArrowRight className="w-5 h-5" /> رجوع لقائمة العمال
+        </Link>
+      </div>
+
+      {/* بطاقة تعريف العامل */}
+      <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+        <div className="flex items-center gap-5">
+          <div className="w-16 h-16 bg-indigo-100 text-indigo-600 rounded-2xl flex items-center justify-center font-black text-2xl">
+            {worker.name[0]}
+          </div>
+          <div>
+            <h1 className="text-2xl font-black text-gray-900">{worker.name}</h1>
+            <div className="flex gap-4 mt-1 text-sm text-gray-500">
+              <span className="flex items-center gap-1"><Phone className="w-3.5 h-3.5" /> {worker.phone}</span>
+              <span className="flex items-center gap-1"><User className="w-3.5 h-3.5" /> {worker.role}</span>
+            </div>
+          </div>
+        </div>
+        
+        <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 text-left min-w-[200px]">
+          <p className="text-xs font-bold text-gray-400 uppercase mb-1 text-right">الرصيد المستحق الحالي</p>
+          <div className={`text-3xl font-black flex items-center justify-end gap-2 ${worker.balance >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+            {worker.balance.toFixed(2)} ₪
+            <Wallet className="w-6 h-6" />
+          </div>
+        </div>
+      </div>
+
+      {/* سجل المعاملات المالية */}
+      <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+        <div className="p-6 border-b bg-gray-50/50 flex items-center gap-2 font-bold text-gray-700">
+          <Calendar className="w-5 h-5 text-indigo-500" /> كشف حساب الحركات المالية
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-right text-sm">
+            <thead className="bg-gray-50 text-gray-400 text-xs uppercase">
+              <tr>
+                <th className="p-4 font-medium">التاريخ</th>
+                <th className="p-4 font-medium">النوع</th>
+                <th className="p-4 font-medium">التفاصيل / ملاحظات</th>
+                <th className="p-4 font-medium">المبلغ</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {worker.transactions.length === 0 ? (
+                <tr>
+                  <td colSpan={4} className="p-10 text-center text-gray-400 font-medium">لا توجد حركات مالية مسجلة بعد لهذا العامل.</td>
+                </tr>
+              ) : (
+                worker.transactions.map((tx: any) => (
+                  <tr key={tx.id} className="hover:bg-gray-50/30 transition">
+                    <td className="p-4 text-gray-500 font-mono text-xs">
+                      {new Date(tx.date).toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' })}
+                    </td>
+                    <td className="p-4">
+                      {tx.type === "STAKE" || tx.type === "BONUS" ? (
+                        <span className="inline-flex items-center gap-1 text-emerald-600 font-bold">
+                          <ArrowUpCircle className="w-4 h-4" /> استحقاق/مكافأة
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 text-rose-600 font-bold">
+                          <ArrowDownCircle className="w-4 h-4" /> سحبيات/دفعات
+                        </span>
+                      )}
+                    </td>
+                    <td className="p-4 text-gray-600 font-medium">
+                      {tx.description || "---"}
+                    </td>
+                    <td className={`p-4 font-black text-lg ${tx.type === "STAKE" || tx.type === "BONUS" ? 'text-emerald-600' : 'text-rose-600'}`}>
+                      {tx.type === "STAKE" || tx.type === "BONUS" ? "+" : "-"}
+                      {tx.amount.toFixed(2)} ₪
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  );
+}
+</file>
+
+<file path="src/app/(dashboard)/workers/page.tsx">
+"use client";
+
+import { useState, useEffect } from "react";
+import Link from "next/link"; //  استيراد Link للتنقل
+import { 
+  registerWorker, 
+  getWorkersWithBalance, 
+  addWorkerTransaction, 
+  deleteWorker 
+} from "@/src/features/workers/actions";
+import { Input } from "@/src/components/ui/Input";
+import { toast } from "react-hot-toast";
+import { 
+  Plus, UserPlus, Trash2, 
+  Loader2, X, Banknote, CreditCard,
+  ChevronLeft
+} from "lucide-react";
+
+export default function WorkersPage() {
+  const [workers, setWorkers] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [isPageLoading, setIsPageLoading] = useState(true);
+
+  // 🔹 State للمودال الجديد
+  const [txModal, setTxModal] = useState({ open: false, userId: '', type: '', name: '' });
+  const [txData, setTxData] = useState({ amount: '', method: 'كاش', notes: '' });
+
+  const loadWorkers = async () => {
+    setIsPageLoading(true);
+    const data = await getWorkersWithBalance();
+    setWorkers(data);
+    setIsPageLoading(false);
+  };
+
+  useEffect(() => { loadWorkers(); }, []);
+
+  const handleAddWorker = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setLoading(true);
+    const form = e.currentTarget;
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData);
+    const res = await registerWorker(data);
+    if (res.success) {
+      toast.success("تم تسجيل العامل بنجاح");
+      form.reset();
+      loadWorkers();
+    } else toast.error(res.error || "خطأ ما");
+    setLoading(false);
+  };
+
+  const handleConfirmTx = async () => {
+    if (!txData.amount || isNaN(Number(txData.amount))) {
+      toast.error("يرجى إدخال مبلغ صحيح");
+      return;
+    }
+
+    const typeLabel = txModal.type === 'STAKE' ? 'استحقاق' : txModal.type === 'ADVANCE' ? 'سلفة' : 'تصفية';
+    const finalDesc = `${typeLabel} - ${txData.method}${txData.notes ? `: ${txData.notes}` : ''}`;
+
+    const res = await addWorkerTransaction({
+      userId: txModal.userId,
+      amount: Number(txData.amount),
+      type: txModal.type,
+      description: finalDesc
+    });
+
+    if (res.success) {
+      toast.success("تم تحديث الحساب المالي");
+      setTxModal({ ...txModal, open: false });
+      setTxData({ amount: '', method: 'كاش', notes: '' });
+      loadWorkers();
+    }
+  };
+
+  const handleDelete = async (userId: string, name: string) => {
+    if (confirm(`حذف العامل (${name}) نهائياً؟`)) {
+      const res = await deleteWorker(userId);
+      if (res.success) { toast.success("تم الحذف"); loadWorkers(); }
+    }
+  };
+
+  return (
+    <div className="p-6 space-y-8 max-w-6xl mx-auto animate-in fade-in duration-500">
+      
+      {/* نموذج إضافة عامل */}
+      <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+        <h2 className="text-lg font-bold mb-6 flex items-center gap-2 text-indigo-600">
+          <UserPlus className="w-5 h-5" /> تسجيل فني جديد
+        </h2>
+        <form onSubmit={handleAddWorker} className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <Input label="الاسم" name="name" required />
+          <Input label="الهاتف" name="phone" required />
+          <Input label="كلمة المرور" name="password" type="password" required />
+          <div className="flex items-end pb-1">
+            <button disabled={loading} className="w-full bg-indigo-600 text-white h-[42px] rounded-xl font-bold hover:bg-indigo-700 transition flex items-center justify-center gap-2">
+              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
+              إضافة
+            </button>
+          </div>
+        </form>
+      </div>
+
+      {/* جدول الحسابات */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        <table className="w-full text-right text-sm">
+          <thead className="bg-gray-50 text-gray-400 text-xs">
+            <tr>
+              <th className="p-4">الفني</th>
+              <th className="p-4">الرصيد الحالي</th>
+              <th className="p-4 text-center">إجراءات مالية</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-100">
+            {workers.map(worker => (
+              <tr key={worker.id} className="hover:bg-gray-50/50 transition group">
+                <td className="p-4">
+                   {/* 👈 رابط لصفحة كشف الحساب الشخصي */}
+                   <Link 
+                    href={`/workers/${worker.id}`} 
+                    className="flex flex-col group-hover:text-indigo-600 transition"
+                   >
+                     <span className="font-bold text-gray-800 decoration-indigo-200 group-hover:underline underline-offset-4">
+                        {worker.name}
+                     </span>
+                     <span className="text-[10px] text-gray-400 flex items-center gap-0.5">
+                        عرض كشف الحساب <ChevronLeft className="w-3 h-3" />
+                     </span>
+                   </Link>
+                </td>
+                <td className="p-4">
+                  <span className={`px-3 py-1 rounded-full font-black text-xs ${worker.currentBalance >= 0 ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'}`}>
+                    {worker.currentBalance.toFixed(2)} ₪
+                  </span>
+                </td>
+                <td className="p-4 flex justify-center gap-2">
+                  <button onClick={() => setTxModal({ open: true, userId: worker.id, type: 'STAKE', name: worker.name })} className="bg-emerald-50 text-emerald-700 px-3 py-1.5 rounded-lg text-xs font-bold border border-emerald-100 hover:bg-emerald-500 hover:text-white transition-all">استحقاق</button>
+                  <button onClick={() => setTxModal({ open: true, userId: worker.id, type: 'ADVANCE', name: worker.name })} className="bg-rose-50 text-rose-700 px-3 py-1.5 rounded-lg text-xs font-bold border border-rose-100 hover:bg-rose-500 hover:text-white transition-all">سلفة</button>
+                  <button onClick={() => setTxModal({ open: true, userId: worker.id, type: 'PAYOUT', name: worker.name })} className="bg-gray-800 text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-black transition">تصفية</button>
+                  <button onClick={() => handleDelete(worker.id, worker.name)} className="p-1.5 text-gray-300 hover:text-rose-600 transition-colors"><Trash2 className="w-4 h-4" /></button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* 🌟 مـودال الـدفع المطور 🌟 */}
+      {txModal.open && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-3xl p-6 w-full max-w-md shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="flex justify-between items-center mb-6 border-b pb-4">
+              <h3 className="font-black text-gray-800">
+                تسجيل {txModal.type === 'STAKE' ? 'استحقاق' : 'دفعة'} لـ <span className="text-indigo-600">{txModal.name}</span>
+              </h3>
+              <button onClick={() => setTxModal({...txModal, open: false})} className="p-1 hover:bg-gray-100 rounded-full transition"><X className="w-5 h-5 text-gray-400" /></button>
+            </div>
+            
+            <div className="space-y-5">
+              <Input label="المبلغ (₪)" type="number" value={txData.amount} onChange={(e) => setTxData({...txData, amount: e.target.value})} autoFocus />
+              
+              <div>
+                <label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-wider">طريقة التعامل</label>
+                <div className="grid grid-cols-2 gap-3">
+                  <button onClick={() => setTxData({...txData, method: 'كاش'})} className={`flex items-center justify-center gap-2 p-3 rounded-xl border-2 transition-all ${txData.method === 'كاش' ? 'border-indigo-600 bg-indigo-50 text-indigo-700' : 'border-gray-100 text-gray-500'}`}>
+                    <Banknote className="w-4 h-4" /> كاش
+                  </button>
+                  <button onClick={() => setTxData({...txData, method: 'بنكي'})} className={`flex items-center justify-center gap-2 p-3 rounded-xl border-2 transition-all ${txData.method === 'بنكي' ? 'border-indigo-600 bg-indigo-50 text-indigo-700' : 'border-gray-100 text-gray-500'}`}>
+                    <CreditCard className="w-4 h-4" /> بنكي
+                  </button>
+                </div>
+              </div>
+
+              <Input label="ملاحظات (اختياري)" value={txData.notes} onChange={(e) => setTxData({...txData, notes: e.target.value})} placeholder="مثلاً: بابت عمل كذا.." />
+
+              <button onClick={handleConfirmTx} className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black text-lg shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all active:scale-[0.98]">
+                تأكيد العملية المالية
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+</file>
+
 <file path="src/components/shared/Navbar.tsx">
 "use client";
 
@@ -3201,14 +3594,14 @@ export default function RootLayout({
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Ticket, Package, Receipt, Settings } from "lucide-react";
+import { LayoutDashboard, Ticket, Package, Receipt, Settings, Users } from "lucide-react";
 
 const menuItems = [
   { name: "الرئيسية", icon: LayoutDashboard, href: "/" },
   { name: "التذاكر والصيانة", icon: Ticket, href: "/tickets" },
   { name: "المخزون والقطع", icon: Package, href: "/inventory" },
   { name: "المشتريات والمصاريف", icon: Receipt, href: "/expenses" },
-  { name: "العمال", icon: Settings, href: "/workers" },
+  { name: "العمال", icon: Users, href: "/workers" },
   { name: "الإعدادات", icon: Settings, href: "/settings" },
 ];
 
@@ -3244,166 +3637,6 @@ export default function Sidebar() {
         })}
       </nav>
     </aside>
-  );
-}
-</file>
-
-<file path="src/app/page.tsx">
-import { getDashboardStats } from "@/src/features/dashboard/actions";
-import { DashboardCharts } from "@/src/features/dashboard/components/DashboardCharts";
-import { 
-  Wallet, Wrench, AlertTriangle, 
-  Ticket as TicketIcon, TrendingUp, AlertCircle, Banknote
-} from "lucide-react";
-import Link from "next/link";
-
-export const dynamic = "force-dynamic";
-
-// دالة مساعدة لتنسيق وتلوين حالة التذكرة
-const getStatusLabel = (status: string) => {
-  const map: Record<string, { label: string, color: string }> = {
-    OPEN: { label: "مفتوحة", color: "bg-yellow-100 text-yellow-800" },
-    IN_PROGRESS: { label: "قيد الصيانة", color: "bg-blue-100 text-blue-800" },
-    WAITING_FOR_PARTS: { label: "بانتظار قطع", color: "bg-orange-100 text-orange-800" },
-    COMPLETED: { label: "مكتملة", color: "bg-green-100 text-green-800" }
-  };
-  return map[status] || { label: status, color: "bg-gray-100 text-gray-800" };
-};
-
-export default async function DashboardPage() {
-  const result = await getDashboardStats();
-
-  if (result.error || !result.data) {
-    return (
-      <div className="p-6 text-center text-red-500 bg-red-50 rounded-2xl border border-red-100">
-        <AlertCircle className="w-10 h-10 mx-auto mb-2" />
-        <p className="font-bold">تعذر تحميل الإحصائيات</p>
-      </div>
-    );
-  }
-
-  const stats = result.data;
-
-  // 👈 تم وضع "الكاش اليومي" كأول بطاقة لأنها الأهم لصاحب العمل
-  const kpiCards = [
-    { title: "الكاش اليومي (الصندوق)", value: `${stats.todaysCash.toFixed(2)} ₪`, icon: Banknote, color: "text-emerald-600", bg: "bg-emerald-50", border: "border-emerald-100" },
-    { title: "الديون المتبقية بالسوق", value: `${stats.totalDebts.toFixed(2)} ₪`, icon: Wallet, color: "text-rose-600", bg: "bg-rose-50", border: "border-rose-100" },
-    { title: "إجمالي إيرادات متوقعة", value: `${stats.totalExpectedRevenue.toFixed(2)} ₪`, icon: TrendingUp, color: "text-blue-600", bg: "bg-blue-50", border: "border-blue-100" },
-    { title: "تذاكر قيد الصيانة", value: stats.statusCounts.IN_PROGRESS, icon: Wrench, color: "text-amber-600", bg: "bg-amber-50", border: "border-amber-100" }
-  ];
-
-  return (
-    <div className="space-y-8 max-w-7xl mx-auto pb-10">
-      
-      <div className="animate-in fade-in slide-in-from-top-4 duration-500">
-        <h1 className="text-2xl font-bold text-gray-900">نظرة عامة</h1>
-        <p className="text-gray-500 text-sm mt-1">ملخص أداء الورشة والحالة المالية اليوم</p>
-      </div>
-
-      {/* بطاقات الإحصائيات العلوية */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {kpiCards.map((card, i) => (
-          <div 
-            key={i} 
-            className={`bg-white p-6 rounded-2xl border ${card.border} shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow animate-in fade-in slide-in-from-bottom-8 duration-700`}
-            style={{ animationFillMode: "backwards", animationDelay: `${i * 150}ms` }}
-          >
-            <div className="flex items-center justify-between mb-4">
-              <div className={`p-3 rounded-xl ${card.bg} ${card.color}`}>
-                <card.icon className="w-6 h-6" />
-              </div>
-            </div>
-            <div>
-              <p className="text-sm text-gray-500 font-medium">{card.title}</p>
-              <h3 className={`text-2xl font-black mt-1 ${card.color}`}>{card.value}</h3>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* المخطط والنواقص */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-500" style={{ animationFillMode: "backwards" }}>
-           <DashboardCharts data={stats.chartData} />
-        </div>
-
-        <div className="bg-white p-6 rounded-2xl border border-red-100 shadow-sm relative overflow-hidden animate-in fade-in slide-in-from-bottom-8 duration-700 delay-700" style={{ animationFillMode: "backwards" }}>
-          <div className="absolute top-0 right-0 w-1 h-full bg-red-500"></div>
-          <div className="flex justify-between items-center mb-4 border-b pb-4">
-            <h3 className="font-bold flex items-center gap-2 text-red-600">
-              <AlertTriangle className="w-5 h-5" /> نواقص المخزون
-            </h3>
-            <span className="bg-red-100 text-red-700 px-2 py-1 rounded-md text-xs font-bold">{stats.lowStockCount} صنف</span>
-          </div>
-
-          {stats.lowStockParts.length === 0 ? (
-            <p className="text-sm text-gray-500 text-center py-6">المخزون بوضع ممتاز، لا توجد نواقص.</p>
-          ) : (
-            <div className="space-y-3">
-              {stats.lowStockParts.map((part: any) => (
-                <div key={part.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-xl border border-gray-100 hover:bg-red-50 transition-colors">
-                  <span className="text-sm font-medium text-gray-800">{part.name}</span>
-                  <span className="text-xs font-black px-2 py-1 bg-white border border-red-200 text-red-600 rounded-lg shadow-sm">
-                    متبقي: {part.quantity}
-                  </span>
-                </div>
-              ))}
-              <div className="pt-2 text-center">
-                <Link href="/inventory" className="text-xs text-gray-500 hover:text-indigo-600 hover:underline">إدارة المخزون &rarr;</Link>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* 🌟 القسم الجديد: أحدث التذاكر المستلمة */}
-        <div className="lg:col-span-3 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm animate-in fade-in slide-in-from-bottom-8 duration-700 delay-1000" style={{ animationFillMode: "backwards" }}>
-          <div className="flex justify-between items-center mb-6 border-b pb-4">
-            <h3 className="font-bold flex items-center gap-2 text-gray-800">
-              <TicketIcon className="w-5 h-5 text-indigo-500" /> أحدث التذاكر
-            </h3>
-            <Link href="/tickets" className="text-sm text-indigo-600 hover:underline font-medium">كل التذاكر</Link>
-          </div>
-          
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm text-right">
-              <thead className="bg-gray-50 text-gray-500 text-xs">
-                <tr>
-                  <th className="p-3 font-medium rounded-r-lg">رقم التذكرة</th>
-                  <th className="p-3 font-medium">اسم الزبون</th>
-                  <th className="p-3 font-medium">تاريخ الاستلام</th>
-                  <th className="p-3 font-medium rounded-l-lg">الحالة</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {stats.recentTickets.map((ticket: any) => {
-                  const statusInfo = getStatusLabel(ticket.status);
-                  return (
-                    <tr key={ticket.id} className="hover:bg-gray-50/50 transition-colors">
-                      <td className="p-3 font-bold text-gray-900 text-xs">
-                        <Link href={`/tickets/${ticket.id}`} className="hover:text-indigo-600 hover:underline">
-                          #{ticket.id.slice(-6).toUpperCase()}
-                        </Link>
-                      </td>
-                      <td className="p-3 font-medium text-gray-800">{ticket.customerName}</td>
-                      <td className="p-3 text-gray-500">{new Date(ticket.createdAt).toLocaleDateString('ar-EG')}</td>
-                      <td className="p-3">
-                        <span className={`px-2.5 py-1 rounded-md text-xs font-bold ${statusInfo.color}`}>
-                          {statusInfo.label}
-                        </span>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-            {stats.recentTickets.length === 0 && (
-              <p className="text-center text-gray-500 py-6 text-sm">لا توجد تذاكر مسجلة بعد.</p>
-            )}
-          </div>
-        </div>
-
-      </div>
-    </div>
   );
 }
 </file>

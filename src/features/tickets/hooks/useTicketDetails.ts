@@ -7,13 +7,17 @@ import {
   removePartFromTicket, addPaymentToTicket, updateTicketInvoiceImage 
 } from "../actions";
 import { getAllSparePartsForDropdown } from "@/src/features/inventory/actions";
+// 👈 استيراد الأنواع
+import { TicketWithDetails } from "@/src/types";
+import { SparePart, TicketStatus } from "@prisma/client";
 
 export function useTicketDetails(ticketId: string) {
-  const [ticketData, setTicketData] = useState<any>(null);
-  const [inventory, setInventory] = useState<any[]>([]);
+  // 👈 تنظيف الـ States
+  const [ticketData, setTicketData] = useState<TicketWithDetails | null>(null);
+  const [inventory, setInventory] = useState<SparePart[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
   
-  const [status, setStatus] = useState<any>("OPEN");
+  const [status, setStatus] = useState<TicketStatus>("OPEN");
   const [laborCost, setLaborCost] = useState(0);
   const [discountPercentage, setDiscountPercentage] = useState(0); 
   const [isSaving, setIsSaving] = useState(false);
@@ -23,15 +27,16 @@ export function useTicketDetails(ticketId: string) {
     setIsLoadingData(true);
     try {
       const ticketResult = await getTicketById(ticketId);
+      // تأكد أن الدالة getTicketById ترجع البيانات بالشكل المتوافق مع TicketWithDetails
       if (ticketResult?.data) {
-        const t = ticketResult.data;
+        const t = ticketResult.data as unknown as TicketWithDetails; // Type Casting
         setTicketData(t);
         setStatus(t.status);
         setLaborCost(t.laborCost || 0);
         setDiscountPercentage(t.discount || 0);
       }
       const inv = await getAllSparePartsForDropdown();
-      if (inv.data) setInventory(inv.data);
+      if (inv.data) setInventory(inv.data as SparePart[]);
     } catch (e) {
       toast.error("خطأ في الاتصال بقاعدة البيانات");
     } finally {
@@ -41,16 +46,15 @@ export function useTicketDetails(ticketId: string) {
 
   useEffect(() => { fetchData(); }, [ticketId]);
 
-  // الحسابات المالية
-  const partsTotal = ticketData?.partsUsed?.reduce((sum: number, p: any) => sum + (p.priceAtTime * p.quantity), 0) || 0;
+  // الحسابات المالية (الآن المحرر سيعرف خصائص p تلقائياً)
+  const partsTotal = ticketData?.partsUsed?.reduce((sum, p) => sum + (p.priceAtTime * p.quantity), 0) || 0;
   const subTotal = partsTotal + laborCost;
   const discountAmount = subTotal * (discountPercentage / 100);
   const grandTotal = subTotal - discountAmount;
-  const totalPaid = (ticketData?.advancePayment || 0) + (ticketData?.payments?.reduce((sum: number, p: any) => sum + p.amount, 0) || 0);
+  const totalPaid = (ticketData?.advancePayment || 0) + (ticketData?.payments?.reduce((sum, p) => sum + p.amount, 0) || 0);
   const remainingAmount = grandTotal - totalPaid;
 
   const finance = { partsTotal, subTotal, discountAmount, grandTotal, totalPaid, remainingAmount };
-
   // الأكشنز
   const handleSaveTicket = async () => {
     setIsSaving(true);
@@ -79,15 +83,27 @@ export function useTicketDetails(ticketId: string) {
     if (res.success) { toast.success("تم تسجيل الدفعة"); fetchData(); }
   };
 
-  const handleUpdateImage = async (url: string) => {
-    await updateTicketInvoiceImage(ticketId, url);
+const handleUpdateImage = async (url: string) => {
+    // جلب الروابط القديمة إن وجدت، وربطها مع الجديد بفاصلة
+    const currentUrls = ticketData?.invoiceImageUrl || "";
+    const newUrls = currentUrls ? `${currentUrls},${url}` : url;
+    
+    await updateTicketInvoiceImage(ticketId, newUrls);
     fetchData();
   };
 
-  return {
+  // دالة جديدة لحذف صورة محددة من المصفوفة
+  const handleRemoveImage = async (urlToRemove: string) => {
+    const currentUrls = ticketData?.invoiceImageUrl || "";
+    const newUrls = currentUrls.split(',').filter((u: string) => u !== urlToRemove).join(',');
+    await updateTicketInvoiceImage(ticketId, newUrls);
+    fetchData();
+  };
+
+return {
     ticketData, inventory, isLoadingData, isSaving, isUpdatingPart,
     status, setStatus, laborCost, setLaborCost, discountPercentage, setDiscountPercentage,
     finance,
-    actions: { handleSaveTicket, handleAddPart, handleRemovePart, handleAddPayment, handleUpdateImage }
+    actions: { handleSaveTicket, handleAddPart, handleRemovePart, handleAddPayment, handleUpdateImage , handleRemoveImage }
   };
 }

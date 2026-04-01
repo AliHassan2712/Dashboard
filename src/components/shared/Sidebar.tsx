@@ -2,19 +2,27 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Ticket, Package, Receipt, Settings, Users } from "lucide-react";
-
-const menuItems = [
-  { name: "الرئيسية", icon: LayoutDashboard, href: "/" },
-  { name: "التذاكر والصيانة", icon: Ticket, href: "/tickets" },
-  { name: "المخزون والقطع", icon: Package, href: "/inventory" },
-  { name: "المشتريات والمصاريف", icon: Receipt, href: "/expenses" },
-  { name: "العمال", icon: Users, href: "/workers" },
-  { name: "الإعدادات", icon: Settings, href: "/settings" },
-];
+import { useSession } from "next-auth/react"; // 👈 استيراد الجلسة
+import { LayoutDashboard, Ticket, Package, Receipt, Settings, Users, FileText } from "lucide-react";
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const { data: session } = useSession(); // 👈 جلب بيانات المستخدم الحالي
+
+  // 👈 تعريف القوائم مع تحديد من يسمح له برؤيتها
+  const menuItems = [
+    { name: "الرئيسية", icon: LayoutDashboard, href: "/", roles: ["ADMIN", "WORKER"] },
+    { name: "التذاكر والصيانة", icon: Ticket, href: "/tickets", roles: ["ADMIN", "WORKER"] },
+    { name: "المخزون والقطع", icon: Package, href: "/inventory", roles: ["ADMIN", "WORKER"] }, // ممكن تخفيها لو حبيت
+    { name: "المشتريات والمصاريف", icon: Receipt, href: "/expenses", roles: ["ADMIN"] }, // للمدير فقط
+    { name: "عروض الأسعار والكتالوج", icon: FileText, href: "/quotations", roles: ["ADMIN"] },
+    { name: "العمال", icon: Users, href: "/workers", roles: ["ADMIN"] }, // للمدير فقط
+    { name: "الإعدادات", icon: Settings, href: "/settings", roles: ["ADMIN", "WORKER"] },
+  ];
+
+  // فلترة القوائم بناءً على صلاحية المستخدم
+  const userRole = session?.user?.role || "WORKER";
+  const visibleMenu = menuItems.filter(item => item.roles.includes(userRole));
 
   return (
     <aside className="print:hidden w-64 bg-slate-900 text-white min-h-screen flex flex-col fixed right-0 top-0 bottom-0 z-20">
@@ -25,7 +33,7 @@ export default function Sidebar() {
       </div>
 
       <nav className="flex-1 py-6 px-3 space-y-2">
-        {menuItems.map((item) => {
+        {visibleMenu.map((item) => {
           const isActive = pathname === item.href;
           const Icon = item.icon;
 

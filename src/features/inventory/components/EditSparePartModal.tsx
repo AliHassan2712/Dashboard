@@ -111,8 +111,7 @@ export function SparePartModal({ part, isSaving, onClose, onSave }: SparePartMod
           <div className="flex flex-col items-center justify-center border-2 border-dashed border-gray-200 rounded-2xl p-4 bg-gray-50 relative group">
             {formData.imageUrl ? (
               <div className="relative w-full aspect-square rounded-xl overflow-hidden shadow-md bg-white border">
-                <Image src={formData.imageUrl} alt="preview" fill className="object-cover" sizes="(max-width: 768px) 100vw, 33vw" />
-                <button type="button" onClick={() => setFormData({...formData, imageUrl: ""})} className="absolute top-2 right-2 bg-red-500 text-white p-1.5 rounded-full shadow-xl hover:scale-110 transition">
+<img src={formData.imageUrl} alt="preview" className="w-full h-full object-cover rounded-xl" />                <button type="button" onClick={() => setFormData({...formData, imageUrl: ""})} className="absolute top-2 right-2 bg-red-500 text-white p-1.5 rounded-full shadow-xl hover:scale-110 transition">
                   <X className="w-4 h-4" />
                 </button>
               </div>
