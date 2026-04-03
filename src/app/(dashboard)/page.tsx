@@ -3,9 +3,9 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
-import { 
-  Banknote, TrendingDown, Store, Wallet, TrendingUp, 
-  AlertTriangle, TicketIcon, Package, ArrowRight, Activity, 
+import {
+  Banknote, TrendingDown, Store, Wallet, TrendingUp,
+  AlertTriangle, TicketIcon, Package, ArrowRight, Activity,
   Loader2, Calendar, Wrench, CheckCircle, Clock, ClipboardList,
   User, ArrowLeftRight
 } from "lucide-react";
@@ -29,9 +29,9 @@ const StatCard = ({ title, value, icon: Icon, color, bg, isCurrency = true }: an
 
 export default function DashboardPage() {
   const { data: session } = useSession();
-  const isAdmin = session?.user?.role === "ADMIN";
-  const userId = session?.user?.id;
-  
+  const isAdmin = (session?.user as any)?.role === "ADMIN";
+  const userId = (session?.user as any)?.id;
+
   const [stats, setStats] = useState<any>(null);
   const [workerStats, setWorkerStats] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -77,21 +77,21 @@ export default function DashboardPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="bg-indigo-600 text-white p-6 rounded-3xl shadow-lg relative overflow-hidden">
-             <TicketIcon className="absolute -right-4 -bottom-4 w-24 h-24 opacity-10" />
-             <p className="text-indigo-100 font-bold text-sm mb-1">تذاكر قيد العمل</p>
-             <h2 className="text-4xl font-black">{workerStats?.openTicketsCount || 0}</h2>
+            <TicketIcon className="absolute -right-4 -bottom-4 w-24 h-24 opacity-10" />
+            <p className="text-indigo-100 font-bold text-sm mb-1">تذاكر قيد العمل</p>
+            <h2 className="text-4xl font-black">{workerStats?.openTicketsCount || 0}</h2>
           </div>
 
           <div className={`${(workerStats?.balance || 0) >= 0 ? 'bg-emerald-600' : 'bg-rose-600'} text-white p-6 rounded-3xl shadow-lg relative overflow-hidden`}>
-             <Wallet className="absolute -right-4 -bottom-4 w-24 h-24 opacity-10" />
-             <p className="opacity-80 font-bold text-sm mb-1">رصيدك المالي (مستحقاتك)</p>
-             <h2 className="text-4xl font-black">₪ {(workerStats?.balance || 0).toFixed(2)}</h2>
+            <Wallet className="absolute -right-4 -bottom-4 w-24 h-24 opacity-10" />
+            <p className="opacity-80 font-bold text-sm mb-1">رصيدك المالي (مستحقاتك)</p>
+            <h2 className="text-4xl font-black">₪ {(workerStats?.balance || 0).toFixed(2)}</h2>
           </div>
 
           <div className="bg-slate-800 text-white p-6 rounded-3xl shadow-lg relative overflow-hidden">
-             <ClipboardList className="absolute -right-4 -bottom-4 w-24 h-24 opacity-10" />
-             <p className="text-slate-400 font-bold text-sm mb-1">قطع (عهدة) بعهدتك</p>
-             <h2 className="text-4xl font-black">{workerStats?.activeTrials || 0}</h2>
+            <ClipboardList className="absolute -right-4 -bottom-4 w-24 h-24 opacity-10" />
+            <p className="text-slate-400 font-bold text-sm mb-1">قطع (عهدة) بعهدتك</p>
+            <h2 className="text-4xl font-black">{workerStats?.activeTrials || 0}</h2>
           </div>
         </div>
 
@@ -110,7 +110,7 @@ export default function DashboardPage() {
           </Link>
 
           <Link href="/trials" className="flex items-center justify-between p-6 bg-white border border-gray-100 rounded-3xl hover:border-indigo-600 transition-all group shadow-sm">
-             <div className="flex items-center gap-4">
+            <div className="flex items-center gap-4">
               <div className="p-3 bg-gray-50 rounded-xl group-hover:bg-indigo-50 transition-colors">
                 <ClipboardList className="w-6 h-6 text-gray-400 group-hover:text-indigo-600" />
               </div>
@@ -131,7 +131,7 @@ export default function DashboardPage() {
   // ==========================================
   return (
     <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500 pb-10">
-      
+
       {/* الترويسة */}
       <div className="bg-gradient-to-r from-indigo-900 to-indigo-700 rounded-3xl p-8 text-white shadow-lg flex justify-between items-center">
         <div>
@@ -152,7 +152,7 @@ export default function DashboardPage() {
         <h2 className="text-xl font-black text-gray-800 flex items-center gap-2">
           <Banknote className="w-5 h-5 text-emerald-600" /> الملخص المالي والتجاري
         </h2>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
           <div className="bg-white p-6 rounded-2xl border-2 border-emerald-500 shadow-sm relative overflow-hidden group">
             <div className="absolute -right-4 -top-4 w-24 h-24 bg-emerald-50 rounded-full group-hover:scale-150 transition-transform duration-500"></div>
@@ -183,14 +183,14 @@ export default function DashboardPage() {
                 <p className="text-gray-500 text-sm mt-1 font-medium">مقارنة بين الإيرادات المحصلة والمصروفات اليومية</p>
               </div>
             </div>
-            
+
             <div className="h-[300px] w-full text-xs sm:text-sm font-bold">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={stats.chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                   <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#64748b' }} dy={10} />
                   <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b' }} dx={-10} />
-                  <Tooltip 
+                  <Tooltip
                     cursor={{ fill: '#f8fafc' }}
                     contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontWeight: 'bold' }}
                   />

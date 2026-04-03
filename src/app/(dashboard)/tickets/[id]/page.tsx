@@ -17,8 +17,7 @@ export default function TicketDetailsPage({ params }: { params: Promise<{ id: st
   const { data: session } = useSession();
   
   // ملاحظة: قمنا بإلغاء قيود isAdmin لعرض المبالغ للجميع (أدمن وفني)
-  const isAdmin = session?.user?.role === "ADMIN" || session?.user?.role === "WORKER";
-
+const isAdmin = (session?.user as any)?.role === "ADMIN" || (session?.user as any)?.role === "WORKER";
   const {
     ticketData, inventory, isLoadingData, isSaving, isUpdatingPart,
     status, setStatus, laborCost, setLaborCost, discountPercentage, setDiscountPercentage,
@@ -75,8 +74,7 @@ export default function TicketDetailsPage({ params }: { params: Promise<{ id: st
 
         {/* القسم الأيمن: بيانات الزبون وجدول القطع */}
         <div className="space-y-6 lg:col-span-2 print:col-span-2">
-          <CustomerInfo ticket={ticketData} status={status} setStatus={setStatus} />
-          <PartsTable 
+<CustomerInfo ticket={ticketData} status={status} setStatus={(val: any) => setStatus(val)} />          <PartsTable 
              parts={ticketData.partsUsed} 
              inventory={inventory} 
              isUpdating={isUpdatingPart} 

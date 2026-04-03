@@ -5,7 +5,7 @@ import { toast } from "react-hot-toast";
 import { getCompressors, addCompressor, updateCompressorStatus, deleteCompressor } from "../actions";
 
 export function useCompressors() {
-  const [compressors, setCompressors] = useState<any[]>([]);
+const [compressors, setCompressors] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);

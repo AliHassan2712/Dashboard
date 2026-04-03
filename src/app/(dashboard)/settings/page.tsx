@@ -44,8 +44,7 @@ export default function SettingsPage() {
          toast.success("ملاحظة: ستحتاج لاستخدام رقم الهاتف الجديد في تسجيل الدخول القادم", { duration: 5000 });
       }
     } else {
-      toast.error(res.error);
-    }
+toast.error(res.error || "حدث خطأ غير متوقع");    }
     setIsSavingProfile(false);
   };
 
@@ -77,8 +76,7 @@ export default function SettingsPage() {
       toast.success("تم تغيير كلمة المرور بنجاح");
       form.reset();
     } else {
-      toast.error(res.error);
-    }
+toast.error(res.error || "حدث خطأ غير متوقع");    }
     setIsSavingPass(false);
   };
 

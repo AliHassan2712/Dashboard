@@ -22,7 +22,7 @@ import { ExportButton } from "@/src/components/shared/ExportButton";
 
 export default function CompressorsPage() {
   // --- States ---
-  const [compressors, setCompressors] = useState([]);
+  const [compressors, setCompressors] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
