@@ -1,7 +1,6 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // إعدادات الصور الخاصة بـ UploadThing
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "utfs.io" },
@@ -9,13 +8,18 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "uufs.io" } 
     ],
   },
-  // تجاهل أخطاء ESLint الشكلية أثناء الـ Build
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-  // تجاهل أخطاء TypeScript الشكلية أثناء الـ Build
+  // تجاهل أخطاء التايب سكريبت أثناء البناء
   typescript: {
     ignoreBuildErrors: true,
+  },
+  // ملاحظة: إعدادات eslint في النسخة 16 تتم عبر ملف منفصل أو CLI
+  // لذا قمنا بإزالتها من هنا لتجنب التحذيرات
+  webpack: (config) => {
+    config.module.rules.push({
+      test: /\.md$/,
+      type: 'asset/source',
+    });
+    return config;
   },
 };
 
