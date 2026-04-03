@@ -151,6 +151,8 @@ model Supplier {
   phone     String?
   totalDebt Float             @default(0.0)
   invoices  PurchaseInvoice[]
+
+  payments    SupplierPayment[] 
 }
 
 model PurchaseInvoice {
@@ -191,3 +193,16 @@ model Expense {
   ticketId String?
   ticket   Ticket?         @relation(fields: [ticketId], references: [id])
 }
+
+
+// ضيف هذا الجدول الجديد
+model SupplierPayment {
+  id         String   @id @default(cuid())
+  amount     Float
+  date       DateTime @default(now())
+  notes      String?
+  
+  supplierId String
+  supplier   Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+}
+

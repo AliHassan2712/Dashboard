@@ -4,104 +4,137 @@ import prisma from "@/src/lib/prisma";
 
 export async function getDashboardStats() {
   try {
+    // تحديد بداية اليوم الحالي (الساعة 12:00 بالليل) لدقة الحسابات
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); 
+
+    // 1. جلب كل التذاكر مع الدفعات لحساب الديون والإيرادات الإجمالية
     const tickets = await prisma.ticket.findMany({
-      include: {
-        partsUsed: true,
-        payments: true,
-      },
+      include: { payments: true }
     });
 
-    const lowStockParts = await prisma.sparePart.findMany({
-      where: { quantity: { lte: prisma.sparePart.fields.lowStockAlert } },
-      select: { id: true, name: true, quantity: true, lowStockAlert: true },
-      take: 5 
-    });
-
-    let totalExpectedRevenue = 0; 
-    let totalPaid = 0; 
-    let todaysCash = 0; // 👈 المتغير الجديد للكاش اليومي
-    const statusCounts = { OPEN: 0, IN_PROGRESS: 0, WAITING_FOR_PARTS: 0, COMPLETED: 0 };
-
-    // تحديد بداية اليوم الحالي لحساب كاش اليوم فقط
-    const todayStart = new Date();
-    todayStart.setHours(0, 0, 0, 0);
+    let totalExpectedRevenue = 0;
+    let totalDebts = 0;
 
     tickets.forEach(ticket => {
-      const partsTotal = ticket.partsUsed.reduce((sum, p) => sum + (p.priceAtTime * p.quantity), 0);
-      const subTotal = partsTotal + ticket.laborCost;
-      const discountAmount = subTotal * (ticket.discount / 100);
-      const grandTotal = subTotal - discountAmount;
+      totalExpectedRevenue += ticket.totalCost;
       
-      let ticketPaid = 0;
+      // حساب إجمالي المدفوع للتذكرة (الدفعة المقدمة + سجل الدفعات)
+      const totalPaidForTicket = (ticket.advancePayment || 0) + ticket.payments.reduce((sum, p) => sum + p.amount, 0);
+      const debt = ticket.totalCost - totalPaidForTicket;
       
-      // حساب الدفعة المقدمة وهل تمت اليوم؟
-      ticketPaid += ticket.advancePayment;
-      if (new Date(ticket.createdAt) >= todayStart) {
-        todaysCash += ticket.advancePayment;
+      if (debt > 0) {
+        totalDebts += debt;
       }
+    });
 
-      // حساب الدفعات الإضافية وهل تمت اليوم؟
-      ticket.payments.forEach(p => {
-        ticketPaid += p.amount;
-        if (new Date(p.createdAt) >= todayStart) {
-          todaysCash += p.amount;
-        }
+    // 2. حساب كاش اليوم (دفعات عادية اليوم + مقدم تذاكر اليوم)
+    const todaysPayments = await prisma.payment.aggregate({
+      where: { createdAt: { gte: today } },
+      _sum: { amount: true }
+    });
+    
+    const todaysAdvancePayments = await prisma.ticket.aggregate({
+      where: { createdAt: { gte: today } },
+      _sum: { advancePayment: true }
+    });
+
+    const todaysCash = (todaysPayments._sum.amount || 0) + (todaysAdvancePayments._sum.advancePayment || 0);
+
+    // 3. إحصائيات حالة التذاكر
+    const statusCounts = {
+      OPEN: await prisma.ticket.count({ where: { status: "OPEN" } }),
+      IN_PROGRESS: await prisma.ticket.count({ where: { status: "IN_PROGRESS" } }),
+      COMPLETED: await prisma.ticket.count({ where: { status: "COMPLETED" } }),
+      CANCELED: await prisma.ticket.count({ where: { status: "CANCELED" } })
+    };
+
+    // 4. نواقص المخزون (بناءً على حد التنبيه لكل قطعة)
+    const allParts = await prisma.sparePart.findMany();
+    const lowStockParts = allParts.filter(part => part.quantity <= part.lowStockAlert).slice(0, 5);
+    const lowStockCount = allParts.filter(part => part.quantity <= part.lowStockAlert).length;
+
+    // 5. أحدث 5 تذاكر
+    const recentTickets = await prisma.ticket.findMany({
+      orderBy: { createdAt: 'desc' },
+      take: 5,
+    });
+
+    // ==========================================
+    // 💰 القسم المالي (المصاريف والموردين)
+    // ==========================================
+
+    // 6. إجمالي مصاريف اليوم من الدرج
+    const expensesToday = await prisma.expense.aggregate({
+      where: { date: { gte: today } },
+      _sum: { amount: true }
+    });
+    const todaysExpenses = expensesToday._sum.amount || 0;
+
+    // 7. إجمالي ديون الموردين (المبالغ المستحقة للتجار علينا)
+    const suppliersDebt = await prisma.supplier.aggregate({
+      _sum: { totalDebt: true }
+    });
+    const totalSupplierDebts = suppliersDebt._sum.totalDebt || 0;
+
+    // 8. صافي الصندوق لليوم
+    const netCash = todaysCash - todaysExpenses;
+
+    // ==========================================
+    // 📊 بناء بيانات المخطط البياني (آخر 7 أيام)
+    // ==========================================
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(today.getDate() - 6);
+    sevenDaysAgo.setHours(0, 0, 0, 0);
+
+    // جلب البيانات اللازمة للمخطط دفعة واحدة لتحسين الأداء
+    const [pms, tks, exs] = await Promise.all([
+      prisma.payment.findMany({ where: { createdAt: { gte: sevenDaysAgo } } }),
+      prisma.ticket.findMany({ where: { createdAt: { gte: sevenDaysAgo } } }),
+      prisma.expense.findMany({ where: { date: { gte: sevenDaysAgo } } })
+    ]);
+
+    const chartData = [];
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date();
+      date.setDate(today.getDate() - i);
+      const dayName = date.toLocaleDateString('ar-EG', { weekday: 'short' });
+
+      const isSameDay = (d1: Date, d2: Date) => 
+        d1.getDate() === d2.getDate() && d1.getMonth() === d2.getMonth() && d1.getFullYear() === d2.getFullYear();
+
+      const dayRevenue = 
+        pms.filter(p => isSameDay(p.createdAt, date)).reduce((s, p) => s + p.amount, 0) +
+        tks.filter(t => isSameDay(t.createdAt, date)).reduce((s, t) => s + (t.advancePayment || 0), 0);
+      
+      const dayExpense = exs.filter(e => isSameDay(e.date, date)).reduce((s, e) => s + e.amount, 0);
+
+      chartData.push({
+        name: dayName,
+        revenue: dayRevenue,
+        expenses: dayExpense
       });
-      
-      totalExpectedRevenue += grandTotal;
-      totalPaid += ticketPaid;
-      
-      if (ticket.status === "OPEN") statusCounts.OPEN++;
-      if (ticket.status === "IN_PROGRESS") statusCounts.IN_PROGRESS++;
-      if (ticket.status === "WAITING_FOR_PARTS") statusCounts.WAITING_FOR_PARTS++;
-      if (ticket.status === "COMPLETED") statusCounts.COMPLETED++;
-    });
-
-    const totalDebts = totalExpectedRevenue - totalPaid;
-
-    const last7Days = Array.from({length: 7}).map((_, i) => {
-      const d = new Date();
-      d.setDate(d.getDate() - i);
-      return d.toISOString().split('T')[0]; 
-    }).reverse();
-
-    const chartData = last7Days.map(date => {
-      const count = tickets.filter(t => t.createdAt.toISOString().split('T')[0] === date).length;
-      const shortDate = new Date(date).toLocaleDateString('ar-EG', { month: 'numeric', day: 'numeric' });
-      return { name: shortDate, "التذاكر": count };
-    });
-
-    const lowStockCount = await prisma.sparePart.count({
-      where: { quantity: { lte: prisma.sparePart.fields.lowStockAlert } }
-    });
-
-    // 👈 جلب أحدث 5 تذاكر فقط وترتيبهم من الأحدث للأقدم
-    const recentTickets = [...tickets]
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-      .slice(0, 5)
-      .map(t => ({
-        id: t.id,
-        customerName: t.customerName,
-        status: t.status,
-        createdAt: t.createdAt
-      }));
+    }
 
     return {
       success: true,
       data: {
         totalTickets: tickets.length,
-        totalDebts,
         totalExpectedRevenue,
-        todaysCash, // 👈 إرجاع الكاش اليومي
+        totalDebts,
         statusCounts,
         lowStockParts,
         lowStockCount,
-        chartData,
-        recentTickets // 👈 إرجاع أحدث التذاكر
+        recentTickets,
+        chartData, 
+        todaysCash,
+        todaysExpenses,
+        netCash,
+        totalSupplierDebts,
       }
     };
   } catch (error) {
     console.error("Dashboard Stats Error:", error);
-    return { error: "فشل في تحميل إحصائيات لوحة التحكم" };
+    return { error: "فشل في جلب إحصائيات لوحة التحكم" };
   }
 }

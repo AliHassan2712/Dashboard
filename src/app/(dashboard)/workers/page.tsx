@@ -10,6 +10,7 @@ import {
 } from "@/src/features/workers/actions";
 import { Input } from "@/src/components/ui/Input";
 import { toast } from "react-hot-toast";
+import { WorkerWithTransactions } from "@/src/types";
 import { 
   Plus, UserPlus, Trash2, 
   Loader2, X, Banknote, CreditCard,
@@ -17,8 +18,7 @@ import {
 } from "lucide-react";
 
 export default function WorkersPage() {
-  const [workers, setWorkers] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
+const [workers, setWorkers] = useState<WorkerWithTransactions[]>([]);  const [loading, setLoading] = useState(false);
   const [isPageLoading, setIsPageLoading] = useState(true);
 
   // 🔹 State للمودال الجديد

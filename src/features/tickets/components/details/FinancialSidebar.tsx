@@ -76,7 +76,7 @@ export const FinancialSidebar = ({
         <h4 className="text-[10px] font-black text-gray-400 flex items-center gap-2 uppercase tracking-widest">
           <CreditCard className="w-3 h-3" /> سجل الدفعات
         </h4>
-        <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+        <div className="space-y-2  pr-1">
           <div className="flex justify-between text-xs p-3 bg-orange-50 text-orange-700 rounded-xl border border-orange-100">
             <div className="flex flex-col"><span className="font-bold">دفعة مقدمة</span></div>
             <span className="font-black text-sm">{advancePayment.toFixed(2)} ₪</span>
