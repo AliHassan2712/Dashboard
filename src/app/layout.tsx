@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Cairo } from 'next/font/google'
 import "./globals.css";
 import Providers from "../components/shared/Providers";
 import { Toaster } from "react-hot-toast"; //  استدعاء المكتبة
-const inter = Inter({ subsets: ["latin", "arabic"] });
-
+const cairo = Cairo({ 
+  subsets: ['latin', 'arabic'],
+  weight: ['400', '600', '700', '900'],
+})
 export const metadata: Metadata = {
   title: "نظام إدارة ورشة الكمبريسور",
   description: "نظام إداري مخصص لورش صيانة وتجميع الكمبريسورات",
@@ -17,7 +19,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ar" dir="rtl">
-      <body className={inter.className}>
+      <body className={cairo.className}>
         {/* تغليف التطبيق بمزود المصادقة */}
         <Providers>
           <Toaster position="top-center" />
