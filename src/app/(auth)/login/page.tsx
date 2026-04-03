@@ -1,7 +1,7 @@
 import { LoginForm } from "@/src/features/auth/login/components/LoginForm";
-import { getServerSession } from "next-auth"; //  استيراد جلب الجلسة
-import { authOptions } from "@/src/lib/auth"; //  استيراد إعدادات المصادقة
-import { redirect } from "next/navigation"; //  استيراد التوجيه
+import { getServerSession } from "next-auth"; 
+import { authOptions } from "@/src/lib/auth";
+import { redirect } from "next/navigation"; 
 
 export default async function LoginPage() {
   // 1. فحص هل المستخدم مسجل دخول أصلاً؟
@@ -21,7 +21,6 @@ export default async function LoginPage() {
           <p className="text-gray-500 text-sm">تسجيل الدخول للنظام</p>
         </div>
 
-        {/* استدعاء الواجهة المفصولة هنا */}
         <LoginForm />
         
       </div>

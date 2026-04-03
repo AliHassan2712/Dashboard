@@ -1,0 +1,100 @@
+"use server";
+
+import prisma from "@/src/lib/prisma";
+import { revalidatePath } from "next/cache";
+
+// 1. جلب كل العهد والقطع التجريبية
+export async function getTrialItems() {
+  try {
+    const trials = await prisma.trialItem.findMany({
+      include: {
+        worker: { select: { name: true } },
+        sparePart: { select: { name: true } },
+        ticket: { select: { id: true, customerName: true } }
+      },
+      orderBy: { givenAt: 'desc' }
+    });
+    return { success: true, data: trials };
+  } catch (error) {
+    return { error: "فشل جلب سجل العهد" };
+  }
+}
+
+// 2. إعطاء قطعة كعهدة لفني (تخصم من المخزن)
+export async function createTrialItem(data: { workerId: string; sparePartId: string; qty: number; notes: string }) {
+  try {
+    const part = await prisma.sparePart.findUnique({ where: { id: data.sparePartId } });
+    if (!part || part.quantity < data.qty) {
+      return { error: "الكمية في المخزن لا تكفي!" };
+    }
+
+    await prisma.$transaction(async (tx) => {
+      // تسجيل العهدة
+      await tx.trialItem.create({
+        data: {
+          workerId: data.workerId,
+          sparePartId: data.sparePartId,
+          qty: data.qty,
+          notes: data.notes,
+          status: "ACTIVE"
+        }
+      });
+
+      // خصم القطعة من المخزن مؤقتاً
+      await tx.sparePart.update({
+        where: { id: data.sparePartId },
+        data: { quantity: { decrement: data.qty } }
+      });
+    });
+
+    revalidatePath("/trials");
+    revalidatePath("/inventory");
+    return { success: true };
+  } catch (error) {
+    return { error: "فشل تسجيل العهدة" };
+  }
+}
+
+// 3. إرجاع القطعة للمخزن (تغيير الحالة لـ RETURNED وترجيع الكمية)
+export async function returnTrialItem(trialId: string) {
+  try {
+    const trial = await prisma.trialItem.findUnique({ where: { id: trialId } });
+    if (!trial || trial.status !== "ACTIVE" || !trial.sparePartId) {
+      return { error: "العهدة غير صالحة للإرجاع" };
+    }
+
+    await prisma.$transaction(async (tx) => {
+      // تحديث حالة العهدة
+      await tx.trialItem.update({
+        where: { id: trialId },
+        data: { status: "RETURNED", returnedAt: new Date() }
+      });
+
+      // إرجاع القطع للمخزن
+      await tx.sparePart.update({
+        where: { id: trial.sparePartId },
+        data: { quantity: { increment: trial.qty } }
+      });
+    });
+
+    revalidatePath("/trials");
+    revalidatePath("/inventory");
+    return { success: true };
+  } catch (error) {
+    return { error: "فشل إرجاع العهدة" };
+  }
+}
+
+// 4. استهلاك القطعة (تغيير الحالة لـ EXPIRED/USED إذا تم تركيبها وتلفها أو تم استخدامها)
+export async function consumeTrialItem(trialId: string) {
+  try {
+    await prisma.trialItem.update({
+      where: { id: trialId },
+      data: { status: "EXPIRED" } // ستبقى مخصومة من المخزن ولن ترجع
+    });
+    revalidatePath("/trials");
+    return { success: true };
+  } catch (error) {
+    return { error: "فشل تحديث الحالة" };
+  }
+}

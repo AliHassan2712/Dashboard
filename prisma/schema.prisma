@@ -6,16 +6,21 @@ datasource db {
   provider = "postgresql"
 }
 
+enum Role {
+  ADMIN
+  WORKER
+}
+
 // ================= الأدوار والمستخدمين =================
 model User {
   id            String              @id @default(cuid())
   name          String
   phone         String              @unique
   password      String
-  role          String              @default("WORKER") // ADMIN أو WORKER
-  baseSalary    Float               @default(0)        // الراتب المرجعي
+  role          Role                @default(WORKER) // ADMIN أو WORKER
+  baseSalary    Float               @default(0)        
 
-  //  العلاقات المصححة مع أسماء الربط (Relation Names)
+  //  (Relation Names)
   tickets       Ticket[]            @relation("WorkerTickets")
   trialItems    TrialItem[]         @relation("WorkerTrials")
   transactions  WorkerTransaction[]
@@ -40,12 +45,13 @@ model SparePart {
 
 model Compressor {
   id             String      @id @default(cuid())
-  serialNumber   String      @unique
+  serialNumber   String?     
   modelName      String
   productionCost Float       @default(0.0)
   sellingPrice   Float       @default(0.0)
   status         String      @default("READY")
-
+  imageUrl       String?     
+  createdAt      DateTime    @default(now()) 
   trialItems     TrialItem[]
 }
 
@@ -71,7 +77,7 @@ model TrialItem {
   compressorId   String?
   compressor     Compressor? @relation(fields: [compressorId], references: [id])
 
-  //  ربط العلاقة مع User بنفس الاسم "WorkerTrials"
+  // "WorkerTrials"
   workerId       String?
   worker         User?       @relation("WorkerTrials", fields: [workerId], references: [id])
   
@@ -103,7 +109,7 @@ model Ticket {
   createdAt        DateTime     @default(now())
   updatedAt        DateTime     @updatedAt
 
-  //  ربط العلاقة مع User بنفس الاسم "WorkerTickets"
+  // "WorkerTickets"
   workerId         String?
   worker           User?        @relation("WorkerTickets", fields: [workerId], references: [id])
   
@@ -134,12 +140,19 @@ model TicketPart {
   priceAtTime Float
 }
 
+
+enum TypesWorkerTransaction {
+  ADVANCE
+  STAKE
+  BONUS
+  PAYOUT
+}
 model WorkerTransaction {
   id          String   @id @default(cuid())
   userId      String
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   amount      Float    
-  type        String   // ADVANCE, STAKE, BONUS, PAYOUT
+  type        TypesWorkerTransaction   
   description String?  
   date        DateTime @default(now())
 }
@@ -154,6 +167,18 @@ model Supplier {
 
   payments    SupplierPayment[] 
 }
+
+model SupplierPayment {
+  id         String   @id @default(cuid())
+  amount     Float
+  date       DateTime @default(now())
+  notes      String?
+  
+  supplierId String
+  supplier   Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+}
+
+
 
 model PurchaseInvoice {
   id          String         @id @default(cuid())
@@ -195,14 +220,4 @@ model Expense {
 }
 
 
-// ضيف هذا الجدول الجديد
-model SupplierPayment {
-  id         String   @id @default(cuid())
-  amount     Float
-  date       DateTime @default(now())
-  notes      String?
-  
-  supplierId String
-  supplier   Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
-}
 

@@ -1,70 +1,132 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useReducer, useEffect } from "react";
 import { toast } from "react-hot-toast";
-import { getSpareParts, createSparePart, updateSparePart, deleteSparePart } from "../actions";
-import { SparePart } from "@prisma/client"; //  استيراد النوع الجاهز من قاعدة البيانات
+import { SparePart } from "@prisma/client";
+import { getInventory, addSparePart, updateSparePart, deleteSparePart } from "../actions";
+
+interface InventoryState {
+  parts: SparePart[];
+  searchQuery: string;
+  isLoading: boolean;
+  isSubmitting: boolean;
+  modals: { addEdit: boolean };
+  editingId: string | null;
+  forms: {
+    part: { name: string; quantity: string; averageCost: string; sellingPrice: string; lowStockAlert: string };
+  };
+}
+
+const initialState: InventoryState = {
+  parts: [],
+  searchQuery: "",
+  isLoading: true,
+  isSubmitting: false,
+  modals: { addEdit: false },
+  editingId: null,
+  forms: {
+    part: { name: "", quantity: "0", averageCost: "0", sellingPrice: "0", lowStockAlert: "5" },
+  },
+};
+
+type Action =
+  | { type: "SET_PARTS"; payload: SparePart[] }
+  | { type: "SET_SEARCH"; payload: string }
+  | { type: "SET_LOADING"; payload: boolean }
+  | { type: "SET_SUBMITTING"; payload: boolean }
+  | { type: "OPEN_MODAL"; payload: { type: keyof InventoryState["modals"], editData?: SparePart | null } }
+  | { type: "CLOSE_MODALS" }
+  | { type: "UPDATE_FORM"; field: string; value: any };
+
+function reducer(state: InventoryState, action: Action): InventoryState {
+  switch (action.type) {
+    case "SET_PARTS": return { ...state, parts: action.payload, isLoading: false };
+    case "SET_SEARCH": return { ...state, searchQuery: action.payload };
+    case "SET_LOADING": return { ...state, isLoading: action.payload };
+    case "SET_SUBMITTING": return { ...state, isSubmitting: action.payload };
+    case "OPEN_MODAL": {
+      if (action.payload.editData) {
+        return {
+          ...state,
+          modals: { ...state.modals, [action.payload.type]: true },
+          editingId: action.payload.editData.id,
+          forms: { part: { 
+            name: action.payload.editData.name, 
+            quantity: String(action.payload.editData.quantity), 
+            averageCost: String(action.payload.editData.averageCost || 0),
+            sellingPrice: String(action.payload.editData.sellingPrice),
+            lowStockAlert: String(action.payload.editData.lowStockAlert)
+          }}
+        };
+      }
+      return {
+        ...state,
+        modals: { ...state.modals, [action.payload.type]: true },
+        editingId: null,
+        forms: initialState.forms 
+      };
+    }
+    case "CLOSE_MODALS": return { ...state, modals: initialState.modals, editingId: null };
+    case "UPDATE_FORM": return { ...state, forms: { part: { ...state.forms.part, [action.field]: action.value } } };
+    default: return state;
+  }
+}
 
 export function useInventory() {
-  //  تحديد نوع المصفوفة بشكل دقيق
-  const [parts, setParts] = useState<SparePart[]>([]); 
-  const [isLoading, setIsLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
-  
-  // حالات المودال (النافذة المنبثقة)
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  //  تحديد أن القطعة إما أن تكون من نوع SparePart أو null
-  const [editingPart, setEditingPart] = useState<SparePart | null>(null); 
-  const [isSaving, setIsSaving] = useState(false);
+  const [state, dispatch] = useReducer(reducer, initialState);
 
-  const loadData = async () => {
-    setIsLoading(true);
-    const result = await getSpareParts();
-    setParts((result?.data as SparePart[]) || []);
-    setIsLoading(false);
+  const fetchInventory = async () => {
+    dispatch({ type: "SET_LOADING", payload: true });
+    const res = await getInventory(); // 👈 تم التصحيح: هنا نستخدم دالة الجلب وليس الإضافة!
+    if (res.success) dispatch({ type: "SET_PARTS", payload: res.data as SparePart[] || [] });
   };
 
-  useEffect(() => { loadData(); }, []);
+  useEffect(() => { fetchInventory(); }, []);
 
-  // فلترة ذكية
-  const filteredParts = parts.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()));
-
-  // الأكشنز
-  const handleSave = async (formData: any) => { 
-    setIsSaving(true);
-    const result = editingPart 
-      ? await updateSparePart(editingPart.id, formData) 
-      : await createSparePart(formData);
+  const handleSavePart = async (e: React.FormEvent) => {
+    e.preventDefault();
+    dispatch({ type: "SET_SUBMITTING", payload: true });
     
-    if (result.success) {
-      toast.success(editingPart ? "تم التحديث بنجاح" : "تمت الإضافة بنجاح");
-      setIsModalOpen(false);
-      loadData();
+    const payload = {
+      name: state.forms.part.name,
+      quantity: Number(state.forms.part.quantity),
+      averageCost: Number(state.forms.part.averageCost),
+      sellingPrice: Number(state.forms.part.sellingPrice),
+      lowStockAlert: Number(state.forms.part.lowStockAlert)
+    };
+
+    let res;
+    if (state.editingId) {
+      res = await updateSparePart(state.editingId, payload);
     } else {
-      toast.error(result.error as string);
+      res = await addSparePart(payload); // 👈 تم التصحيح: اسم الدالة هو addSparePart
     }
-    setIsSaving(false);
-  };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("هل أنت متأكد من حذف هذه القطعة؟")) return;
-    const result = await deleteSparePart(id);
-    if (result.success) {
-      toast.success("تم الحذف بنجاح");
-      loadData();
+    if (res.success) {
+      toast.success(state.editingId ? "تم التعديل بنجاح" : "تمت الإضافة بنجاح");
+      dispatch({ type: "CLOSE_MODALS" });
+      fetchInventory();
     } else {
-      toast.error(result.error as string);
+      toast.error(res.error || "حدث خطأ أثناء الحفظ");
+    }
+    dispatch({ type: "SET_SUBMITTING", payload: false });
+  };
+
+  const handleDelete = async (id: string, name: string) => {
+    if (confirm(`هل أنت متأكد من حذف القطعة (${name}) نهائياً؟`)) {
+      const res = await deleteSparePart(id);
+      if (res.success) { 
+        toast.success("تم الحذف"); 
+        fetchInventory(); 
+      } else { 
+        toast.error(res.error || "حدث خطأ أثناء الحذف"); 
+      }
     }
   };
 
-  const openModal = (part: SparePart | null = null) => {
-    setEditingPart(part);
-    setIsModalOpen(true);
-  };
+  const filteredParts = state.parts.filter(part => 
+    part.name.toLowerCase().includes(state.searchQuery.toLowerCase())
+  );
 
-  return {
-    parts: filteredParts, isLoading, searchTerm, setSearchTerm,
-    isModalOpen, setIsModalOpen, editingPart, isSaving,
-    actions: { handleSave, handleDelete, openModal }
-  };
+  return { state, filteredParts, dispatch, actions: { handleSavePart, handleDelete } };
 }

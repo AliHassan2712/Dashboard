@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react"; // 👈 استيراد الجلسة
-import { LayoutDashboard, Ticket, Package, Receipt, Settings, Users, FileText } from "lucide-react";
+import { LayoutDashboard, Ticket, Package, Receipt, Settings, Users, FileText, PieChart, ClipboardList } from "lucide-react";
 
 export default function Sidebar() {
   const pathname = usePathname();
@@ -16,9 +16,14 @@ export default function Sidebar() {
     { name: "المخزون والقطع", icon: Package, href: "/inventory", roles: ["ADMIN", "WORKER"] }, // ممكن تخفيها لو حبيت
     { name: "المشتريات والمصاريف", icon: Receipt, href: "/expenses", roles: ["ADMIN"] }, // للمدير فقط
     { name: "عروض الأسعار والكتالوج", icon: FileText, href: "/quotations", roles: ["ADMIN"] },
+    { name: "الميزانية والتقارير", icon: PieChart, href: "/reports", roles: ["ADMIN"] },
+    { name: "مخزن الكمبريسورات", icon: Package, href: "/compressors", roles: ["ADMIN"] },
+    { name: "العهد والتجارب", icon: ClipboardList, href: "/trials", roles: ["ADMIN"] },
     { name: "العمال", icon: Users, href: "/workers", roles: ["ADMIN"] }, // للمدير فقط
     { name: "الإعدادات", icon: Settings, href: "/settings", roles: ["ADMIN", "WORKER"] },
   ];
+
+  
 
   // فلترة القوائم بناءً على صلاحية المستخدم
   const userRole = session?.user?.role || "WORKER";
