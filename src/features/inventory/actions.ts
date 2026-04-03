@@ -1,21 +1,20 @@
-"use server"; //  هذا السطر السحري يخبر Next.js أن كل الدوال هنا تعمل على السيرفر فقط ولا تصل للمتصفح (أمان عالي)
+"use server"; // هذا السطر السحري يخبر Next.js أن كل الدوال هنا تعمل على السيرفر فقط ولا تصل للمتصفح (أمان عالي)
 
 import prisma from "@/src/lib/prisma";
 import { sparePartSchema, type SparePartFormValues } from "./validations";
 import { revalidatePath } from "next/cache";
 
 // 1. دالة إضافة قطعة غيار جديدة
-export async function createSparePart(data: SparePartFormValues) {
+export async function addSparePart(data: SparePartFormValues) {
   try {
     // تحقق أمني إضافي في السيرفر (Server-side Validation)
-    // حتى لو حاول شخص تجاوز الـ Frontend، السيرفر سيوقفه هنا
     const parsedData = sparePartSchema.safeParse(data);
     
     if (!parsedData.success) {
       return { error: "بيانات غير صالحة تم إرسالها للسيرفر" };
     }
 
-    // إدخال البيانات في قاعدة بيانات Neon عبر Prisma
+    // إدخال البيانات في قاعدة بيانات عبر Prisma
     const newPart = await prisma.sparePart.create({
       data: parsedData.data,
     });
@@ -31,7 +30,7 @@ export async function createSparePart(data: SparePartFormValues) {
 }
 
 // 2. دالة جلب كل قطع الغيار
-export async function getSpareParts() {
+export async function getInventory() {
   try {
     const parts = await prisma.sparePart.findMany({
       orderBy: { name: 'asc' }, // ترتيب أبجدي حسب الاسم
@@ -76,19 +75,17 @@ export async function deleteSparePart(id: string) {
   }
 }
 
-
 // 🟡 دالة جلب كل قطع الغيار (لعرضها في القائمة المنسدلة داخل التذكرة)
 export async function getAllSparePartsForDropdown() {
   try {
     const parts = await prisma.sparePart.findMany({
-      // نختار فقط الحقول التي نحتاجها لتقليل حجم البيانات (أسرع)
       select: {
         id: true,
         name: true,
         sellingPrice: true,
         quantity: true, // مهم لنعرف إذا كانت القطعة متوفرة أم لا
       },
-      orderBy: { name: 'asc' } // ترتيب أبجدي ليسهل على العامل البحث
+      orderBy: { name: 'asc' } 
     });
     return { success: true, data: parts };
   } catch (error) {

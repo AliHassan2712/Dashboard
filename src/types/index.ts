@@ -1,11 +1,15 @@
-import { 
-  Ticket, 
-  TicketPart, 
-  SparePart, 
-  User, 
-  Payment, 
-  WorkerTransaction 
+import {
+  Ticket,
+  TicketPart,
+  SparePart,
+  User,
+  Payment,
+  WorkerTransaction,
+   PurchaseInvoice, 
+   SupplierPayment
+
 } from "@prisma/client";
+
 
 // ==========================================
 // 1. أنواع نظام التذاكر (Tickets)
@@ -61,4 +65,27 @@ export type DashboardStats = {
   todaysExpenses: number;
   netCash: number;
   totalSupplierDebts: number;
+};
+
+
+
+// ==========================================
+// 4. أنواع المصاريف والمشتريات (Expenses & Purchases)
+// ==========================================
+
+// نوع فاتورة المشتريات مدمج مع اسم التاجر
+export type PurchaseInvoiceWithSupplier = PurchaseInvoice & {
+  supplier: { name: string };
+};
+
+// نوع الدفعة مدمج مع اسم التاجر
+export type SupplierPaymentWithSupplier = SupplierPayment & {
+  supplier: { name: string };
+};
+
+// نوع ملخص الإحصائيات العلوية
+export type FinancialOverview = {
+  totalExpenses: number;
+  totalPurchases: number;
+  totalDebts: number;
 };

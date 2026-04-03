@@ -129,39 +129,74 @@ export async function getPurchaseInvoices() {
 }
 
 // إضافة فاتورة مشتريات وتحديث دين التاجر أوتوماتيكياً
+// ابحث عن دالة addPurchaseInvoice واستبدلها بالكامل بهذا الكود:
+
 export async function addPurchaseInvoice(data: {
   supplierId: string;
   totalAmount: number;
   paidAmount: number;
+  items: { sparePartId: string; quantity: number; unitCost: number }[]; // 👈 الأسطر الجديدة: الأصناف
 }) {
   try {
-    // 1. تسجيل الفاتورة
-    await prisma.purchaseInvoice.create({
-      data: {
-        supplierId: data.supplierId,
-        totalAmount: data.totalAmount,
-        paidAmount: data.paidAmount,
+    // نستخدم Transaction عشان لو فشل تحديث المخزون، يتراجع عن الفاتورة كاملة (أمان 100%)
+    await prisma.$transaction(async (tx) => {
+      // 1. تسجيل الفاتورة والأصناف بداخلها
+      const invoice = await tx.purchaseInvoice.create({
+        data: {
+          supplierId: data.supplierId,
+          totalAmount: data.totalAmount,
+          paidAmount: data.paidAmount,
+          items: {
+            create: data.items.map(item => ({
+              sparePartId: item.sparePartId,
+              quantity: item.quantity,
+              unitCost: item.unitCost
+            }))
+          }
+        }
+      });
+
+      // 2. تحديث ديون المورد
+      const remainingDebt = data.totalAmount - data.paidAmount;
+      if (remainingDebt > 0) {
+        await tx.supplier.update({
+          where: { id: data.supplierId },
+          data: { totalDebt: { increment: remainingDebt } }
+        });
+      }
+
+      // 3. تحديث كميات المخزون وحساب (متوسط التكلفة الجديد) لكل قطعة
+      for (const item of data.items) {
+        const part = await tx.sparePart.findUnique({ where: { id: item.sparePartId } });
+        if (part) {
+          const oldQty = part.quantity;
+          const oldCost = part.averageCost;
+          const newQty = item.quantity;
+          const newCost = item.unitCost;
+          
+          const totalQty = oldQty + newQty;
+          // المعادلة المحاسبية لمتوسط التكلفة المرجح:
+          const newAverageCost = totalQty > 0 ? ((oldQty * oldCost) + (newQty * newCost)) / totalQty : newCost;
+
+          await tx.sparePart.update({
+            where: { id: item.sparePartId },
+            data: {
+              quantity: { increment: newQty },
+              averageCost: newAverageCost
+            }
+          });
+        }
       }
     });
 
-    // 2. تحديث ديون المورد (نضيف عليه المبلغ المتبقي غير المدفوع)
-    const remainingDebt = data.totalAmount - data.paidAmount;
-    if (remainingDebt > 0) {
-      await prisma.supplier.update({
-        where: { id: data.supplierId },
-        data: {
-          totalDebt: { increment: remainingDebt }
-        }
-      });
-    }
-
     revalidatePath("/expenses");
+    revalidatePath("/inventory"); // تحديث شاشة المخزن كمان
     return { success: true };
   } catch (error) {
-    return { error: "فشل إضافة الفاتورة" };
+    console.error("Add Invoice Error:", error);
+    return { error: "فشل إضافة الفاتورة وتحديث المخزون" };
   }
 }
-
 
 
 // ==========================================

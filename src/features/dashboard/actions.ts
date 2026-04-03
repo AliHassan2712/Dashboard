@@ -138,3 +138,34 @@ export async function getDashboardStats() {
     return { error: "فشل في جلب إحصائيات لوحة التحكم" };
   }
 }
+
+
+// جلب إحصائيات لوحة تحكم الفني
+export async function getWorkerDashboardStats(workerId: string) {
+  try {
+    // 1. عدد التذاكر المفتوحة المكلف بها الفني
+    const openTicketsCount = await prisma.ticket.count({
+      where: { workerId, status: { in: ['OPEN', 'IN_PROGRESS', 'WAITING_FOR_PARTS'] } }
+    });
+
+    // 2. حساب الرصيد المالي الحالي للفني (استحقاقات - سلف)
+    const transactions = await prisma.workerTransaction.findMany({
+      where: { userId: workerId }
+    });
+
+    const balance = transactions.reduce((acc, tx) => {
+      if (tx.type === 'STAKE' || tx.type === 'BONUS') return acc + tx.amount;
+      if (tx.type === 'ADVANCE' || tx.type === 'PAYOUT') return acc - tx.amount;
+      return acc;
+    }, 0);
+
+    // 3. عدد قطع العهدة النشطة مع الفني حالياً
+    const activeTrials = await prisma.trialItem.count({
+      where: { workerId, status: 'ACTIVE' }
+    });
+
+    return { success: true, data: { openTicketsCount, balance, activeTrials } };
+  } catch (error) {
+    return { error: "فشل جلب بيانات الفني" };
+  }
+}
