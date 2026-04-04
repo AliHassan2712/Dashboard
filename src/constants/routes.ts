@@ -1,5 +1,4 @@
 export const ROUTES = {
-  // المسارات الثابتة
   HOME: "/",
   LOGIN: "/login",
   SETTINGS: "/settings",
