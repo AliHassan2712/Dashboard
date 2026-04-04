@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Ticket as TicketIcon, User, Wrench, Save } from "lucide-react";
 import { Input } from "@/src/components/ui/Input";
 import { Textarea } from "@/src/components/ui/Textarea";
+import { ROUTES } from "@/src/constants/routes"; 
 
 // ==========================================
 // 1. مكون جدول عرض كل التذاكر
@@ -12,7 +13,8 @@ export const TicketsTable = ({ tickets }: { tickets: any[] }) => {
       <div className="text-center py-12 text-gray-500 bg-white rounded-xl shadow-sm border border-gray-100">
         <TicketIcon className="w-12 h-12 text-gray-300 mx-auto mb-3" />
         <p>لا توجد أي تذاكر صيانة حتى الآن.</p>
-        <Link href="/tickets/new" className="text-indigo-600 hover:underline text-sm mt-2 inline-block font-bold">
+        {/* 👈 ربط نظيف */}
+        <Link href={ROUTES.NEW_TICKET} className="text-indigo-600 hover:underline text-sm mt-2 inline-block font-bold">
           اضغط هنا لإنشاء أول تذكرة
         </Link>
       </div>
@@ -62,7 +64,8 @@ export const TicketsTable = ({ tickets }: { tickets: any[] }) => {
                   {ticket.partsUsed?.length || 0} قطع
                 </td>
                 <td className="px-4 py-3 text-center">
-                  <Link href={`/tickets/${ticket.id}`} className="text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-lg text-xs font-bold transition">
+                  {/* 👈 استخدام المسار الديناميكي */}
+                  <Link href={ROUTES.TICKET_DETAILS(ticket.id)} className="text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-lg text-xs font-bold transition">
                     عرض التفاصيل
                   </Link>
                 </td>
@@ -109,7 +112,8 @@ export const NewTicketForm = ({ form, isLoading, onSubmit }: any) => {
       </div>
 
       <div className="flex justify-end gap-4 mt-8 pt-4">
-        <Link href="/tickets" className="px-6 py-3 text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200 font-bold transition">إلغاء الرجوع</Link>
+        {/* 👈 ربط الإلغاء بالقائمة الرئيسية للتذاكر */}
+        <Link href={ROUTES.TICKETS} className="px-6 py-3 text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200 font-bold transition">إلغاء الرجوع</Link>
         <button type="submit" disabled={isLoading} className="flex items-center gap-2 px-8 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 disabled:opacity-70 font-bold shadow-lg transition">
           <Save className="w-5 h-5" /> {isLoading ? "جاري الحفظ والتحويل..." : "حفظ وفتح التذكرة"}
         </button>

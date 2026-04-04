@@ -1,7 +1,12 @@
 export const ROUTES = {
+  // المسارات الثابتة
   HOME: "/",
+  LOGIN: "/login",
+  SETTINGS: "/settings",
+  
   TICKETS: "/tickets",
   NEW_TICKET: "/tickets/new",
+  
   INVENTORY: "/inventory",
   EXPENSES: "/expenses",
   QUOTATIONS: "/quotations",
@@ -9,6 +14,7 @@ export const ROUTES = {
   COMPRESSORS: "/compressors",
   TRIALS: "/trials",
   WORKERS: "/workers",
-  SETTINGS: "/settings",
-  LOGIN: "/login",
+
+  TICKET_DETAILS: (id: string) => `/tickets/${id}`,
+  WORKER_STATEMENT: (id: string) => `/workers/${id}/statement`,
 } as const;
