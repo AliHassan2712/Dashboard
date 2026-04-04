@@ -2,8 +2,6 @@
 
 import { TrendingDown, Plus, Wallet, Receipt, Truck, History, Loader2 } from "lucide-react";
 import { useExpenses } from "@/src/features/expenses/hooks/useExpenses";
-
-// المكونات المفصولة
 import { FinancialStats } from "@/src/features/expenses/components/FinancialStats";
 import { ExpensesModals } from "@/src/features/expenses/components/ExpensesModals";
 import { ExpensesTable, PaymentsTable, PurchasesTable } from "@/src/features/expenses/components/ExpensesTable";
