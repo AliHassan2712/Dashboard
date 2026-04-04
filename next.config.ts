@@ -1,13 +1,14 @@
-import type { NextConfig } from "next";
+﻿import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "utfs.io" },
       { protocol: "https", hostname: "uploadthing.com" },
-      { protocol: "https", hostname: "uufs.io" } 
+      { protocol: "https", hostname: "uufs.io" }
     ],
   },
+  // No custom Turbopack configuration needed for Next 15.
 };
 
 export default nextConfig;

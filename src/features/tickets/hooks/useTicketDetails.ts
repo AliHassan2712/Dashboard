@@ -17,7 +17,7 @@ export function useTicketDetails(ticketId: string) {
   const [inventory, setInventory] = useState<SparePart[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
   
-  const [status, setStatus] = useState<TicketStatus>("OPEN");
+  const [status, setStatus] = useState<string>("OPEN");
   const [laborCost, setLaborCost] = useState(0);
   const [discountPercentage, setDiscountPercentage] = useState(0); 
   const [isSaving, setIsSaving] = useState(false);

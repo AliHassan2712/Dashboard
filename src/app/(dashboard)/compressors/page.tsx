@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import type { Compressor } from "@prisma/client";
 import { 
   Plus, RefreshCw, Loader2, Package, 
   Search, Filter, LayoutGrid 
@@ -22,7 +23,7 @@ import { ExportButton } from "@/src/components/shared/ExportButton";
 
 export default function CompressorsPage() {
   // --- States ---
-  const [compressors, setCompressors] = useState([]);
+  const [compressors, setCompressors] = useState<Compressor[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);

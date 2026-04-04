@@ -47,7 +47,7 @@ export function useCompressors() {
     if (res.success) {
       toast.success("تمت إضافة الكمبريسور للمخزون");
       setIsModalOpen(false);
-      setFormData({ serialNumber: "", model: "", buildCost: "", sellingPrice: "", description: "" });
+      setFormData({ serialNumber: "", model: "", buildCost: "", sellingPrice: "", description: "", imageUrl: "" });
       await fetchData(); // تحديث فوري
     } else {
       toast.error(res.error || "خطأ");

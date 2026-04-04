@@ -1,7 +1,33 @@
 import { NextAuthOptions } from "next-auth";
+import type { JWT } from "next-auth/jwt";
+import type { Session } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcrypt";
 import prisma from "@/src/lib/prisma";
+
+// Extend NextAuth types
+declare module "next-auth" {
+  interface User {
+    role?: string;
+    phone?: string;
+  }
+  interface Session {
+    user: {
+      id?: string;
+      role?: string;
+      name?: string | null;
+      email?: string | null;
+      image?: string | null;
+    };
+  }
+}
+
+declare module "next-auth/jwt" {
+  interface JWT {
+    id?: string;
+    role?: string;
+  }
+}
 
 export const authOptions: NextAuthOptions = {
   providers: [

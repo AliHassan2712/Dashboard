@@ -145,7 +145,7 @@ export async function getWorkerDashboardStats(workerId: string) {
   try {
     // 1. عدد التذاكر المفتوحة المكلف بها الفني
     const openTicketsCount = await prisma.ticket.count({
-      where: { workerId, status: { in: ['OPEN', 'IN_PROGRESS', 'WAITING_FOR_PARTS'] } }
+      where: { workerId, status: { in: ['OPEN', 'IN_PROGRESS', 'WAITING_FOR_PARTS'] as any } }
     });
 
     // 2. حساب الرصيد المالي الحالي للفني (استحقاقات - سلف)
