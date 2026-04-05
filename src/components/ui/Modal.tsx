@@ -1,5 +1,6 @@
 import { ReactNode } from "react";
 import { X } from "lucide-react";
+import { maxWidthClasses } from "@/src/constants/maxWidthClasses";
 
 interface ModalProps {
   isOpen: boolean;
@@ -12,13 +13,7 @@ interface ModalProps {
 export const Modal = ({ isOpen, onClose, title, children, maxWidth = "md" }: ModalProps) => {
   if (!isOpen) return null;
 
-  const maxWidthClasses = {
-    sm: "max-w-sm",
-    md: "max-w-md",
-    lg: "max-w-lg",
-    xl: "max-w-xl",
-    "2xl": "max-w-2xl",
-  };
+
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">

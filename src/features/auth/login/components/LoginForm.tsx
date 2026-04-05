@@ -6,8 +6,8 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { loginSchema, type LoginFormValues } from "../validations";
-//  استيراد مكون الـ Input النظيف
 import { Input } from "@/src/components/ui/Input"; 
+import { ROUTES } from "@/src/constants/routes";
 
 export function LoginForm() {
   const router = useRouter();
@@ -29,7 +29,7 @@ export function LoginForm() {
     setIsLoading(false);
 
     if (result?.error) setError(result.error);
-    else { router.push("/"); router.refresh(); }
+    else { router.push(`${ROUTES.HOME}`); router.refresh(); }
   };
 
   return (
@@ -40,7 +40,6 @@ export function LoginForm() {
         </div>
       )}
 
-      {/* 👇 شوف النظافة والترتيب هنا! سطر واحد بيعمل Label و Input و Error */}
       <Input
         label="رقم الهاتف"
         placeholder="0599999999"

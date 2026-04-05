@@ -35,7 +35,7 @@ export default function TicketDetailsPage({ params }: { params: Promise<{ id: st
   return (
     <div className="max-w-7xl mx-auto space-y-6 pb-20 print:bg-white print:p-0 print:m-0 print:text-black">
 
-      {/* 🖨️ ترويسة الطباعة الرسمية */}
+      {/*  ترويسة الطباعة الرسمية */}
       <div className="hidden print:flex flex-col items-center border-b-2 border-gray-800 pb-4 mb-6 text-center">
         <h1 className="text-3xl font-black mb-1">{siteConfig.name}</h1>
         <p className="text-gray-600 font-medium">{siteConfig.slogan}</p>
@@ -48,7 +48,6 @@ export default function TicketDetailsPage({ params }: { params: Promise<{ id: st
       {/* الترويسة العادية وأزرار التحكم */}
       <div className="print:hidden flex flex-col sm:flex-row justify-between items-center gap-4 bg-white p-4 rounded-2xl border shadow-sm">
         <div className="flex items-center gap-4">
-          {/* 👈 استخدام الثابت للرجوع */}
           <Link href={ROUTES.TICKETS} className="p-2 bg-gray-50 hover:bg-gray-100 rounded-xl text-gray-500 transition">
             <ArrowRight className="w-5 h-5" />
           </Link>
@@ -85,7 +84,6 @@ export default function TicketDetailsPage({ params }: { params: Promise<{ id: st
             onRemove={actions.handleRemovePart} 
           />
 
-          {/* 👈 استدعاء المكون الجديد النظيف */}
           <TicketAttachments 
             imagesArray={imagesArray} 
             onAddImage={actions.handleUpdateImage} 

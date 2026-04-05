@@ -22,7 +22,7 @@ export default function NewTicketPage() {
         </div>
       </div>
 
-      {/* استدعاء نموذج الإضافة النظيف */}
+      {/* استدعاء نموذج الإضافة  */}
       <NewTicketForm form={form} isLoading={isLoading} onSubmit={onSubmit} />
       
     </div>

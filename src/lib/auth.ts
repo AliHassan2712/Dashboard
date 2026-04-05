@@ -1,9 +1,8 @@
 import { NextAuthOptions } from "next-auth";
-import type { JWT } from "next-auth/jwt";
-import type { Session } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcrypt";
 import prisma from "@/src/lib/prisma";
+import { ROUTES } from "../constants/routes";
 
 // Extend NextAuth types
 declare module "next-auth" {
@@ -78,5 +77,5 @@ export const authOptions: NextAuthOptions = {
       return session;
     }
   },
-  pages: { signIn: "/login" },
+  pages: { signIn: `${ROUTES.LOGIN}` },
 };

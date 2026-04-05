@@ -23,7 +23,7 @@ export async function addCompressor(data: {
   productionCost: number;
   sellingPrice: number;
   description?: string;
-  imageUrl?: string; // 👈 إضافة الحقل هنا
+  imageUrl?: string; 
 }) {
   try {
     const compressor = await prisma.compressor.create({
@@ -32,7 +32,7 @@ export async function addCompressor(data: {
         productionCost: data.productionCost,
         sellingPrice: data.sellingPrice,
         status: "AVAILABLE",
-        imageUrl: data.imageUrl, // 👈 حفظ الرابط
+        imageUrl: data.imageUrl, 
         ...(data.serialNumber ? { serialNumber: data.serialNumber } : {}),
       }
     });

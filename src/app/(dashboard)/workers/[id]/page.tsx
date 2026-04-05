@@ -11,7 +11,7 @@ import {
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-// 1. هنا التعديل: تحويل params إلى Promise
+// 1.  params إلى Promise
 export default async function WorkerProfilePage({ params }: { params: Promise<{ id: string }> }) {
   
   // 2. فك الـ Promise للحصول على الـ id

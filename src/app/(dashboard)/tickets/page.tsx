@@ -3,8 +3,6 @@ import Link from "next/link";
 import { getAllTickets } from "@/src/features/tickets/actions";
 import { TicketsTable } from "@/src/features/tickets/components/TicketsComponents";
 
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
 
 export default async function TicketsPage() {
   const result = await getAllTickets();
@@ -44,7 +42,7 @@ export default async function TicketsPage() {
         </Link>
       </div>
 
-      {/* استدعاء مكون الجدول النظيف */}
+      {/* استدعاء مكون الجدول  */}
       <TicketsTable tickets={result.data || []} />
       
     </div>

@@ -26,7 +26,7 @@ export const WorkerDashboard = ({ workerStats, userName }: { workerStats: any, u
   <div className="max-w-5xl mx-auto space-y-8 animate-in fade-in duration-700 pb-10">
     <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm flex items-center justify-between">
       <div>
-        <h1 className="text-2xl font-black text-slate-900">أهلاً بك يا بطل، {userName} 👋</h1>
+        <h1 className="text-2xl font-black text-slate-900">أهلاً بك يا  {userName} </h1>
         <p className="text-gray-500 font-medium mt-1">إليك ملخص مهامك ورصيدك الحالي في الورشة</p>
       </div>
     </div>

@@ -37,9 +37,9 @@ export function useCompressors() {
     setIsSubmitting(true);
     
     const res = await addCompressor({
-      modelName: formData.model, // الربط مع modelName في السكيما
+      modelName: formData.model, 
       serialNumber: formData.serialNumber.trim() || undefined,
-      productionCost: Number(formData.buildCost), // الربط مع productionCost في السكيما
+      productionCost: Number(formData.buildCost), 
       sellingPrice: Number(formData.sellingPrice),
       description: formData.description
     });
