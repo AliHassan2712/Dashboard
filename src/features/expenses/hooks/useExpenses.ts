@@ -2,57 +2,17 @@
 
 import { useReducer, useEffect } from "react";
 import { toast } from "react-hot-toast";
-import { ExpenseCategory, Expense, Supplier } from "@prisma/client";
-import { PurchaseInvoiceWithSupplier, SupplierPaymentWithSupplier, FinancialOverview } from "@/src/types";
+import {  Expense, Supplier } from "@prisma/client";
+import { ExpensesState, PurchaseInvoiceWithSupplier, SupplierPaymentWithSupplier } from "@/src/types";
 import { 
   getFinancialOverview, getExpenses, getPurchaseInvoices, 
   getSuppliers, getSupplierPayments, addExpense, 
   addPurchaseInvoice, addSupplier, addSupplierPayment, deleteExpense 
 } from "../actions";
-import { getAllSparePartsForDropdown } from "../../inventory/actions"; // 👈 جلب القطع
+import { getAllSparePartsForDropdown } from "../../inventory/actions"; 
+import { Action, initialState } from "@/src/constants/expenses";
 
-interface ExpensesState {
-  activeTab: "expenses" | "purchases" | "payments";
-  overview: FinancialOverview;
-  expenses: Expense[];
-  purchases: PurchaseInvoiceWithSupplier[];
-  suppliers: Supplier[];
-  spareParts: any[]; 
-  payments: SupplierPaymentWithSupplier[];
-  isLoading: boolean;
-  isSubmitting: boolean;
-  modals: { expense: boolean; purchase: boolean; supplier: boolean; payment: boolean; };
-  forms: {
-    expense: { title: string; amount: string; category: ExpenseCategory; notes: string };
-    // 👈 تعديل نموذج المشتريات ليحتوي على مصفوفة الأصناف
-    purchase: { supplierId: string; paidAmount: string; items: { sparePartId: string; quantity: string; unitCost: string }[] };
-    supplier: { name: string; phone: string };
-    payment: { supplierId: string; amount: string; notes: string };
-  };
-}
 
-const initialState: ExpensesState = {
-  activeTab: "expenses",
-  overview: { totalExpenses: 0, totalPurchases: 0, totalDebts: 0 },
-  expenses: [], purchases: [], suppliers: [], spareParts: [], payments: [],
-  isLoading: true, isSubmitting: false,
-  modals: { expense: false, purchase: false, supplier: false, payment: false },
-  forms: {
-    expense: { title: "", amount: "", category: "STANDARD", notes: "" },
-    purchase: { supplierId: "", paidAmount: "", items: [] }, // تبدأ بدون أصناف
-    supplier: { name: "", phone: "" },
-    payment: { supplierId: "", amount: "", notes: "" },
-  },
-};
-
-type Action =
-  | { type: "SET_TAB"; payload: ExpensesState["activeTab"] }
-  | { type: "SET_LOADING"; payload: boolean }
-  | { type: "SET_SUBMITTING"; payload: boolean }
-  | { type: "SET_DATA"; payload: Partial<ExpensesState> }
-  | { type: "OPEN_MODAL"; payload: keyof ExpensesState["modals"] }
-  | { type: "CLOSE_MODALS" }
-  | { type: "UPDATE_FORM"; form: keyof ExpensesState["forms"]; field: string; value: any };
 
 function reducer(state: ExpensesState, action: Action): ExpensesState {
   switch (action.type) {
@@ -74,7 +34,7 @@ export function useExpenses() {
     dispatch({ type: "SET_LOADING", payload: true });
     const [ovRes, expRes, purRes, supRes, payRes, partsRes] = await Promise.all([
       getFinancialOverview(), getExpenses(), getPurchaseInvoices(), 
-      getSuppliers(), getSupplierPayments(), getAllSparePartsForDropdown() // 👈 جلب القطع
+      getSuppliers(), getSupplierPayments(), getAllSparePartsForDropdown()
     ]);
     
     dispatch({
@@ -85,7 +45,7 @@ export function useExpenses() {
         purchases: (purRes.data as PurchaseInvoiceWithSupplier[]) || [],
         suppliers: (supRes.data as Supplier[]) || [],
         payments: (payRes.data as SupplierPaymentWithSupplier[]) || [],
-        spareParts: partsRes.data || [], // 👈 حفظ القطع
+        spareParts: partsRes.data || [],
         isLoading: false,
       }
     });
@@ -134,7 +94,7 @@ export function useExpenses() {
     dispatch({ type: "SET_SUBMITTING", payload: false });
   };
 
-  // 👈 الدالة الأهم: حفظ فاتورة المشتريات
+  //  الدالة الأهم: حفظ فاتورة المشتريات
   const handleAddPurchase = async (e: React.FormEvent) => {
     e.preventDefault();
     const { supplierId, paidAmount, items } = state.forms.purchase;

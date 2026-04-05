@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { Image as ImageIcon, Edit2, Trash2, Loader2 } from "lucide-react";
-import { SparePart } from "@prisma/client"; // استيراد النوع الجاهز من بريزما
+import { SparePart } from "@prisma/client"; 
 
 // تعريف واضح للخصائص التي يستقبلها المكون (بدون any)
 interface InventoryTableProps {

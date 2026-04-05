@@ -3,9 +3,9 @@
 import { useState } from "react";
 import { Printer, Loader2, PieChart, Filter, X } from "lucide-react"; 
 import { useReports } from "@/src/features/reports/hooks/useReports";
-import { PrintReportTemplate } from "@/src/features/reports/components/ReportsComponents";
 import { Input } from "@/src/components/ui/Input";
 import { ExportButton } from "@/src/components/shared/ExportButton"; 
+import { PrintReportTemplate } from "@/src/features/reports/components/PrintReportTemplate";
 
 export default function ReportsPage() {
   const { reportData, isLoading, setFilters } = useReports();

@@ -1,8 +1,7 @@
 import { Ticket as TicketIcon, Plus, AlertCircle } from "lucide-react";
 import Link from "next/link";
 import { getAllTickets } from "@/src/features/tickets/actions";
-import { TicketsTable } from "@/src/features/tickets/components/TicketsComponents";
-
+import { TicketsTable } from "@/src/features/tickets/components/TicketsTable";
 
 export default async function TicketsPage() {
   const result = await getAllTickets();

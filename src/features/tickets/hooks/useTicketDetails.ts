@@ -7,12 +7,10 @@ import {
   removePartFromTicket, addPaymentToTicket, updateTicketInvoiceImage 
 } from "../actions";
 import { getAllSparePartsForDropdown } from "@/src/features/inventory/actions";
-// 👈 استيراد الأنواع
 import { TicketWithDetails } from "@/src/types";
-import { SparePart, TicketStatus } from "@prisma/client";
+import { SparePart } from "@prisma/client";
 
 export function useTicketDetails(ticketId: string) {
-  // 👈 تنظيف الـ States
   const [ticketData, setTicketData] = useState<TicketWithDetails | null>(null);
   const [inventory, setInventory] = useState<SparePart[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
@@ -29,7 +27,7 @@ export function useTicketDetails(ticketId: string) {
       const ticketResult = await getTicketById(ticketId);
       // تأكد أن الدالة getTicketById ترجع البيانات بالشكل المتوافق مع TicketWithDetails
       if (ticketResult?.data) {
-        const t = ticketResult.data as unknown as TicketWithDetails; // Type Casting
+        const t = ticketResult.data as unknown as TicketWithDetails;
         setTicketData(t);
         setStatus(t.status);
         setLaborCost(t.laborCost || 0);

@@ -3,34 +3,12 @@
 import prisma from "@/src/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { getServerSession } from "next-auth"; 
-import { authOptions } from "@/src/lib/auth"; // تأكد من إنشاء هذا الملف كما اتفقنا
+import { authOptions } from "@/src/lib/auth"; 
+import { UpdateTicketInput } from "@/src/types";
 
-// ==========================================
-// 1. الأنواع (Types)
-// ==========================================
-type CreateTicketInput = {
-  customerName: string;
-  customerPhone: string;
-  compressorModel: string;
-  issueDescription: string;
-  advancePayment: number;
-};
 
-type UpdateTicketInput = {
-  customerName?: string;
-  customerPhone?: string;
-  compressorModel?: string;
-  issueDescription?: string;
-  advancePayment?: number;
-  status?: "OPEN" | "IN_PROGRESS" | "WAITING_FOR_PARTS" | "COMPLETED";
-  laborCost?: number;
-  discount?: number;
-  invoiceImageUrl?: string;
-};
 
-// ==========================================
-// 2. دوال السيرفر الأساسية (CRUD)
-// ==========================================
+
 
 export async function createTicket(data: any) {
   const session = await getServerSession(authOptions); // جلب المستخدم الحالي
@@ -41,7 +19,7 @@ export async function createTicket(data: any) {
     const ticket = await prisma.ticket.create({
       data: {
         ...data,
-        workerId: session.user.id, // 👈 هنا يتم ربط التذكرة بالعامل اللي سجلها
+        workerId: session.user.id, 
       }
     });
     return { success: true, data: ticket };

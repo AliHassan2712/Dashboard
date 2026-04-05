@@ -2,7 +2,9 @@
 
 import { ClipboardList, Plus, Loader2 } from "lucide-react";
 import { useTrials } from "@/src/features/trials/hooks/useTrials";
-import { TrialsTable, TrialModal } from "@/src/features/trials/components/TrialsComponents";
+import { TrialsTable } from "@/src/features/trials/components/TrialsTable";
+import { TrialModal } from "@/src/features/trials/components/TrialModal";
+
 
 export default function TrialsPage() {
   const { trials, workers, parts, isLoading, isModalOpen, setIsModalOpen, formData, setFormData, isSubmitting, actions } = useTrials();

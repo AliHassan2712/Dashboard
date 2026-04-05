@@ -7,7 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "react-hot-toast";
 import { createTicket } from "../actions";
 import { createTicketSchema, CreateTicketValues } from "../validations";
-import { ROUTES } from "@/src/constants/routes"; // 👈 استيراد الثوابت
+import { ROUTES } from "@/src/constants/routes";
 
 export function useNewTicket() {
   const [isLoading, setIsLoading] = useState(false);

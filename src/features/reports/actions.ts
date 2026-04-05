@@ -51,7 +51,7 @@ export async function getFinancialReport(filters: { startDate?: string; endDate?
       }),
       // --- بيانات الميزانية الثابتة (تراكمي) ---
       prisma.sparePart.findMany({ select: { quantity: true, averageCost: true } }),
-      prisma.ticket.aggregate({ where: { status: { not: 'COMPLETED' } }, _sum: { totalCost: true } }), // مثال لديون الزبائن
+      prisma.ticket.aggregate({ where: { status: { not: 'COMPLETED' } }, _sum: { totalCost: true } }), 
       prisma.supplier.aggregate({ _sum: { totalDebt: true } })
     ]);
 

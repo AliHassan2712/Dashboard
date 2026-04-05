@@ -6,7 +6,10 @@ import {
   Payment,
   WorkerTransaction,
    PurchaseInvoice, 
-   SupplierPayment
+   SupplierPayment,
+   Expense,
+   Supplier,
+   ExpenseCategory
 
 } from "@prisma/client";
 
@@ -89,3 +92,81 @@ export type FinancialOverview = {
   totalPurchases: number;
   totalDebts: number;
 };
+
+
+
+
+
+
+export interface ExpensesState {
+  activeTab: "expenses" | "purchases" | "payments";
+  overview: FinancialOverview;
+  expenses: Expense[];
+  purchases: PurchaseInvoiceWithSupplier[];
+  suppliers: Supplier[];
+  spareParts: any[]; 
+  payments: SupplierPaymentWithSupplier[];
+  isLoading: boolean;
+  isSubmitting: boolean;
+  modals: { expense: boolean; purchase: boolean; supplier: boolean; payment: boolean; };
+  forms: {
+    expense: { title: string; amount: string; category: ExpenseCategory; notes: string };
+    purchase: { supplierId: string; paidAmount: string; items: { sparePartId: string; quantity: string; unitCost: string }[] };
+    supplier: { name: string; phone: string };
+    payment: { supplierId: string; amount: string; notes: string };
+  };
+}
+
+
+
+
+export interface InventoryState {
+  parts: SparePart[];
+  searchQuery: string;
+  isLoading: boolean;
+  isSubmitting: boolean;
+  modals: { addEdit: boolean };
+  editingId: string | null;
+  forms: {
+    part: { name: string; quantity: string; averageCost: string; sellingPrice: string; lowStockAlert: string };
+  };
+}
+
+
+
+
+
+export interface WorkersState {
+  workers: WorkerWithTransactions[];
+  isLoading: boolean;
+  isSubmitting: boolean;
+  txModal: { isOpen: boolean; userId: string; type: string; name: string };
+  txData: { amount: string; method: string; notes: string };
+  workerForm: { name: string; phone: string; password: string };
+}
+
+
+
+
+export type UpdateTicketInput = {
+  customerName?: string;
+  customerPhone?: string;
+  compressorModel?: string;
+  issueDescription?: string;
+  advancePayment?: number;
+  status?: "OPEN" | "IN_PROGRESS" | "WAITING_FOR_PARTS" | "COMPLETED";
+  laborCost?: number;
+  discount?: number;
+  invoiceImageUrl?: string;
+};
+
+
+
+export interface FinanceData {
+  partsTotal: number;
+  subTotal: number;
+  discountAmount: number;
+  grandTotal: number;
+  totalPaid: number;
+  remainingAmount: number;
+}

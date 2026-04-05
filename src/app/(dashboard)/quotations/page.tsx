@@ -2,7 +2,8 @@
 
 import { Printer } from "lucide-react";
 import { useQuotation } from "@/src/features/quotations/hooks/useQuotation";
-import { QuotationForm, QuotationPrintTemplate } from "@/src/features/quotations/components/QuotationComponents";
+import { QuotationPrintTemplate } from "@/src/features/quotations/components/QuotationPrintTemplate";
+import { QuotationForm } from "@/src/features/quotations/components/QuotationForm";
 
 export default function QuotationPage() {
   const { quoteData, updateField, priceUsd, currentDate, quoteNumber } = useQuotation();
@@ -39,11 +40,11 @@ export default function QuotationPage() {
 
       <div className="flex flex-col lg:flex-row gap-8 print:block print:gap-0">
         
-        {/* 1. نموذج الإدخال (مفصول كـ Component) */}
+        {/* 1. نموذج الإدخال */}
         <QuotationForm quoteData={quoteData} updateField={updateField} />
 
-        {/* 2. قالب الطباعة A4 (مفصول كـ Component) */}
-        <QuotationPrintTemplate 
+        {/* 2. قالب الطباعة A4*/}
+        <QuotationPrintTemplate
           quoteData={quoteData} 
           priceUsd={priceUsd} 
           currentDate={currentDate} 

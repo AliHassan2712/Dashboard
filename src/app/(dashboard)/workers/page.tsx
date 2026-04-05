@@ -2,7 +2,9 @@
 
 import { Loader2 } from "lucide-react";
 import { useWorkers } from "@/src/features/workers/hooks/useWorkers";
-import { AddWorkerForm, WorkersTable, WorkerTransactionModal } from "@/src/features/workers/components/WorkersComponents";
+import { AddWorkerForm } from "@/src/features/workers/components/AddWorkerForm";
+import { WorkersTable } from "@/src/features/workers/components/WorkersTable";
+import { WorkerTransactionModal } from "@/src/features/workers/components/WorkerTransactionModal";
 
 export default function WorkersPage() {
   const { state, dispatch, actions } = useWorkers();

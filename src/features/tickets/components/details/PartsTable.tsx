@@ -1,6 +1,6 @@
 import { Trash2, Wrench } from "lucide-react";
 import Select from "react-select";
-import { SparePart, TicketPart } from "@prisma/client"; //  استيراد الأنواع
+import { SparePart, TicketPart } from "@prisma/client"; 
 
 //  تعريف نوع مخصص للقطعة المستهلكة لأنها تحتوي على بيانات القطعة الأصلية (Relation)
 type TicketPartWithDetails = TicketPart & {

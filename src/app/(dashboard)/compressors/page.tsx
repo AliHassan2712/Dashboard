@@ -5,8 +5,9 @@ import {
   Search, Filter 
 } from "lucide-react";
 import { useCompressors } from "@/src/features/compressors/hooks/useCompressors";
-import { CompressorTable, CompressorModal } from "@/src/features/compressors/components/CompressorComponents";
 import { ExportButton } from "@/src/components/shared/ExportButton";
+import { CompressorModal } from "@/src/features/compressors/components/CompressorModal";
+import { CompressorTable } from "@/src/features/compressors/components/CompressorTable";
 
 export default function CompressorsPage() {
   const { 
@@ -76,7 +77,7 @@ export default function CompressorsPage() {
       )}
 
       {/* النافذة المنبثقة للإضافة */}
-      <CompressorModal 
+      <CompressorModal
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 
         formData={formData} 

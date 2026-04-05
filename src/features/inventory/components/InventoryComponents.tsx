@@ -115,7 +115,6 @@ export const InventoryModal = ({ state, dispatch, onSave }: any) => {
         />
 
         <div className="grid grid-cols-2 gap-4 border-t border-gray-100 pt-4 mt-2">
-          {/* 👈 تعديل حقل السعر هنا */}
           <Input 
             label="سعر التكلفة/الشراء (₪)" 
             type="number" 

@@ -2,7 +2,8 @@
 
 import { Loader2 } from "lucide-react";
 import { useSettings } from "@/src/features/settings/hooks/useSettings";
-import { ProfileForm, PasswordForm } from "@/src/features/settings/components/SettingsComponents";
+import { ProfileForm } from "@/src/features/settings/components/ProfileForm";
+import { PasswordForm } from "@/src/features/settings/components/PasswordForm";
 
 export default function SettingsPage() {
   const { 
@@ -31,14 +32,14 @@ export default function SettingsPage() {
       {/* النماذج المفصولة */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         
-        <ProfileForm 
+        <ProfileForm
           profileData={profileData} 
           setProfileData={setProfileData} 
           isSaving={isSavingProfile} 
           onSubmit={handleProfileUpdate} 
         />
         
-        <PasswordForm 
+        <PasswordForm
           isSaving={isSavingPass} 
           onSubmit={handlePasswordChange} 
         />

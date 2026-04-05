@@ -3,35 +3,10 @@
 import { useReducer, useEffect } from "react";
 import { toast } from "react-hot-toast";
 import { registerWorker, getWorkersWithBalance, addWorkerTransaction, deleteWorker } from "../actions";
-import { WorkerWithTransactions } from "@/src/types";
+import { Action, initialState } from "@/src/constants/worker";
+import { WorkersState } from "@/src/types";
 
-interface WorkersState {
-  workers: WorkerWithTransactions[];
-  isLoading: boolean;
-  isSubmitting: boolean;
-  txModal: { isOpen: boolean; userId: string; type: string; name: string };
-  txData: { amount: string; method: string; notes: string };
-  workerForm: { name: string; phone: string; password: string };
-}
 
-const initialState: WorkersState = {
-  workers: [],
-  isLoading: true,
-  isSubmitting: false,
-  txModal: { isOpen: false, userId: '', type: '', name: '' },
-  txData: { amount: '', method: 'كاش', notes: '' },
-  workerForm: { name: '', phone: '', password: '' }
-};
-
-type Action =
-  | { type: "SET_LOADING"; payload: boolean }
-  | { type: "SET_SUBMITTING"; payload: boolean }
-  | { type: "SET_WORKERS"; payload: WorkerWithTransactions[] }
-  | { type: "OPEN_TX_MODAL"; payload: { userId: string; type: string; name: string } }
-  | { type: "CLOSE_TX_MODAL" }
-  | { type: "UPDATE_TX_DATA"; field: string; value: any }
-  | { type: "UPDATE_WORKER_FORM"; field: string; value: any }
-  | { type: "RESET_FORMS" };
 
 function reducer(state: WorkersState, action: Action): WorkersState {
   switch (action.type) {

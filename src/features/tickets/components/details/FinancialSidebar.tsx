@@ -1,16 +1,9 @@
 import { Receipt, CreditCard, Plus, Percent } from "lucide-react";
 import { useState } from "react";
 import { Payment } from "@prisma/client";
-import { Input } from "@/src/components/ui/Input"; //  استيراد المكون الموحد
+import { Input } from "@/src/components/ui/Input"; 
+import { FinanceData } from "@/src/types";
 
-interface FinanceData {
-  partsTotal: number;
-  subTotal: number;
-  discountAmount: number;
-  grandTotal: number;
-  totalPaid: number;
-  remainingAmount: number;
-}
 
 interface FinancialSidebarProps {
   finance: FinanceData;
@@ -92,7 +85,7 @@ export const FinancialSidebar = ({
           ))}
         </div>
         
-        {/*  حقل إضافة دفعة جديدة بالمكون الموحد */}
+        {/* حقل إضافة دفعة جديدة  */}
         <div className="flex gap-2 print:hidden pt-2 items-center">
           <Input 
             type="number" 

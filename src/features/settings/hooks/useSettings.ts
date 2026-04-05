@@ -36,7 +36,7 @@ export function useSettings() {
     
     const res = await updateProfile({ name: profileData.name, phone: profileData.phone });
     if (res.success) {
-      toast.success("تم تحديث البيانات الشخصية بنجاح ✨");
+      toast.success("تم تحديث البيانات الشخصية بنجاح ");
     } else {
       toast.error(res.error || "فشل تحديث البيانات");
     }
@@ -55,20 +55,20 @@ export function useSettings() {
     const confirmPass = formData.get("confirmPass") as string;
 
     if (newPass !== confirmPass) {
-      toast.error("كلمة المرور الجديدة غير متطابقة ❌");
+      toast.error("كلمة المرور الجديدة غير متطابقة ");
       setIsSavingPass(false);
       return;
     }
 
     if (newPass.length < 6) {
-      toast.error("كلمة المرور يجب أن تكون 6 أحرف على الأقل ⚠️");
+      toast.error("كلمة المرور يجب أن تكون 6 أحرف على الأقل ");
       setIsSavingPass(false);
       return;
     }
 
     const res = await changePassword({ currentPass, newPass });
     if (res.success) {
-      toast.success("تم تغيير كلمة المرور بنجاح 🔒");
+      toast.success("تم تغيير كلمة المرور بنجاح ");
       form.reset();
     } else {
       toast.error(res.error || "فشل تغيير كلمة المرور");

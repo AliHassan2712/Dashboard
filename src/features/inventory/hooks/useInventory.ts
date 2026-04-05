@@ -4,39 +4,9 @@ import { useReducer, useEffect } from "react";
 import { toast } from "react-hot-toast";
 import { SparePart } from "@prisma/client";
 import { getInventory, addSparePart, updateSparePart, deleteSparePart } from "../actions";
+import { Action, initialState } from "@/src/constants/inventory";
+import { InventoryState } from "@/src/types";
 
-interface InventoryState {
-  parts: SparePart[];
-  searchQuery: string;
-  isLoading: boolean;
-  isSubmitting: boolean;
-  modals: { addEdit: boolean };
-  editingId: string | null;
-  forms: {
-    part: { name: string; quantity: string; averageCost: string; sellingPrice: string; lowStockAlert: string };
-  };
-}
-
-const initialState: InventoryState = {
-  parts: [],
-  searchQuery: "",
-  isLoading: true,
-  isSubmitting: false,
-  modals: { addEdit: false },
-  editingId: null,
-  forms: {
-    part: { name: "", quantity: "0", averageCost: "0", sellingPrice: "0", lowStockAlert: "5" },
-  },
-};
-
-type Action =
-  | { type: "SET_PARTS"; payload: SparePart[] }
-  | { type: "SET_SEARCH"; payload: string }
-  | { type: "SET_LOADING"; payload: boolean }
-  | { type: "SET_SUBMITTING"; payload: boolean }
-  | { type: "OPEN_MODAL"; payload: { type: keyof InventoryState["modals"], editData?: SparePart | null } }
-  | { type: "CLOSE_MODALS" }
-  | { type: "UPDATE_FORM"; field: string; value: any };
 
 function reducer(state: InventoryState, action: Action): InventoryState {
   switch (action.type) {
@@ -77,7 +47,7 @@ export function useInventory() {
 
   const fetchInventory = async () => {
     dispatch({ type: "SET_LOADING", payload: true });
-    const res = await getInventory(); // 👈 تم التصحيح: هنا نستخدم دالة الجلب وليس الإضافة!
+    const res = await getInventory(); 
     if (res.success) dispatch({ type: "SET_PARTS", payload: res.data as SparePart[] || [] });
   };
 
@@ -99,7 +69,7 @@ export function useInventory() {
     if (state.editingId) {
       res = await updateSparePart(state.editingId, payload);
     } else {
-      res = await addSparePart(payload); // 👈 تم التصحيح: اسم الدالة هو addSparePart
+      res = await addSparePart(payload); 
     }
 
     if (res.success) {

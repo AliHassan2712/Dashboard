@@ -33,7 +33,7 @@ export async function getFinancialOverview() {
       success: true,
       data: {
         totalExpenses: expenses._sum.amount || 0,
-        totalPurchases: purchases._sum.amount || 0,
+        totalPurchases: purchases._sum.totalAmount || 0,
         totalDebts: suppliers._sum.totalDebt || 0,
       }
     };
@@ -128,17 +128,16 @@ export async function getPurchaseInvoices() {
   }
 }
 
-// إضافة فاتورة مشتريات وتحديث دين التاجر أوتوماتيكياً
-// ابحث عن دالة addPurchaseInvoice واستبدلها بالكامل بهذا الكود:
 
+// إضافة فاتورة مشتريات وتحديث دين التاجر أوتوماتيكياً
 export async function addPurchaseInvoice(data: {
   supplierId: string;
   totalAmount: number;
   paidAmount: number;
-  items: { sparePartId: string; quantity: number; unitCost: number }[]; // 👈 الأسطر الجديدة: الأصناف
+  items: { sparePartId: string; quantity: number; unitCost: number }[]; 
 }) {
   try {
-    // نستخدم Transaction عشان لو فشل تحديث المخزون، يتراجع عن الفاتورة كاملة (أمان 100%)
+    // نمرر إعدادات الوقت (Timeout) في نهاية الترانزاكشن لتجنب خطأ الوقت
     await prisma.$transaction(async (tx) => {
       // 1. تسجيل الفاتورة والأصناف بداخلها
       const invoice = await tx.purchaseInvoice.create({
@@ -187,17 +186,20 @@ export async function addPurchaseInvoice(data: {
           });
         }
       }
+    },
+    {
+      maxWait: 10000, 
+      timeout: 20000, 
     });
 
     revalidatePath("/expenses");
-    revalidatePath("/inventory"); // تحديث شاشة المخزن كمان
+    revalidatePath("/inventory");
     return { success: true };
   } catch (error) {
     console.error("Add Invoice Error:", error);
     return { error: "فشل إضافة الفاتورة وتحديث المخزون" };
   }
 }
-
 
 // ==========================================
 // 4. سجل دفعات الموردين (Supplier Payments)

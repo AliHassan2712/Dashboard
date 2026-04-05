@@ -3,7 +3,8 @@ import { notFound } from "next/navigation";
 import { ArrowRight } from "lucide-react";
 import { getWorkerDetails } from "@/src/features/workers/actions";
 import { ROUTES } from "@/src/constants/routes";
-import { WorkerProfileCard, TransactionTable } from "@/src/features/workers/components/WorkerProfileComponents";
+import { WorkerProfileCard } from "@/src/features/workers/components/WorkerProfileCard";
+import { TransactionTable } from "@/src/features/workers/components/TransactionTable";
 
 export default async function WorkerProfilePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

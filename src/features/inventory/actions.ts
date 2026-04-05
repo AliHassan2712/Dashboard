@@ -1,4 +1,4 @@
-"use server"; // هذا السطر السحري يخبر Next.js أن كل الدوال هنا تعمل على السيرفر فقط ولا تصل للمتصفح (أمان عالي)
+"use server"; 
 
 import prisma from "@/src/lib/prisma";
 import { sparePartSchema, type SparePartFormValues } from "./validations";
@@ -75,7 +75,7 @@ export async function deleteSparePart(id: string) {
   }
 }
 
-// 🟡 دالة جلب كل قطع الغيار (لعرضها في القائمة المنسدلة داخل التذكرة)
+//  دالة جلب كل قطع الغيار (لعرضها في القائمة المنسدلة داخل التذكرة)
 export async function getAllSparePartsForDropdown() {
   try {
     const parts = await prisma.sparePart.findMany({
