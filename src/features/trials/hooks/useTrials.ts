@@ -5,7 +5,7 @@ import { toast } from "react-hot-toast";
 import { getAllSparePartsForDropdown } from "@/src/server/actions/inventory.actions";
 import { getWorkersWithBalance } from "@/src/server/actions/workers.actions";
 import { TrialItemData, TrialFormData, WorkerOption, PartOption } from "@/src/types";
-import { getTrialItems } from "@/src/server/actions/trials.actions";
+import { getTrialItems, createTrialItem, returnTrialItem, consumeTrialItem } from "@/src/server/actions/trials.actions";
 
 export function useTrials() {
   const [trials, setTrials] = useState<TrialItemData[]>([]);

@@ -11,10 +11,14 @@ export const initialState: ExpensesState = {
   payments: [],
   isLoading: true, 
   isSubmitting: false,
-  modals: { expense: false, purchase: false, supplier: false, payment: false },
+  modals: { expense: false, purchase: false, supplier: false, payment: false, ledger: false, editPayment: false },
+  
+  ledgerSupplierId: null,
+  editingPaymentId: null,
+  
   forms: {
     expense: { title: "", amount: "", category: ExpenseCategory.STANDARD, notes: "" },
-    purchase: { supplierId: "", paidAmount: "", items: [] }, 
+    purchase: { supplierId: "", paidAmount: "", notes: "", items: [] }, 
     supplier: { name: "", phone: "" },
     payment: { supplierId: "", amount: "", notes: "" },
   },

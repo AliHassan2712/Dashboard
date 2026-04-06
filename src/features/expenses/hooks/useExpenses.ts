@@ -6,10 +6,11 @@ import { Expense, Supplier, ExpenseCategory } from "@prisma/client";
 import { ExpensesState, PurchaseInvoiceWithSupplier, SupplierPaymentWithSupplier } from "@/src/types";
 import { Action, initialState } from "@/src/constants/expenses";
 import { 
-  getFinancialOverview, getExpenses, getPurchaseInvoices, 
+  getFinancialOverview, getExpenses, 
   getSuppliers, getSupplierPayments, addExpense, 
   addPurchaseInvoice, addSupplier, addSupplierPayment, deleteExpense,
-  updateSupplierPayment, deleteSupplierPayment
+  updateSupplierPayment, deleteSupplierPayment,
+  getPurchaseInvoices
 } from "@/src/server/actions/expenses.actions";
 import { getAllSparePartsForDropdown } from "@/src/server/actions/inventory.actions";
 

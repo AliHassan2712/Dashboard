@@ -88,6 +88,7 @@ model TrialItem {
 // ================= نظام التذاكر =================
 enum TicketStatus {
   OPEN
+  WAITING_FOR_PARTS
   IN_PROGRESS
   COMPLETED
   CANCELED

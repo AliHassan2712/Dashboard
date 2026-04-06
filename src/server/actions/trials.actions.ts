@@ -57,35 +57,32 @@ export async function createTrialItem(data: { workerId: string; sparePartId: str
 }
 
 // 3. إرجاع القطعة للمخزن
-export async function returnTrialItem(trialId: string) {
+export async function returnTrialItem(id: string) {
   try {
-    const trial = await prisma.trialItem.findUnique({ where: { id: trialId } });
-    if (!trial || trial.status !== "ACTIVE" || !trial.sparePartId) {
-      return { error: "العهدة غير صالحة للإرجاع" };
-    }
-
     await prisma.$transaction(async (tx) => {
-      // تحديث حالة العهدة
-      await tx.trialItem.update({
-        where: { id: trialId },
-        data: { status: "RETURNED", returnedAt: new Date() }
-      });
+      const trial = await tx.trialItem.findUnique({ where: { id } });
+      
+      // تأكد أن العهدة موجودة وأنها مرتبطة بقطعة غيار
+      if (!trial || !trial.sparePartId) {
+        throw new Error("العهدة غير موجودة أو غير مرتبطة بقطعة غيار");
+      }
 
       // إرجاع القطع للمخزن
       await tx.sparePart.update({
-        where: { id: trial.sparePartId },
+        where: { id: trial.sparePartId }, 
         data: { quantity: { increment: trial.qty } }
       });
+
+      // حذف سجل العهدة بعد الإرجاع
+      await tx.trialItem.delete({ where: { id } });
     });
 
-    revalidatePath(ROUTES.TRIALS || "/trials");
-    revalidatePath(ROUTES.INVENTORY || "/inventory");
+    revalidatePath(ROUTES.WORKERS);
     return { success: true };
   } catch (error) {
-    return { error: "فشل إرجاع العهدة" };
+    return { error: "فشل إرجاع العهدة للمخزن" };
   }
 }
-
 // 4. استهلاك القطعة (EXPIRED)
 export async function consumeTrialItem(trialId: string) {
   try {

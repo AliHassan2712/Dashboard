@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { ExpenseCategory } from "@prisma/client";
 import { ROUTES } from "@/src/constants/paths";
 
+// 1. جلب الإحصائيات المالية
 export async function getFinancialOverview() {
   try {
     const now = new Date();
@@ -25,6 +26,7 @@ export async function getFinancialOverview() {
   } catch (error) { return { error: "فشل جلب الإحصائيات المالية" }; }
 }
 
+// 2. إدارة المصاريف
 export async function getExpenses() {
   try {
     const expenses = await prisma.expense.findMany({ orderBy: { date: 'desc' } });
@@ -48,6 +50,7 @@ export async function deleteExpense(id: string) {
   } catch (error) { return { error: "فشل الحذف" }; }
 }
 
+// 3. إدارة الموردين
 export async function getSuppliers() {
   try {
     const suppliers = await prisma.supplier.findMany({ orderBy: { name: 'asc' } });
@@ -63,6 +66,7 @@ export async function addSupplier(data: { name: string; phone?: string }) {
   } catch (error) { return { error: "فشل إضافة المورد" }; }
 }
 
+// 4. إدارة فواتير المشتريات
 export async function getPurchaseInvoices() {
   try {
     const invoices = await prisma.purchaseInvoice.findMany({
@@ -70,7 +74,9 @@ export async function getPurchaseInvoices() {
       orderBy: { date: 'desc' }
     });
     return { success: true, data: invoices };
-  } catch (error) { return { error: "فشل جلب فواتير المشتريات" }; }
+  } catch (error) { 
+    return { error: "فشل جلب فواتير المشتريات" }; 
+  }
 }
 
 export async function addPurchaseInvoice(data: {
@@ -84,7 +90,8 @@ export async function addPurchaseInvoice(data: {
     newItemName?: string; 
     newItemSellingPrice?: number;
     quantity: number; 
-    unitCost: number 
+    unitCost: number;
+    notes?: string; 
   }[]; 
 }) {
   try {
@@ -124,7 +131,8 @@ export async function addPurchaseInvoice(data: {
             create: processedItems.map(item => ({
               sparePartId: item.sparePartId,
               quantity: item.quantity,
-              unitCost: item.unitCost
+              unitCost: item.unitCost,
+              notes: item.notes
             }))
           }
         }
@@ -162,6 +170,7 @@ export async function addPurchaseInvoice(data: {
   }
 }
 
+// 5. إدارة الدفعات
 export async function getSupplierPayments() {
   try {
     const payments = await prisma.supplierPayment.findMany({
@@ -188,14 +197,11 @@ export async function updateSupplierPayment(paymentId: string, data: { amount: n
     await prisma.$transaction(async (tx) => {
       const oldPayment = await tx.supplierPayment.findUnique({ where: { id: paymentId } });
       if (!oldPayment) throw new Error("Payment not found");
-
       const difference = oldPayment.amount - data.amount;
-
       await tx.supplierPayment.update({
         where: { id: paymentId },
         data: { amount: data.amount, notes: data.notes }
       });
-
       await tx.supplier.update({
         where: { id: oldPayment.supplierId },
         data: { totalDebt: { increment: difference } }
@@ -211,12 +217,10 @@ export async function deleteSupplierPayment(paymentId: string) {
     await prisma.$transaction(async (tx) => {
       const payment = await tx.supplierPayment.findUnique({ where: { id: paymentId } });
       if (!payment) throw new Error("Payment not found");
-
       await tx.supplier.update({
         where: { id: payment.supplierId },
         data: { totalDebt: { increment: payment.amount } }
       });
-
       await tx.supplierPayment.delete({ where: { id: paymentId } });
     });
     revalidatePath(ROUTES.EXPENSES);
@@ -224,6 +228,7 @@ export async function deleteSupplierPayment(paymentId: string) {
   } catch (error) { return { error: "فشل حذف الدفعة" }; }
 }
 
+// 6. كشف الحساب
 export async function getSupplierStatement(supplierId: string) {
   try {
     const supplier = await prisma.supplier.findUnique({
@@ -233,7 +238,6 @@ export async function getSupplierStatement(supplierId: string) {
         payments: { orderBy: { date: 'asc' } }
       }
     });
-    
     if (!supplier) return { error: "التاجر غير موجود" };
     return { success: true, data: supplier };
   } catch (error) { return { error: "فشل جلب كشف الحساب" }; }
