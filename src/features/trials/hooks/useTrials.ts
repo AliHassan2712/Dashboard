@@ -1,36 +1,37 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, FormEvent } from "react";
 import { toast } from "react-hot-toast";
-import { getTrialItems, createTrialItem, returnTrialItem, consumeTrialItem } from "../actions";
-import { getAllSparePartsForDropdown } from "../../inventory/actions";
-import { getWorkersWithBalance } from "../../workers/actions";
+import { getAllSparePartsForDropdown } from "@/src/server/actions/inventory.actions";
+import { getWorkersWithBalance } from "@/src/server/actions/workers.actions";
+import { TrialItemData, TrialFormData, WorkerOption, PartOption } from "@/src/types";
+import { getTrialItems } from "@/src/server/actions/trials.actions";
 
 export function useTrials() {
-  const [trials, setTrials] = useState<any[]>([]);
-  const [workers, setWorkers] = useState<any[]>([]);
-  const [parts, setParts] = useState<any[]>([]);
+  const [trials, setTrials] = useState<TrialItemData[]>([]);
+  const [workers, setWorkers] = useState<WorkerOption[]>([]);
+  const [parts, setParts] = useState<PartOption[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formData, setFormData] = useState({ workerId: "", sparePartId: "", qty: "1", notes: "" });
+  const [formData, setFormData] = useState<TrialFormData>({ workerId: "", sparePartId: "", qty: "1", notes: "" });
 
   const fetchData = async () => {
     setIsLoading(true);
     const [trialsRes, workersRes, partsRes] = await Promise.all([
       getTrialItems(), getWorkersWithBalance(), getAllSparePartsForDropdown()
     ]);
-    if (trialsRes.success) setTrials(trialsRes.data || []);
-    if (workersRes) setWorkers(workersRes);
-    if (partsRes.success) setParts(partsRes.data || []);
+    if (trialsRes.success && trialsRes.data) setTrials(trialsRes.data as TrialItemData[]);
+    if (workersRes) setWorkers(workersRes as WorkerOption[]);
+    if (partsRes.success && partsRes.data) setParts(partsRes.data as PartOption[]);
     setIsLoading(false);
   };
 
   useEffect(() => { fetchData(); }, []);
 
-  const handleAddTrial = async (e: React.FormEvent) => {
+  const handleAddTrial = async (e: FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     const res = await createTrialItem({

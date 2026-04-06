@@ -1,5 +1,5 @@
 import { SparePart } from "@prisma/client";
-import { InventoryState } from "../types";
+import { InventoryState } from "@/src/types";
 
 export const initialState: InventoryState = {
   parts: [],
@@ -20,4 +20,8 @@ export type Action =
   | { type: "SET_SUBMITTING"; payload: boolean }
   | { type: "OPEN_MODAL"; payload: { type: keyof InventoryState["modals"], editData?: SparePart | null } }
   | { type: "CLOSE_MODALS" }
-  | { type: "UPDATE_FORM"; field: string; value: any };
+  | { 
+      type: "UPDATE_FORM"; 
+      field: keyof InventoryState["forms"]["part"]; 
+      value: string; 
+    };

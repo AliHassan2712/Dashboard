@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { QuoteData } from "@/src/types";
 
 export function useQuotation() {
-  const [quoteData, setQuoteData] = useState({
+  const [quoteData, setQuoteData] = useState<QuoteData>({
     customerName: "",
     modelName: "",
     specs: "",
@@ -17,20 +18,18 @@ export function useQuotation() {
   const [currentDate, setCurrentDate] = useState("");
   const [quoteNumber, setQuoteNumber] = useState("");
 
-  // حساب السعر بالدولار تلقائياً عند تغيير الشيكل أو سعر الصرف
   useEffect(() => {
     const ils = parseFloat(quoteData.priceIls) || 0;
     const rate = parseFloat(quoteData.exchangeRate) || 1;
     setPriceUsd(ils / rate);
   }, [quoteData.priceIls, quoteData.exchangeRate]);
 
-  // توليد التاريخ ورقم العرض عند التحميل (لتجنب مشاكل الـ Hydration)
   useEffect(() => {
     setCurrentDate(new Date().toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' }));
     setQuoteNumber(`QT-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`);
   }, []);
 
-  const updateField = (field: keyof typeof quoteData, value: string) => {
+  const updateField = (field: keyof QuoteData, value: string) => {
     setQuoteData(prev => ({ ...prev, [field]: value }));
   };
 

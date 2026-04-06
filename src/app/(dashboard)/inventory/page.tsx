@@ -2,8 +2,9 @@
 
 import { Loader2 } from "lucide-react";
 import { useInventory } from "@/src/features/inventory/hooks/useInventory";
-import { InventoryModal, InventoryTable, InventoryToolbar } from "@/src/features/inventory/components/InventoryComponents";
-
+import { InventoryToolbar } from "@/src/features/inventory/components/InventoryToolbar";
+import { InventoryTable } from "@/src/features/inventory/components/InventoryTable";
+import { InventoryModal } from "@/src/features/inventory/components/InventoryModal";
 export default function InventoryPage() {
   const { state, filteredParts, dispatch, actions } = useInventory();
 

@@ -3,7 +3,7 @@
 import { use } from "react";
 import Link from "next/link";
 import { ArrowRight, Printer, Loader2 } from "lucide-react";
-import { ROUTES } from "@/src/constants/routes";
+import { ROUTES } from "@/src/constants/paths";
 import { siteConfig } from "@/src/config/site";
 
 import { useTicketDetails } from "@/src/features/tickets/hooks/useTicketDetails";

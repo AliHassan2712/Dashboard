@@ -1,7 +1,13 @@
-import {  RotateCcw, AlertTriangle } from "lucide-react";
+import { RotateCcw, AlertTriangle } from "lucide-react";
+import { TrialItemData } from "@/src/types";
 
+interface Props {
+  trials: TrialItemData[];
+  onReturn: (id: string) => void;
+  onConsume: (id: string) => void;
+}
 
-export const TrialsTable = ({ trials, onReturn, onConsume }: any) => (
+export const TrialsTable = ({ trials, onReturn, onConsume }: Props) => (
   <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
     <div className="overflow-x-auto">
       <table className="w-full text-right text-sm">
@@ -19,7 +25,7 @@ export const TrialsTable = ({ trials, onReturn, onConsume }: any) => (
           {trials.length === 0 ? (
             <tr><td colSpan={6} className="text-center py-10 text-gray-400">لا توجد قطع تجريبية (عهد) مسجلة.</td></tr>
           ) : (
-            trials.map((trial: any) => (
+            trials.map(trial => (
               <tr key={trial.id} className="hover:bg-gray-50 transition">
                 <td className="p-4 font-mono text-xs text-gray-500">{new Date(trial.givenAt).toLocaleDateString('ar-EG')}</td>
                 <td className="p-4 font-bold text-gray-900">{trial.worker?.name || "غير محدد"}</td>

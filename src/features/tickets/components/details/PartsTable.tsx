@@ -2,12 +2,10 @@ import { Trash2, Wrench } from "lucide-react";
 import Select from "react-select";
 import { SparePart, TicketPart } from "@prisma/client"; 
 
-//  تعريف نوع مخصص للقطعة المستهلكة لأنها تحتوي على بيانات القطعة الأصلية (Relation)
 type TicketPartWithDetails = TicketPart & {
   sparePart: SparePart;
 };
 
-//  تعريف دقيق للخصائص (Props)
 interface PartsTableProps {
   parts: TicketPartWithDetails[];
   inventory: SparePart[];
@@ -17,7 +15,6 @@ interface PartsTableProps {
 }
 
 export const PartsTable = ({ parts, inventory, isUpdating, onAdd, onRemove }: PartsTableProps) => {
-  // تحويل المخزون لصيغة تناسب react-select
   const options = inventory.map((p) => ({
     value: p.id,
     label: `${p.name} (${p.sellingPrice} ₪) - متوفر: ${p.quantity}`,
@@ -35,7 +32,7 @@ export const PartsTable = ({ parts, inventory, isUpdating, onAdd, onRemove }: Pa
             placeholder="ابحث عن قطعة..."
             options={options}
             isDisabled={isUpdating}
-            onChange={(opt: any) => { if (opt) onAdd(opt.value); }}
+            onChange={(opt) => { if (opt) onAdd(opt.value); }}
             value={null}
             styles={{ control: (base) => ({ ...base, fontSize: '0.875rem', borderRadius: '0.5rem' }) }}
           />

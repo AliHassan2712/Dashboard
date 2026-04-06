@@ -1,7 +1,16 @@
+import { Dispatch, SetStateAction, FormEvent } from "react";
 import { Input } from "@/src/components/ui/Input";
-import { User, ShieldCheck, Save,  Loader2 } from "lucide-react";
+import { User, ShieldCheck, Save, Loader2 } from "lucide-react";
+import { UserProfileData } from "@/src/types";
 
-export const ProfileForm = ({ profileData, setProfileData, isSaving, onSubmit }: any) => (
+interface ProfileFormProps {
+  profileData: UserProfileData;
+  setProfileData: Dispatch<SetStateAction<UserProfileData>>;
+  isSaving: boolean;
+  onSubmit: (e: FormEvent<HTMLFormElement>) => void;
+}
+
+export const ProfileForm = ({ profileData, setProfileData, isSaving, onSubmit }: ProfileFormProps) => (
   <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm h-fit">
     <div className="flex items-center gap-3 mb-6 border-b pb-4">
       <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg"><User className="w-5 h-5" /></div>

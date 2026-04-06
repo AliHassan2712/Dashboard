@@ -1,26 +1,24 @@
 "use server"; 
 
 import prisma from "@/src/lib/prisma";
-import { sparePartSchema, type SparePartFormValues } from "./validations";
 import { revalidatePath } from "next/cache";
+import { sparePartSchema, type SparePartFormValues } from "@/src/features/inventory/validations/validations";
+import { ROUTES } from "@/src/constants/paths"; 
 
 // 1. دالة إضافة قطعة غيار جديدة
 export async function addSparePart(data: SparePartFormValues) {
   try {
-    // تحقق أمني إضافي في السيرفر (Server-side Validation)
     const parsedData = sparePartSchema.safeParse(data);
     
     if (!parsedData.success) {
       return { error: "بيانات غير صالحة تم إرسالها للسيرفر" };
     }
 
-    // إدخال البيانات في قاعدة بيانات عبر Prisma
     const newPart = await prisma.sparePart.create({
       data: parsedData.data,
     });
 
-    // تحديث الصفحة "وراء الكواليس" لكي تظهر القطعة الجديدة فوراً في الجدول
-    revalidatePath("/inventory");
+    revalidatePath(ROUTES.INVENTORY); 
 
     return { success: true, data: newPart };
   } catch (error) {
@@ -33,7 +31,7 @@ export async function addSparePart(data: SparePartFormValues) {
 export async function getInventory() {
   try {
     const parts = await prisma.sparePart.findMany({
-      orderBy: { name: 'asc' }, // ترتيب أبجدي حسب الاسم
+      orderBy: { name: 'asc' }, 
     });
     
     return { success: true, data: parts };
@@ -51,7 +49,7 @@ export async function updateSparePart(id: string, data: Partial<SparePartFormVal
       data: data,
     });
 
-    revalidatePath("/inventory");
+    revalidatePath(ROUTES.INVENTORY); 
     return { success: true, data: updatedPart };
   } catch (error) {
     console.error("Error updating spare part:", error);
@@ -66,16 +64,15 @@ export async function deleteSparePart(id: string) {
       where: { id },
     });
 
-    revalidatePath("/inventory");
+    revalidatePath(ROUTES.INVENTORY); 
     return { success: true };
   } catch (error) {
     console.error("Error deleting spare part:", error);
-    // ملاحظة أمنية: إذا كانت القطعة مستخدمة في تذكرة سابقة، Prisma سترفض الحذف لحماية الحسابات المالية
     return { error: "لا يمكن حذف القطعة لأنها قد تكون مرتبطة بتذاكر أو فواتير سابقة." };
   }
 }
 
-//  دالة جلب كل قطع الغيار (لعرضها في القائمة المنسدلة داخل التذكرة)
+// دالة جلب كل قطع الغيار (للقائمة المنسدلة)
 export async function getAllSparePartsForDropdown() {
   try {
     const parts = await prisma.sparePart.findMany({
@@ -83,7 +80,7 @@ export async function getAllSparePartsForDropdown() {
         id: true,
         name: true,
         sellingPrice: true,
-        quantity: true, // مهم لنعرف إذا كانت القطعة متوفرة أم لا
+        quantity: true, 
       },
       orderBy: { name: 'asc' } 
     });

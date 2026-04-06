@@ -1,7 +1,12 @@
-import { Building2, Wallet, Package, Store, Users, TrendingUp, TrendingDown, Receipt, CalendarRange } from "lucide-react";
+import { Building2, Wallet, Package, Store, Users, TrendingUp, TrendingDown, CalendarRange } from "lucide-react";
 import { siteConfig } from "@/src/config/site";
+import { FinancialReportData } from "@/src/types";
 
-export const PrintReportTemplate = ({ data }: { data: any }) => {
+interface Props {
+  data: FinancialReportData;
+}
+
+export const PrintReportTemplate = ({ data }: Props) => {
   const today = new Date().toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' });
   const time = new Date().toLocaleTimeString('ar-EG');
   
@@ -15,7 +20,6 @@ export const PrintReportTemplate = ({ data }: { data: any }) => {
       <div className="h-4 w-full bg-gradient-to-r from-slate-900 to-slate-700 shrink-0"></div>
       
       <div className="p-8 sm:p-10 flex-1 flex flex-col">
-        
         {/* الترويسة */}
         <div className="flex justify-between items-start mb-8 border-b-2 border-gray-100 pb-6">
           <div className="flex items-center gap-4">
@@ -40,48 +44,39 @@ export const PrintReportTemplate = ({ data }: { data: any }) => {
             <p className="text-slate-300 font-bold mb-2 flex items-center gap-2">
               <Building2 className="w-5 h-5" /> صافي الأصول (قيمة الورشة الكلية اليوم)
             </p>
-            <h2 className="text-4xl sm:text-5xl font-black tracking-tight text-emerald-400">
+            <h2 className={`text-4xl sm:text-5xl font-black tracking-tight ${data.totalAssets >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
               ₪ {data.totalAssets.toLocaleString(undefined, { minimumFractionDigits: 2 })}
             </h2>
             <p className="text-xs text-slate-400 mt-3 font-medium">
-              * تمثل الميزانية الثابتة للورشة ولا تتأثر بفلتر التواريخ.
+              * المعادلة: (السيولة + ديون الزبائن + المخزون) - (ديون التجار).
             </p>
           </div>
         </div>
 
-        {/* شبكة الأصول الثابتة (لا تتأثر بالفلتر) */}
+        {/* شبكة الأصول الثابتة */}
         <div className="grid grid-cols-2 gap-6 mb-8">
           <div className="space-y-4">
             <h3 className="font-black text-emerald-700 flex items-center gap-2 border-b-2 border-emerald-100 pb-2">
               <TrendingUp className="w-5 h-5" /> الأصول الملموسة والمستحقات (+)
             </h3>
-            
             <div className="bg-emerald-50 p-4 rounded-xl flex justify-between items-center border border-emerald-100">
               <div className="flex items-center gap-3">
                 <Package className="w-8 h-8 text-emerald-500" />
-                <div>
-                  <p className="text-sm font-bold text-emerald-900">البضاعة بالمخزن</p>
-                </div>
+                <div><p className="text-sm font-bold text-emerald-900">البضاعة بالمخزن</p></div>
               </div>
               <p className="font-black text-xl text-emerald-700">₪ {data.inventoryCost.toLocaleString()}</p>
             </div>
-
             <div className="bg-emerald-50 p-4 rounded-xl flex justify-between items-center border border-emerald-100">
               <div className="flex items-center gap-3">
                 <Users className="w-8 h-8 text-emerald-500" />
-                <div>
-                  <p className="text-sm font-bold text-emerald-900">ديون الزبائن لنا</p>
-                </div>
+                <div><p className="text-sm font-bold text-emerald-900">ديون الزبائن لنا</p></div>
               </div>
               <p className="font-black text-xl text-emerald-700">₪ {data.totalCustomerDebts.toLocaleString()}</p>
             </div>
-            
             <div className="bg-emerald-50 p-4 rounded-xl flex justify-between items-center border border-emerald-100">
               <div className="flex items-center gap-3">
                 <Wallet className="w-8 h-8 text-emerald-500" />
-                <div>
-                  <p className="text-sm font-bold text-emerald-900">إجمالي الصندوق الشامل</p>
-                </div>
+                <div><p className="text-sm font-bold text-emerald-900">إجمالي الصندوق (تراكمي)</p></div>
               </div>
               <p className="font-black text-xl text-emerald-700">₪ {data.totalNetCashAllTime.toLocaleString()}</p>
             </div>
@@ -94,16 +89,14 @@ export const PrintReportTemplate = ({ data }: { data: any }) => {
             <div className="bg-rose-50 p-4 rounded-xl flex justify-between items-center border border-rose-100">
               <div className="flex items-center gap-3">
                 <Store className="w-8 h-8 text-rose-500" />
-                <div>
-                  <p className="text-sm font-bold text-rose-900">ديون التجار علينا</p>
-                </div>
+                <div><p className="text-sm font-bold text-rose-900">ديون التجار علينا</p></div>
               </div>
               <p className="font-black text-xl text-rose-700">₪ {data.totalSupplierDebts.toLocaleString()}</p>
             </div>
           </div>
         </div>
 
-        {/* التدفقات النقدية (تتأثر بفلتر التاريخ) */}
+        {/* التدفقات النقدية */}
         <div className="bg-indigo-50 border border-indigo-100 rounded-xl p-4 mb-4 flex items-center gap-3">
           <CalendarRange className="w-6 h-6 text-indigo-600" />
           <div>
@@ -123,7 +116,7 @@ export const PrintReportTemplate = ({ data }: { data: any }) => {
             </thead>
             <tbody className="divide-y divide-gray-100">
               <tr>
-                <td className="p-4 font-bold text-gray-800">إيرادات التذاكر المحصلة</td>
+                <td className="p-4 font-bold text-gray-800">إيرادات التذاكر والمبيعات</td>
                 <td className="p-4 font-black text-emerald-600 border-r border-gray-100">₪ {data.period.revenue.toLocaleString()}</td>
                 <td className="p-4 text-gray-400 border-r border-gray-100">---</td>
               </tr>

@@ -5,16 +5,16 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "react-hot-toast";
-import { createTicket } from "../actions";
-import { createTicketSchema, CreateTicketValues } from "../validations";
-import { ROUTES } from "@/src/constants/routes";
+import { createTicket } from "@/src/server/actions/tickets.actions";
+import { createTicketSchema, CreateTicketValues } from "../validations/validations";
+import { ROUTES } from "@/src/constants/paths";
 
 export function useNewTicket() {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
   const form = useForm<CreateTicketValues>({
-    resolver: zodResolver(createTicketSchema),
+    resolver: zodResolver(createTicketSchema), 
     defaultValues: { advancePayment: 0 }
   });
 

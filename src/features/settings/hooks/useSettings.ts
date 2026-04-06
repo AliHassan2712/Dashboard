@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, FormEvent } from "react";
 import { toast } from "react-hot-toast";
-import { getUserProfile, updateProfile, changePassword } from "../actions";
+import { getUserProfile, updateProfile, changePassword } from "@/src/server/actions/settings.actions";
+import { UserProfileData } from "@/src/types";
 
 export function useSettings() {
   const [isLoading, setIsLoading] = useState(true);
-  const [profileData, setProfileData] = useState({ name: "", phone: "", role: "" });
+  const [profileData, setProfileData] = useState<UserProfileData>({ name: "", phone: "", role: "" });
   
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [isSavingPass, setIsSavingPass] = useState(false);
@@ -30,13 +31,13 @@ export function useSettings() {
   }, []);
 
   // حفظ الملف الشخصي
-  const handleProfileUpdate = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleProfileUpdate = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsSavingProfile(true);
     
     const res = await updateProfile({ name: profileData.name, phone: profileData.phone });
     if (res.success) {
-      toast.success("تم تحديث البيانات الشخصية بنجاح ");
+      toast.success("تم تحديث البيانات الشخصية بنجاح");
     } else {
       toast.error(res.error || "فشل تحديث البيانات");
     }
@@ -44,7 +45,7 @@ export function useSettings() {
   };
 
   // تغيير كلمة المرور
-  const handlePasswordChange = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handlePasswordChange = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsSavingPass(true);
     
@@ -55,20 +56,20 @@ export function useSettings() {
     const confirmPass = formData.get("confirmPass") as string;
 
     if (newPass !== confirmPass) {
-      toast.error("كلمة المرور الجديدة غير متطابقة ");
+      toast.error("كلمة المرور الجديدة غير متطابقة");
       setIsSavingPass(false);
       return;
     }
 
     if (newPass.length < 6) {
-      toast.error("كلمة المرور يجب أن تكون 6 أحرف على الأقل ");
+      toast.error("كلمة المرور يجب أن تكون 6 أحرف على الأقل");
       setIsSavingPass(false);
       return;
     }
 
     const res = await changePassword({ currentPass, newPass });
     if (res.success) {
-      toast.success("تم تغيير كلمة المرور بنجاح ");
+      toast.success("تم تغيير كلمة المرور بنجاح");
       form.reset();
     } else {
       toast.error(res.error || "فشل تغيير كلمة المرور");

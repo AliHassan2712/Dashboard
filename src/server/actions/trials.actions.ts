@@ -2,6 +2,7 @@
 
 import prisma from "@/src/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { ROUTES } from "@/src/constants/paths";
 
 // 1. جلب كل العهد والقطع التجريبية
 export async function getTrialItems() {
@@ -47,15 +48,15 @@ export async function createTrialItem(data: { workerId: string; sparePartId: str
       });
     });
 
-    revalidatePath("/trials");
-    revalidatePath("/inventory");
+    revalidatePath(ROUTES.TRIALS || "/trials");
+    revalidatePath(ROUTES.INVENTORY || "/inventory");
     return { success: true };
   } catch (error) {
     return { error: "فشل تسجيل العهدة" };
   }
 }
 
-// 3. إرجاع القطعة للمخزن (تغيير الحالة لـ RETURNED وترجيع الكمية)
+// 3. إرجاع القطعة للمخزن
 export async function returnTrialItem(trialId: string) {
   try {
     const trial = await prisma.trialItem.findUnique({ where: { id: trialId } });
@@ -77,22 +78,22 @@ export async function returnTrialItem(trialId: string) {
       });
     });
 
-    revalidatePath("/trials");
-    revalidatePath("/inventory");
+    revalidatePath(ROUTES.TRIALS || "/trials");
+    revalidatePath(ROUTES.INVENTORY || "/inventory");
     return { success: true };
   } catch (error) {
     return { error: "فشل إرجاع العهدة" };
   }
 }
 
-// 4. استهلاك القطعة (تغيير الحالة لـ EXPIRED/USED إذا تم تركيبها وتلفها أو تم استخدامها)
+// 4. استهلاك القطعة (EXPIRED)
 export async function consumeTrialItem(trialId: string) {
   try {
     await prisma.trialItem.update({
       where: { id: trialId },
-      data: { status: "EXPIRED" } // ستبقى مخصومة من المخزن ولن ترجع
+      data: { status: "EXPIRED" } // ستبقى مخصومة ولن ترجع
     });
-    revalidatePath("/trials");
+    revalidatePath(ROUTES.TRIALS || "/trials");
     return { success: true };
   } catch (error) {
     return { error: "فشل تحديث الحالة" };

@@ -2,19 +2,19 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { toast } from "react-hot-toast";
-import { getFinancialReport } from "../actions";
+import { getFinancialReport } from "@/src/server/actions/reports.actions";
+import { FinancialReportData } from "@/src/types";
 
 export function useReports() {
-  const [reportData, setReportData] = useState<any>(null);
+  const [reportData, setReportData] = useState<FinancialReportData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [filters, setFilters] = useState<{ startDate?: string; endDate?: string }>({});
 
   const fetchReport = useCallback(async () => {
     setIsLoading(true);
-    // نمرر الـ filters مباشرة ككائن واحد
     const res = await getFinancialReport(filters);
-    if (res.success) {
-      setReportData(res.data);
+    if (res.success && res.data) {
+      setReportData(res.data as FinancialReportData);
     } else {
       toast.error(res.error || "خطأ في جلب البيانات");
     }

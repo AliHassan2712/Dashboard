@@ -1,15 +1,22 @@
-import { 
-  Package, 
-  Loader2, Camera, X, 
-} from "lucide-react";
+import { Dispatch, SetStateAction, FormEvent } from "react";
+import { Package, Camera, X, Loader2 } from "lucide-react";
 import { Modal } from "@/src/components/ui/Modal";
 import { Input } from "@/src/components/ui/Input";
 import { Textarea } from "@/src/components/ui/Textarea";
 import { UploadButton } from "@/src/lib/uploadthing";
 import { toast } from "react-hot-toast";
+import { CompressorFormData } from "@/src/types";
 
+interface CompressorModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  formData: CompressorFormData;
+  setFormData: Dispatch<SetStateAction<CompressorFormData>>;
+  isSubmitting: boolean;
+  onSave: (e: FormEvent) => void;
+}
 
-export const CompressorModal = ({ isOpen, onClose, formData, setFormData, isSubmitting, onSave }: any) => (
+export const CompressorModal = ({ isOpen, onClose, formData, setFormData, isSubmitting, onSave }: CompressorModalProps) => (
   <Modal isOpen={isOpen} onClose={onClose} title={<><Package className="w-5 h-5 text-indigo-600"/> إضافة كمبريسور للمخزون</>} maxWidth="lg">
     <form onSubmit={onSave} className="space-y-5">
       

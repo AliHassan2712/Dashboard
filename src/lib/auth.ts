@@ -2,7 +2,7 @@ import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcrypt";
 import prisma from "@/src/lib/prisma";
-import { ROUTES } from "../constants/routes";
+import { ROUTES } from "../constants/paths";
 
 // Extend NextAuth types
 declare module "next-auth" {

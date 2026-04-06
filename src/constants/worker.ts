@@ -1,4 +1,4 @@
-import { WorkersState, WorkerWithTransactions } from "../types";
+import { WorkersState, WorkerWithTransactions } from "@/src/types";
 
 export const initialState: WorkersState = {
   workers: [],
@@ -15,6 +15,6 @@ export type Action =
   | { type: "SET_WORKERS"; payload: WorkerWithTransactions[] }
   | { type: "OPEN_TX_MODAL"; payload: { userId: string; type: string; name: string } }
   | { type: "CLOSE_TX_MODAL" }
-  | { type: "UPDATE_TX_DATA"; field: string; value: any }
-  | { type: "UPDATE_WORKER_FORM"; field: string; value: any }
+  | { type: "UPDATE_TX_DATA"; field: keyof WorkersState["txData"]; value: string }
+  | { type: "UPDATE_WORKER_FORM"; field: keyof WorkersState["workerForm"]; value: string }
   | { type: "RESET_FORMS" };

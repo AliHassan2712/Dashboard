@@ -2,7 +2,8 @@
 
 import { Loader2 } from "lucide-react";
 import { useDashboard } from "@/src/features/dashboard/hooks/useDashboard";
-import { AdminDashboard, WorkerDashboard } from "@/src/features/dashboard/components/DashboardViews";
+import { AdminDashboard } from "@/src/features/dashboard/components/AdminDashboard";
+import { WorkerDashboard } from "@/src/features/dashboard/components/WorkerDashboard";
 
 export default function DashboardPage() {
   const { isAdmin, userName, stats, workerStats, isLoading } = useDashboard();

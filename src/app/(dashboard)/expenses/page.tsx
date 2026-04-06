@@ -3,20 +3,26 @@
 import { TrendingDown, Plus, Wallet, Receipt, Truck, History, Loader2 } from "lucide-react";
 import { useExpenses } from "@/src/features/expenses/hooks/useExpenses";
 import { FinancialStats } from "@/src/features/expenses/components/FinancialStats";
-import { ExpensesModals } from "@/src/features/expenses/components/ExpensesModals";
-import { ExpensesTable, PaymentsTable, PurchasesTable } from "@/src/features/expenses/components/ExpensesTable";
+import { ExpenseModal } from "@/src/features/expenses/components/modals/ExpenseModal";
+import { PurchaseModal } from "@/src/features/expenses/components/modals/PurchaseModal";
+import { SupplierModal } from "@/src/features/expenses/components/modals/SupplierModal";
+import { PaymentModal } from "@/src/features/expenses/components/modals/PaymentModal";
+import { SupplierLedgerModal } from "@/src/features/expenses/components/modals/SupplierLedgerModal";
+import { ExpensesState, PurchaseItemForm } from "@/src/types";
+import { ExpensesTable } from "@/src/features/expenses/components/tables/ExpensesTable";
+import { PaymentsTable } from "@/src/features/expenses/components/tables/PaymentsTable";
+import { PurchasesTable } from "@/src/features/expenses/components/tables/PurchasesTable";
+
 
 export default function ExpensesPage() {
   const { state, dispatch, actions } = useExpenses();
 
-  const updateForm = (form: any, field: string, value: any) => {
+  const updateForm = (form: keyof ExpensesState["forms"], field: string, value: string | PurchaseItemForm[]) => {
     dispatch({ type: "UPDATE_FORM", form, field, value });
   };
 
   return (
     <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500 pb-10">
-      
-      {/* 1. الترويسة وأزرار التحكم */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
         <div>
           <h1 className="text-2xl font-black text-gray-900 flex items-center gap-2">
@@ -34,36 +40,33 @@ export default function ExpensesPage() {
         </div>
       </div>
 
-      {/* 2. الإحصائيات العلوية */}
       <FinancialStats overview={state.overview} />
 
-      {/* 3. منطقة الجداول والتبويبات */}
       <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
-        
-        {/* أزرار التبويبات */}
         <div className="flex border-b border-gray-100 bg-gray-50/50 p-2 gap-2 overflow-x-auto">
           <button onClick={() => dispatch({ type: "SET_TAB", payload: "expenses" })} className={`whitespace-nowrap flex-1 py-3 px-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${state.activeTab === "expenses" ? "bg-white text-rose-600 shadow-sm border border-gray-200" : "text-gray-500 hover:bg-gray-100"}`}><Receipt className="w-5 h-5" /> المصاريف التشغيلية</button>
           <button onClick={() => dispatch({ type: "SET_TAB", payload: "purchases" })} className={`whitespace-nowrap flex-1 py-3 px-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${state.activeTab === "purchases" ? "bg-white text-indigo-600 shadow-sm border border-gray-200" : "text-gray-500 hover:bg-gray-100"}`}><Truck className="w-5 h-5" /> فواتير المشتريات</button>
           <button onClick={() => dispatch({ type: "SET_TAB", payload: "payments" })} className={`whitespace-nowrap flex-1 py-3 px-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${state.activeTab === "payments" ? "bg-white text-emerald-600 shadow-sm border border-gray-200" : "text-gray-500 hover:bg-gray-100"}`}><History className="w-5 h-5" /> سجل دفعات الموردين</button>
         </div>
 
-        {/* محتوى الجداول */}
         <div className="p-0">
           {state.isLoading ? (
             <div className="py-20 flex justify-center"><Loader2 className="w-8 h-8 animate-spin text-gray-400" /></div>
           ) : state.activeTab === "expenses" ? (
             <ExpensesTable expenses={state.expenses} onDelete={actions.handleDeleteExpense} />
           ) : state.activeTab === "purchases" ? (
-            <PurchasesTable purchases={state.purchases} />
+            <PurchasesTable purchases={state.purchases} onOpenLedger={actions.openLedger} />
           ) : (
-            <PaymentsTable payments={state.payments} />
+            <PaymentsTable payments={state.payments} onEdit={actions.openEditPayment} onDelete={actions.handleDeletePayment} />
           )}
         </div>
       </div>
 
-      {/* 4. النوافذ المنبثقة (Modals) */}
-      <ExpensesModals state={state} dispatch={dispatch} actions={actions} updateForm={updateForm} />
-
+      <ExpenseModal state={state} dispatch={dispatch} onSave={actions.handleAddExpense} updateForm={updateForm} />
+      <PurchaseModal state={state} dispatch={dispatch} onSave={actions.handleAddPurchase} updateForm={updateForm} />
+      <SupplierModal state={state} dispatch={dispatch} onSave={actions.handleAddSupplier} updateForm={updateForm} />
+      <PaymentModal state={state} dispatch={dispatch} onSave={state.editingPaymentId ? actions.handleEditPaymentSubmit : actions.handleAddPayment} updateForm={updateForm} />
+      <SupplierLedgerModal isOpen={state.modals.ledger} onClose={() => dispatch({ type: "CLOSE_MODALS" })} supplierId={state.ledgerSupplierId} />
     </div>
   );
 }

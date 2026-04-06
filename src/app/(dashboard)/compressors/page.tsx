@@ -1,13 +1,11 @@
 "use client";
 
-import { 
-  Plus, RefreshCw, Loader2, Package, 
-  Search, Filter 
-} from "lucide-react";
+import { Plus, RefreshCw, Loader2, Package, Search, Filter } from "lucide-react";
 import { useCompressors } from "@/src/features/compressors/hooks/useCompressors";
 import { ExportButton } from "@/src/components/shared/ExportButton";
 import { CompressorModal } from "@/src/features/compressors/components/CompressorModal";
 import { CompressorTable } from "@/src/features/compressors/components/CompressorTable";
+import { Compressor } from "@prisma/client";
 
 export default function CompressorsPage() {
   const { 
@@ -16,18 +14,18 @@ export default function CompressorsPage() {
   } = useCompressors();
 
   // --- تجهيز البيانات للتصدير ---
-  const excelData = compressors.map((c: any) => ({
+  const excelData = compressors.map((c: Compressor) => ({
     "الموديل/الوصف": c.modelName,
     "الرقم التسلسلي": c.serialNumber || "لا يوجد",
     "تكلفة الإنتاج (₪)": c.productionCost,
     "سعر البيع (₪)": c.sellingPrice,
     "الربح المتوقع (₪)": c.sellingPrice - c.productionCost,
-    "الحالة": c.status === 'AVAILABLE' ? 'جاهز للبيع' : c.status === 'SOLD' ? 'تم البيع' : 'صيانة',
+    "الحالة": c.status === 'AVAILABLE' || c.status === 'READY' ? 'جاهز للبيع' : c.status === 'SOLD' ? 'تم البيع' : 'صيانة',
     "تاريخ الإضافة": new Date(c.createdAt).toLocaleDateString('ar-EG'),
   }));
 
   return (
-    <div className="p-4 sm:p-8 max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500">
+    <div className="p-4 sm:p-8 max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500 pb-10">
       
       {/* الترويسة (Header) */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white p-6 rounded-[2.5rem] border border-gray-100 shadow-sm">

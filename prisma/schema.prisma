@@ -187,7 +187,7 @@ model PurchaseInvoice {
   totalAmount Float
   paidAmount  Float          @default(0.0)
   date        DateTime       @default(now())
-
+  notes       String?
   items       PurchaseItem[]
 }
 
@@ -199,6 +199,7 @@ model PurchaseItem {
   sparePart   SparePart       @relation(fields: [sparePartId], references: [id])
   quantity    Int
   unitCost    Float
+  notes       String?
 }
 
 // ================= المصاريف التشغيلية =================

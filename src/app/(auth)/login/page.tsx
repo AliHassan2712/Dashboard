@@ -2,7 +2,7 @@ import { LoginForm } from "@/src/features/auth/login/components/LoginForm";
 import { getServerSession } from "next-auth"; 
 import { authOptions } from "@/src/lib/auth";
 import { redirect } from "next/navigation"; 
-import { ROUTES } from "@/src/constants/routes";
+import { ROUTES } from "@/src/constants/paths";
 
 export default async function LoginPage() {
   // 1. فحص هل المستخدم مسجل دخول أصلاً؟

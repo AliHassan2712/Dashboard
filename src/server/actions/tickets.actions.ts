@@ -5,14 +5,14 @@ import { revalidatePath } from "next/cache";
 import { getServerSession } from "next-auth"; 
 import { authOptions } from "@/src/lib/auth"; 
 import { UpdateTicketInput } from "@/src/types";
+import { CreateTicketValues } from "@/src/features/tickets/validations/validations";
+import { ROUTES } from "@/src/constants/paths";
 
-
-
-
-
-export async function createTicket(data: any) {
-  const session = await getServerSession(authOptions); // جلب المستخدم الحالي
-  
+// ==========================================
+// 1. إنشاء وتعديل التذاكر
+// ==========================================
+export async function createTicket(data: CreateTicketValues) {
+  const session = await getServerSession(authOptions);
   if (!session) return { error: "يجب تسجيل الدخول أولاً" };
 
   try {
@@ -22,22 +22,23 @@ export async function createTicket(data: any) {
         workerId: session.user.id, 
       }
     });
+    revalidatePath(ROUTES.TICKETS);
     return { success: true, data: ticket };
   } catch (e) {
     return { error: "خطأ في الحفظ" };
   }
 }
+
 export async function updateTicket(ticketId: string, data: UpdateTicketInput) {
   try {
     const updatedTicket = await prisma.ticket.update({
       where: { id: ticketId },
       data: data,
     });
-    revalidatePath(`/tickets/${ticketId}`);
-    revalidatePath("/tickets");
+    revalidatePath(ROUTES.TICKET_DETAILS(ticketId));
+    revalidatePath(ROUTES.TICKETS);
     return { success: true, data: updatedTicket };
   } catch (error) {
-    console.error("Update Ticket Error:", error);
     return { error: "حدث خطأ أثناء تعديل بيانات التذكرة." };
   }
 }
@@ -54,10 +55,8 @@ export async function getTicketById(ticketId: string) {
     });
     
     if (!ticket) return { error: "لم يتم العثور على هذه التذكرة." };
-    
     return { success: true, data: ticket };
   } catch (error) {
-    console.error("Get Ticket Error:", error);
     return { error: "حدث خطأ أثناء قراءة التذكرة من قاعدة البيانات." };
   }
 }
@@ -68,33 +67,26 @@ export async function getAllTickets() {
       orderBy: { createdAt: 'desc' },
       include: { 
         partsUsed: true,
-        worker: { select: { name: true } } // مفيد لو أردنا عرض اسم الموظف في الجدول الرئيسي
+        worker: { select: { name: true } }
       } 
     });
     return { success: true, data: tickets };
   } catch (error) {
-    console.error("Get All Tickets Error:", error);
     return { error: "تعذر جلب التذاكر." };
   }
 }
 
 // ==========================================
-// 3. دوال الدفعات وصورة الفاتورة
+// 2. دوال الدفعات وصورة الفاتورة
 // ==========================================
-
 export async function addPaymentToTicket(ticketId: string, amount: number) {
   try {
     await prisma.payment.create({
-      data: {
-        ticketId,
-        amount,
-        notes: "دفعة إضافية"
-      }
+      data: { ticketId, amount, notes: "دفعة إضافية" }
     });
-    revalidatePath(`/tickets/${ticketId}`);
+    revalidatePath(ROUTES.TICKET_DETAILS(ticketId));
     return { success: true };
   } catch (error) {
-    console.error("Add Payment Error:", error);
     return { error: "فشل تسجيل الدفعة." };
   }
 }
@@ -105,18 +97,16 @@ export async function updateTicketInvoiceImage(ticketId: string, imageUrl: strin
       where: { id: ticketId },
       data: { invoiceImageUrl: imageUrl }
     });
-    revalidatePath(`/tickets/${ticketId}`);
+    revalidatePath(ROUTES.TICKET_DETAILS(ticketId));
     return { success: true };
   } catch (error) {
-    console.error("Update Invoice Image Error:", error);
     return { error: "فشل حفظ صورة الفاتورة." };
   }
 }
 
 // ==========================================
-// 4. دوال الجرد (سحب وإرجاع القطع)
+// 3. دوال الجرد (سحب وإرجاع القطع)
 // ==========================================
-
 export async function addPartToTicket(data: { ticketId: string; sparePartId: string; quantity: number }) {
   try {
     const sparePart = await prisma.sparePart.findUnique({ where: { id: data.sparePartId } });
@@ -140,10 +130,9 @@ export async function addPartToTicket(data: { ticketId: string; sparePartId: str
       return ticketPart;
     });
 
-    revalidatePath(`/tickets/${data.ticketId}`);
+    revalidatePath(ROUTES.TICKET_DETAILS(data.ticketId));
     return { success: true, data: result };
   } catch (error) {
-    console.error("Add Part To Ticket Error:", error);
     return { error: "حدث خطأ أثناء سحب القطعة من المخزون." };
   }
 }
@@ -161,10 +150,20 @@ export async function removePartFromTicket(ticketPartId: string, ticketId: strin
       });
     });
 
-    revalidatePath(`/tickets/${ticketId}`);
+    revalidatePath(ROUTES.TICKET_DETAILS(ticketId));
     return { success: true };
   } catch (error) {
-    console.error("Remove Part From Ticket Error:", error);
     return { error: "حدث خطأ أثناء إرجاع القطعة للمخزون." };
+  }
+}
+
+
+export async function deleteTicket(ticketId: string) {
+  try {
+    await prisma.ticket.delete({ where: { id: ticketId } });
+    revalidatePath(ROUTES.TICKETS);
+    return { success: true };
+  } catch (error) {
+    return { error: "لا يمكن حذف التذكرة لاحتوائها على حركات مالية أو قطع مستهلكة. يرجى تصفيتها أولاً." };
   }
 }

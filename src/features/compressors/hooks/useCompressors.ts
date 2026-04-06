@@ -1,16 +1,18 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, FormEvent } from "react";
 import { toast } from "react-hot-toast";
-import { getCompressors, addCompressor, updateCompressorStatus, deleteCompressor } from "../actions";
+import { Compressor } from "@prisma/client"; 
+import { CompressorFormData } from "@/src/types"; 
+import { getCompressors, addCompressor, updateCompressorStatus, deleteCompressor } from "@/src/server/actions/compressors.actions";
 
 export function useCompressors() {
-  const [compressors, setCompressors] = useState<any[]>([]);
+  const [compressors, setCompressors] = useState<Compressor[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<CompressorFormData>({
     serialNumber: "",
     model: "",
     buildCost: "",
@@ -23,7 +25,7 @@ export function useCompressors() {
     setIsLoading(true);
     const res = await getCompressors();
     if (res.success) {
-      setCompressors(res.data || []);
+      setCompressors((res.data as Compressor[]) || []);
     } else {
       toast.error(res.error || "خطأ في الجلب");
     }
@@ -32,7 +34,7 @@ export function useCompressors() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  const handleAdd = async (e: React.FormEvent) => {
+  const handleAdd = async (e: FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     
@@ -41,14 +43,15 @@ export function useCompressors() {
       serialNumber: formData.serialNumber.trim() || undefined,
       productionCost: Number(formData.buildCost), 
       sellingPrice: Number(formData.sellingPrice),
-      description: formData.description
+      description: formData.description,
+      imageUrl: formData.imageUrl || undefined
     });
 
     if (res.success) {
       toast.success("تمت إضافة الكمبريسور للمخزون");
       setIsModalOpen(false);
       setFormData({ serialNumber: "", model: "", buildCost: "", sellingPrice: "", description: "", imageUrl: "" });
-      await fetchData(); // تحديث فوري
+      await fetchData(); 
     } else {
       toast.error(res.error || "خطأ");
     }
@@ -60,6 +63,8 @@ export function useCompressors() {
     if (res.success) {
       toast.success("تم تحديث الحالة");
       await fetchData();
+    } else {
+      toast.error(res.error || "فشل التحديث");
     }
   };
 
@@ -69,6 +74,8 @@ export function useCompressors() {
     if (res.success) {
       toast.success("تم الحذف");
       await fetchData();
+    } else {
+      toast.error(res.error || "فشل الحذف");
     }
   };
 

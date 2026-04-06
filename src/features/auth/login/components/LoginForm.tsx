@@ -5,9 +5,9 @@ import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { loginSchema, type LoginFormValues } from "../validations";
+import { loginSchema, type LoginFormValues } from "../validations/validations";
 import { Input } from "@/src/components/ui/Input"; 
-import { ROUTES } from "@/src/constants/routes";
+import { ROUTES } from "@/src/constants/paths";
 
 export function LoginForm() {
   const router = useRouter();

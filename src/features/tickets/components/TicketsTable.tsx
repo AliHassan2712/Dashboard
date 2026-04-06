@@ -1,16 +1,20 @@
 import Link from "next/link";
-import { Ticket as TicketIcon } from "lucide-react";
-import { ROUTES } from "@/src/constants/routes";
+import { Ticket as TicketIcon, Edit, Trash2 } from "lucide-react";
+import { ROUTES } from "@/src/constants/paths";
+import { TicketListItem } from "@/src/types";
 
-export const TicketsTable = ({ tickets }: { tickets: any[] }) => {
+interface TicketsTableProps {
+  tickets: TicketListItem[];
+  onEdit: (ticket: TicketListItem) => void;
+  onDelete: (id: string, name: string) => void;
+}
+
+export const TicketsTable = ({ tickets, onEdit, onDelete }: TicketsTableProps) => {
     if (tickets.length === 0) {
         return (
             <div className="text-center py-12 text-gray-500 bg-white rounded-xl shadow-sm border border-gray-100">
                 <TicketIcon className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                <p>لا توجد أي تذاكر صيانة حتى الآن.</p>
-                <Link href={ROUTES.NEW_TICKET} className="text-indigo-600 hover:underline text-sm mt-2 inline-block font-bold">
-                    اضغط هنا لإنشاء أول تذكرة
-                </Link>
+                <p>لا توجد أي تذاكر مطابقة لعملية البحث.</p>
             </div>
         );
     }
@@ -25,12 +29,11 @@ export const TicketsTable = ({ tickets }: { tickets: any[] }) => {
                             <th className="px-4 py-3 font-medium">الزبون</th>
                             <th className="px-4 py-3 font-medium">تاريخ الدخول</th>
                             <th className="px-4 py-3 font-medium">الحالة</th>
-                            <th className="px-4 py-3 font-medium">عدد القطع المستهلكة</th>
                             <th className="px-4 py-3 font-medium text-center">إجراءات</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-100">
-                        {tickets.map((ticket: any) => (
+                        {tickets.map((ticket) => (
                             <tr key={ticket.id} className="hover:bg-gray-50/50 transition">
                                 <td className="px-4 py-3 font-bold text-gray-400 font-mono text-xs">
                                     #{ticket.id.slice(-6).toUpperCase()}
@@ -53,13 +56,16 @@ export const TicketsTable = ({ tickets }: { tickets: any[] }) => {
                                                 ticket.status === 'WAITING_FOR_PARTS' ? 'بانتظار قطع' : 'مكتملة'}
                                     </span>
                                 </td>
-                                <td className="px-4 py-3 font-bold text-gray-700">
-                                    {ticket.partsUsed?.length || 0} قطع
-                                </td>
-                                <td className="px-4 py-3 text-center">
+                                <td className="px-4 py-3 text-center flex items-center justify-center gap-2">
                                     <Link href={ROUTES.TICKET_DETAILS(ticket.id)} className="text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-lg text-xs font-bold transition">
-                                        عرض التفاصيل
+                                        التفاصيل
                                     </Link>
+                                    <button onClick={() => onEdit(ticket)} className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition">
+                                        <Edit className="w-4 h-4"/>
+                                    </button>
+                                    <button onClick={() => onDelete(ticket.id, ticket.customerName)} className="p-1.5 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition">
+                                        <Trash2 className="w-4 h-4"/>
+                                    </button>
                                 </td>
                             </tr>
                         ))}

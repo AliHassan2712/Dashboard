@@ -2,6 +2,7 @@
 
 import prisma from "@/src/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { ROUTES } from "@/src/constants/paths";
 
 // 1. جلب البيانات
 export async function getCompressors() {
@@ -16,7 +17,7 @@ export async function getCompressors() {
   }
 }
 
-// 2. الإضافة (تأكد من الحقول الاختيارية)
+// 2. الإضافة
 export async function addCompressor(data: {
   serialNumber?: string;
   modelName: string; 
@@ -36,29 +37,37 @@ export async function addCompressor(data: {
         ...(data.serialNumber ? { serialNumber: data.serialNumber } : {}),
       }
     });
-    revalidatePath("/compressors");
+    revalidatePath(ROUTES.COMPRESSORS); 
     return { success: true, data: compressor };
   } catch (error) {
+    console.error("Add Error:", error);
     return { error: "فشل إضافة الكمبريسور" };
   }
 }
 
-// 3. التحديث والحذف (بقيت كما هي مع revalidatePath)
+// 3. التحديث
 export async function updateCompressorStatus(id: string, status: string) {
   try {
     await prisma.compressor.update({
       where: { id },
       data: { status }
     });
-    revalidatePath("/compressors");
+    revalidatePath(ROUTES.COMPRESSORS); 
     return { success: true };
-  } catch (error) { return { error: "فشل التحديث" }; }
+  } catch (error) { 
+    console.error("Update Error:", error);
+    return { error: "فشل التحديث" }; 
+  }
 }
 
+// 4. الحذف
 export async function deleteCompressor(id: string) {
   try {
     await prisma.compressor.delete({ where: { id } });
-    revalidatePath("/compressors");
+    revalidatePath(ROUTES.COMPRESSORS); 
     return { success: true };
-  } catch (error) { return { error: "فشل الحذف" }; }
+  } catch (error) { 
+    console.error("Delete Error:", error);
+    return { error: "فشل الحذف" }; 
+  }
 }

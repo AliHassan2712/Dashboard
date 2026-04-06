@@ -2,7 +2,7 @@
 
 import { signOut, useSession } from "next-auth/react";
 import { LogOut, User, Menu } from "lucide-react";
-import { ROUTES } from "@/src/constants/routes"; 
+import { ROUTES } from "@/src/constants/paths"; 
 
 export default function Navbar({ onOpenSidebar }: { onOpenSidebar?: () => void }) {
   const { data: session } = useSession();

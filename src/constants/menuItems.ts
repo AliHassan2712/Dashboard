@@ -1,5 +1,5 @@
 import { LayoutDashboard, Ticket, Package, Receipt, Settings, Users, FileText, PieChart, ClipboardList } from "lucide-react";
-import { ROUTES } from "./routes";
+import { ROUTES } from "./paths";
 
   export const menuItems = [
     { name: "الرئيسية", icon: LayoutDashboard, href: ROUTES.HOME, roles: ["ADMIN", "WORKER"] },

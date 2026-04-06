@@ -1,12 +1,18 @@
 import Link from "next/link";
 import { User, Wrench, Save } from "lucide-react";
+import { UseFormReturn } from "react-hook-form";
 import { Input } from "@/src/components/ui/Input";
 import { Textarea } from "@/src/components/ui/Textarea";
-import { ROUTES } from "@/src/constants/routes";
+import { ROUTES } from "@/src/constants/paths";
+import { CreateTicketValues } from "../validations/validations";
 
+interface NewTicketFormProps {
+    form: UseFormReturn<CreateTicketValues>;
+    isLoading: boolean;
+    onSubmit: (data: CreateTicketValues) => void;
+}
 
-
-export const NewTicketForm = ({ form, isLoading, onSubmit }: any) => {
+export const NewTicketForm = ({ form, isLoading, onSubmit }: NewTicketFormProps) => {
     const { register, handleSubmit, formState: { errors } } = form;
 
     return (
@@ -30,8 +36,13 @@ export const NewTicketForm = ({ form, isLoading, onSubmit }: any) => {
                 <div className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <Input label="نوع / موديل الكمبريسور" placeholder="ايطالي 200 لتر" error={errors.compressorModel?.message} {...register("compressorModel")} />
-                        <Input label="دفعة مقدمة (تحت الحساب)" type="number" leftIcon="₪" error={errors.advancePayment?.message} {...register("advancePayment")} />
-                    </div>
+                        <Input
+                            label="دفعة مقدمة (تحت الحساب)"
+                            type="number"
+                            leftIcon="₪"
+                            error={errors.advancePayment?.message}
+                            {...register("advancePayment", { valueAsNumber: true })}
+                        />                    </div>
                     <Textarea label="وصف المشكلة المبدئي" rows={4} placeholder="الجهاز لا يضغط هواء..." error={errors.issueDescription?.message} {...register("issueDescription")} />
                 </div>
             </div>

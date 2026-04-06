@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { ROUTES } from "@/src/constants/routes";
+import { ROUTES } from "@/src/constants/paths";
 import { menuItems } from "@/src/constants/menuItems";
 import { X } from "lucide-react";
 

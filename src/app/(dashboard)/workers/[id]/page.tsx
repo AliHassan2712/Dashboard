@@ -1,4 +1,4 @@
-import { getWorkerDetails } from "@/src/features/workers/actions";
+import { getWorkerDetails } from "@/src/server/actions/workers.actions";
 import { 
   ArrowRight, 
   Calendar, 
@@ -53,8 +53,8 @@ export default async function WorkerProfilePage({ params }: { params: Promise<{ 
         
         <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 text-left min-w-[200px]">
           <p className="text-xs font-bold text-gray-400 uppercase mb-1 text-right">الرصيد المستحق الحالي</p>
-          <div className={`text-3xl font-black flex items-center justify-end gap-2 ${worker.balance >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
-            {worker.balance.toFixed(2)} ₪
+          <div className={`text-3xl font-black flex items-center justify-end gap-2 ${worker.currentBalance >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+            {worker.currentBalance.toFixed(2)} ₪ //console.log()
             <Wallet className="w-6 h-6" />
           </div>
         </div>

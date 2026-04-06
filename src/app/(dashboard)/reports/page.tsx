@@ -23,27 +23,24 @@ export default function ReportsPage() {
     setFilters({});
   };
 
-  // --- تجهيز بيانات الإكسيل من التقرير الحالي ---
-// ... داخل الـ Component
   const prepareExcelData = () => {
     if (!reportData) return [];
     
     return [{
       "الفترة من": localStart || "البداية",
       "الفترة إلى": localEnd || "اليوم",
-      "إجمالي الإيرادات (₪)": reportData.totalRevenue,
-      "إجمالي التكاليف (₪)": reportData.totalCosts,
-      "صافي الربح (₪)": reportData.netProfit,
-      "إيراد الصيانة (تذاكر)": reportData.ticketsRevenue,
-      "مبيعات أجهزة جاهزة": reportData.compressorsRevenue,
-      "مصاريف تشغيلية": reportData.generalExpenses,
-      "رواتب وسلف": reportData.workersPayments,
-      "تكاليف مواد وتجهيز": reportData.purchasesCosts
+      "إجمالي الإيرادات (₪)": reportData.period.revenue,
+      "إجمالي التكاليف (₪)": reportData.period.expenses + reportData.period.workerPayments + reportData.period.purchasesPaid,
+      "صافي الربح (₪)": reportData.period.netCash,
+      "إيراد الصيانة والمبيعات": reportData.period.revenue,
+      "مصاريف تشغيلية": reportData.period.expenses,
+      "رواتب وسلف": reportData.period.workerPayments,
+      "تكاليف ومدفوعات للتجار": reportData.period.purchasesPaid,
+      "صافي الأصول الكلي للورشة": reportData.totalAssets
     }];
   };
-// ...
 
-  if (isLoading) {
+  if (isLoading || !reportData) {
     return (
       <div className="flex justify-center items-center min-h-[60vh]">
         <Loader2 className="w-12 h-12 animate-spin text-indigo-600" />
@@ -81,14 +78,11 @@ export default function ReportsPage() {
           </div>
           
           <div className="flex gap-2 w-full sm:w-auto">
-            {/*  زر التصدير للإكسيل الجديد */}
-            {reportData && (
-              <ExportButton 
-                data={prepareExcelData()} 
-                fileName={`الميزانية_${localStart || 'شامل'}`} 
-                sheetName="الملخص المالي"
-              />
-            )}
+            <ExportButton 
+              data={prepareExcelData()} 
+              fileName={`الميزانية_${localStart || 'شامل'}`} 
+              sheetName="الملخص المالي"
+            />
 
             <button onClick={() => window.print()} className="flex items-center gap-2 px-8 py-3 bg-slate-900 text-white hover:bg-black rounded-xl font-bold transition shadow-xl w-full sm:w-auto justify-center">
               <Printer className="w-5 h-5" /> طباعة
@@ -116,11 +110,10 @@ export default function ReportsPage() {
             )}
           </div>
         </div>
-
       </div>
 
       {/* قالب العرض والطباعة */}
-      {reportData && <PrintReportTemplate data={reportData} />}
+      <PrintReportTemplate data={reportData} />
 
     </div>
   );

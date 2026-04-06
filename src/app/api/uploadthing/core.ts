@@ -4,10 +4,9 @@ const f = createUploadthing();
 
 export const ourFileRouter = {
   // اسم مسار الرفع (سنستخدمه في الواجهة الأمامية)
-  imageUploader: f({ image: { maxFileSize: "4MB", maxFileCount: 4 } }) // 👈 غيرنا الرقم هنا
+  imageUploader: f({ image: { maxFileSize: "4MB", maxFileCount: 4 } }) 
     .onUploadComplete(async ({ metadata, file }) => {
       // هذه الدالة تعمل بعد نجاح رفع الصورة
-      console.log("تم رفع الصورة بنجاح! الرابط:", file.url);
       return { uploadedBy: "Admin" };
     }),
 } satisfies FileRouter;

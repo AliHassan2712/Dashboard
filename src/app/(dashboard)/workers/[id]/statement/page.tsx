@@ -1,33 +1,43 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowRight } from "lucide-react";
-import { getWorkerDetails } from "@/src/features/workers/actions";
-import { ROUTES } from "@/src/constants/routes";
+import { getWorkerDetails } from "@/src/server/actions/workers.actions"; 
+import { ROUTES } from "@/src/constants/paths";
 import { WorkerProfileCard } from "@/src/features/workers/components/WorkerProfileCard";
-import { TransactionTable } from "@/src/features/workers/components/TransactionTable";
+import { WorkerWithTransactions } from "@/src/types";
+import { WorkerStatementTable } from "@/src/features/workers/components/WorkerStatement";
 
-export default async function WorkerProfilePage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-  const result = await getWorkerDetails(id);
+export default async function WorkerStatementPage({ params }: { params: Promise<{ id: string }> }) {
+  // في Next.js 15 الـ params عبارة عن Promise
+  const resolvedParams = await params;
+  const { id } = resolvedParams;
 
-  if (result.error || !result.data) {
-    return notFound();
+  const res = await getWorkerDetails(id);
+
+  if (!res.success || !res.data) {
+    notFound();
   }
 
-  const worker = result.data;
+  const worker = res.data as WorkerWithTransactions;
 
   return (
-    <div className="p-6 max-w-5xl mx-auto space-y-6 animate-in fade-in duration-500">
+    <div className="p-4 sm:p-8 max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500 pb-10">
       
-      <div className="flex items-center justify-between">
-        <Link href={ROUTES.WORKERS} className="flex items-center gap-2 text-gray-500 hover:text-indigo-600 transition font-bold text-sm">
-          <ArrowRight className="w-5 h-5" /> رجوع لقائمة العمال
-        </Link>
-      </div>
+      {/* زر العودة */}
+      <Link 
+        href={ROUTES.WORKERS} 
+        className="inline-flex items-center gap-2 text-gray-500 hover:text-indigo-600 transition-colors font-bold bg-white px-4 py-2 rounded-xl shadow-sm border border-gray-100 w-fit"
+      >
+        <ArrowRight className="w-5 h-5" />
+        العودة لقائمة الفنيين
+      </Link>
 
+      {/* بطاقة معلومات الفني */}
       <WorkerProfileCard worker={worker} />
-      <TransactionTable transactions={worker.transactions} />
 
+      {/* جدول كشف الحساب المحدث */}
+      <WorkerStatementTable transactions={worker.transactions} />
+      
     </div>
   );
 }

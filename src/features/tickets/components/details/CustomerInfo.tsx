@@ -1,9 +1,9 @@
-import { Ticket } from "@prisma/client"; //  استيراد نوع التذكرة
+import { Ticket, TicketStatus } from "@prisma/client";
 
 interface CustomerInfoProps {
   ticket: Ticket;
-  status: string;
-  setStatus: (newStatus: string) => void;
+  status: TicketStatus;
+  setStatus: (newStatus: TicketStatus) => void;
 }
 
 export const CustomerInfo = ({ ticket, status, setStatus }: CustomerInfoProps) => (
@@ -19,7 +19,7 @@ export const CustomerInfo = ({ ticket, status, setStatus }: CustomerInfoProps) =
       <p className="font-bold text-gray-900">{ticket.compressorModel || "غير محدد"}</p>
       <select 
         value={status} 
-        onChange={(e) => setStatus(e.target.value)} 
+        onChange={(e) => setStatus(e.target.value as TicketStatus)} 
         className="mt-2 text-xs border rounded-md p-1 bg-gray-50 outline-none cursor-pointer hover:bg-gray-100 transition"
       >
         <option value="OPEN">مفتوحة</option>

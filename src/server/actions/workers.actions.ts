@@ -3,8 +3,10 @@
 import prisma from "@/src/lib/prisma";
 import bcrypt from "bcrypt";
 import { revalidatePath } from "next/cache";
+import { ROUTES } from "@/src/constants/paths";
+import { TypesWorkerTransaction } from "@prisma/client";
 
-export async function registerWorker(data: any) {
+export async function registerWorker(data: { name: string; phone: string; password: string; baseSalary?: string | number }) {
   try {
     const hashedPassword = await bcrypt.hash(data.password, 10);
     await prisma.user.create({
@@ -16,7 +18,7 @@ export async function registerWorker(data: any) {
         role: "WORKER",
       },
     });
-    revalidatePath("/workers");
+    revalidatePath(ROUTES.WORKERS);
     return { success: true };
   } catch (error: any) {
     return { error: "فشل إضافة العامل: " + (error.code === 'P2002' ? "الرقم مسجل مسبقاً" : "خطأ تقني") };
@@ -44,7 +46,7 @@ export async function getWorkersWithBalance() {
 export async function addWorkerTransaction(data: { 
   userId: string, 
   amount: number, 
-  type: string, 
+  type: TypesWorkerTransaction, 
   description: string,
 }) {
   try {
@@ -56,7 +58,7 @@ export async function addWorkerTransaction(data: {
         description: data.description,
       }
     });
-    revalidatePath("/workers");
+    revalidatePath(ROUTES.WORKERS);
     return { success: true };
   } catch (error) {
     return { error: "فشل تسجيل العملية" };
@@ -66,11 +68,10 @@ export async function addWorkerTransaction(data: {
 export async function deleteWorker(userId: string) {
   try {
     await prisma.user.delete({ where: { id: userId } });
-    revalidatePath("/workers");
+    revalidatePath(ROUTES.WORKERS);
     return { success: true };
   } catch (error) { return { error: "فشل الحذف" }; }
 }
-
 
 export async function getWorkerDetails(userId: string) {
   try {
@@ -78,21 +79,20 @@ export async function getWorkerDetails(userId: string) {
       where: { id: userId },
       include: {
         transactions: {
-          orderBy: { date: 'desc' } // الأحدث أولاً
+          orderBy: { date: 'desc' }
         }
       }
     });
 
     if (!worker) return { error: "العامل غير موجود" };
 
-    // حساب الرصيد الحالي
-    const balance = worker.transactions.reduce((acc, t) => {
+    const currentBalance = worker.transactions.reduce((acc, t) => {
       if (t.type === "STAKE" || t.type === "BONUS") return acc + t.amount;
       if (t.type === "ADVANCE" || t.type === "PAYOUT") return acc - t.amount;
       return acc;
     }, 0);
 
-    return { success: true, data: { ...worker, balance } };
+    return { success: true, data: { ...worker, currentBalance } };
   } catch (error) {
     return { error: "فشل في جلب سجل العامل" };
   }

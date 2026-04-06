@@ -1,7 +1,13 @@
 import { Camera, X } from "lucide-react";
 import { UploadButton } from "@/src/lib/uploadthing";
 
-export const TicketAttachments = ({ imagesArray, onAddImage, onRemoveImage }: any) => {
+interface TicketAttachmentsProps {
+  imagesArray: string[];
+  onAddImage: (url: string) => void;
+  onRemoveImage: (url: string) => void;
+}
+
+export const TicketAttachments = ({ imagesArray, onAddImage, onRemoveImage }: TicketAttachmentsProps) => {
   return (
     <div className="bg-white p-6 rounded-2xl border shadow-sm print:hidden">
       <div className="flex justify-between items-center mb-4">
@@ -10,8 +16,8 @@ export const TicketAttachments = ({ imagesArray, onAddImage, onRemoveImage }: an
         </h3>
         <UploadButton
           endpoint="imageUploader"
-          onClientUploadComplete={(res: any) => {
-            res.forEach((file: any) => onAddImage(file.url));
+          onClientUploadComplete={(res) => {
+            res.forEach((file) => onAddImage(file.url));
           }}
           appearance={{ button: "bg-gray-100 text-gray-700 px-4 py-1.5 rounded-lg text-xs font-bold hover:bg-gray-200" }}
           content={{ button: "إضافة صور" }}
@@ -20,7 +26,7 @@ export const TicketAttachments = ({ imagesArray, onAddImage, onRemoveImage }: an
 
       {imagesArray.length > 0 ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-          {imagesArray.map((img: string, index: number) => (
+          {imagesArray.map((img, index) => (
             <div key={index} className="relative group aspect-square rounded-xl overflow-hidden border-2 border-gray-100 bg-gray-50">
               <img src={img} alt={`مرفق ${index + 1}`} className="w-full h-full object-cover" />
               <button

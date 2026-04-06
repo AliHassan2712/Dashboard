@@ -1,8 +1,13 @@
+import { FormEvent } from "react";
 import { Input } from "@/src/components/ui/Input";
 import { ShieldCheck, Lock, Loader2 } from "lucide-react";
 
+interface PasswordFormProps {
+  isSaving: boolean;
+  onSubmit: (e: FormEvent<HTMLFormElement>) => void;
+}
 
-export const PasswordForm = ({ isSaving, onSubmit }: any) => (
+export const PasswordForm = ({ isSaving, onSubmit }: PasswordFormProps) => (
   <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm h-fit">
     <div className="flex items-center gap-3 mb-6 border-b pb-4">
       <div className="p-2 bg-rose-50 text-rose-600 rounded-lg"><Lock className="w-5 h-5" /></div>

@@ -5,6 +5,7 @@ import bcrypt from "bcrypt";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/src/lib/auth";
 import { revalidatePath } from "next/cache";
+import { ROUTES } from "@/src/constants/paths";
 
 // 1. جلب بيانات المستخدم الحالي
 export async function getUserProfile() {
@@ -35,10 +36,13 @@ export async function updateProfile(data: { name: string; phone: string }) {
       data: { name: data.name, phone: data.phone }
     });
     
-    revalidatePath("/settings");
+    revalidatePath(ROUTES.SETTINGS || "/settings");
     return { success: true };
-  } catch (error: any) {
-    if (error.code === 'P2002') return { error: "رقم الهاتف هذا مستخدم لحساب آخر!" };
+  } catch (error: unknown) {
+    // فحص آمن لخطأ تكرار رقم الهاتف في Prisma
+    if (typeof error === "object" && error !== null && "code" in error && (error as { code: string }).code === 'P2002') {
+      return { error: "رقم الهاتف هذا مستخدم لحساب آخر!" };
+    }
     return { error: "حدث خطأ أثناء حفظ البيانات" };
   }
 }

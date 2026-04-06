@@ -1,12 +1,11 @@
 "use client";
 
-import { useReducer, useEffect } from "react";
+import { useReducer, useEffect, FormEvent } from "react";
 import { toast } from "react-hot-toast";
-import { registerWorker, getWorkersWithBalance, addWorkerTransaction, deleteWorker } from "../actions";
+import { registerWorker, getWorkersWithBalance, addWorkerTransaction, deleteWorker } from "@/src/server/actions/workers.actions";
 import { Action, initialState } from "@/src/constants/worker";
 import { WorkersState } from "@/src/types";
-
-
+import { TypesWorkerTransaction } from "@prisma/client";
 
 function reducer(state: WorkersState, action: Action): WorkersState {
   switch (action.type) {
@@ -33,7 +32,7 @@ export function useWorkers() {
 
   useEffect(() => { loadWorkers(); }, []);
 
-  const handleAddWorker = async (e: React.FormEvent) => {
+  const handleAddWorker = async (e: FormEvent) => {
     e.preventDefault();
     dispatch({ type: "SET_SUBMITTING", payload: true });
     const res = await registerWorker(state.workerForm);
@@ -57,7 +56,7 @@ export function useWorkers() {
     const res = await addWorkerTransaction({
       userId: state.txModal.userId,
       amount: Number(state.txData.amount),
-      type: state.txModal.type,
+      type: state.txModal.type as TypesWorkerTransaction,
       description: finalDesc
     });
 

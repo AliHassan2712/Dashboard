@@ -5,12 +5,20 @@ import { useTrials } from "@/src/features/trials/hooks/useTrials";
 import { TrialsTable } from "@/src/features/trials/components/TrialsTable";
 import { TrialModal } from "@/src/features/trials/components/TrialModal";
 
-
 export default function TrialsPage() {
-  const { trials, workers, parts, isLoading, isModalOpen, setIsModalOpen, formData, setFormData, isSubmitting, actions } = useTrials();
+  const { 
+    trials, workers, parts, isLoading, 
+    isModalOpen, setIsModalOpen, 
+    formData, setFormData, isSubmitting, 
+    actions 
+  } = useTrials();
 
   if (isLoading) {
-    return <div className="flex justify-center items-center min-h-[50vh]"><Loader2 className="w-12 h-12 animate-spin text-indigo-600" /></div>;
+    return (
+      <div className="flex justify-center items-center min-h-[50vh]">
+        <Loader2 className="w-12 h-12 animate-spin text-indigo-600" />
+      </div>
+    );
   }
 
   return (
@@ -31,7 +39,16 @@ export default function TrialsPage() {
 
       <TrialsTable trials={trials} onReturn={actions.handleReturn} onConsume={actions.handleConsume} />
       
-      <TrialModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} formData={formData} setFormData={setFormData} isSubmitting={isSubmitting} onSave={actions.handleAddTrial} workers={workers} parts={parts} />
+      <TrialModal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        formData={formData} 
+        setFormData={setFormData} 
+        isSubmitting={isSubmitting} 
+        onSave={actions.handleAddTrial} 
+        workers={workers} 
+        parts={parts} 
+      />
 
     </div>
   );

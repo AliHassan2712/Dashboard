@@ -1,12 +1,11 @@
 "use client";
 
-import { useReducer, useEffect } from "react";
+import { useReducer, useEffect, FormEvent } from "react";
 import { toast } from "react-hot-toast";
 import { SparePart } from "@prisma/client";
-import { getInventory, addSparePart, updateSparePart, deleteSparePart } from "../actions";
+import { getInventory, addSparePart, updateSparePart, deleteSparePart } from "@/src/server/actions/inventory.actions"; 
 import { Action, initialState } from "@/src/constants/inventory";
 import { InventoryState } from "@/src/types";
-
 
 function reducer(state: InventoryState, action: Action): InventoryState {
   switch (action.type) {
@@ -48,12 +47,12 @@ export function useInventory() {
   const fetchInventory = async () => {
     dispatch({ type: "SET_LOADING", payload: true });
     const res = await getInventory(); 
-    if (res.success) dispatch({ type: "SET_PARTS", payload: res.data as SparePart[] || [] });
+    if (res.success) dispatch({ type: "SET_PARTS", payload: (res.data as SparePart[]) || [] });
   };
 
   useEffect(() => { fetchInventory(); }, []);
 
-  const handleSavePart = async (e: React.FormEvent) => {
+  const handleSavePart = async (e: FormEvent) => {
     e.preventDefault();
     dispatch({ type: "SET_SUBMITTING", payload: true });
     
