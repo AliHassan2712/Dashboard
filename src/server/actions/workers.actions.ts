@@ -20,7 +20,7 @@ export async function registerWorker(data: { name: string; phone: string; passwo
     });
     revalidatePath(ROUTES.WORKERS);
     return { success: true };
-  } catch (error: any) {
+  } catch (error: string  | any) {
     return { error: "فشل إضافة العامل: " + (error.code === 'P2002' ? "الرقم مسجل مسبقاً" : "خطأ تقني") };
   }
 }
@@ -40,7 +40,7 @@ export async function getWorkersWithBalance() {
       }, 0);
       return { ...worker, currentBalance };
     });
-  } catch (error) { return []; }
+  } catch (_error) { return []; }
 }
 
 export async function addWorkerTransaction(data: { 
@@ -60,7 +60,7 @@ export async function addWorkerTransaction(data: {
     });
     revalidatePath(ROUTES.WORKERS);
     return { success: true };
-  } catch (error) {
+  } catch (_error) {
     return { error: "فشل تسجيل العملية" };
   }
 }
@@ -70,7 +70,7 @@ export async function deleteWorker(userId: string) {
     await prisma.user.delete({ where: { id: userId } });
     revalidatePath(ROUTES.WORKERS);
     return { success: true };
-  } catch (error) { return { error: "فشل الحذف" }; }
+  } catch (_error) { return { error: "فشل الحذف" }; }
 }
 
 export async function getWorkerDetails(userId: string) {
@@ -93,7 +93,7 @@ export async function getWorkerDetails(userId: string) {
     }, 0);
 
     return { success: true, data: { ...worker, currentBalance } };
-  } catch (error) {
+  } catch (_error) {
     return { error: "فشل في جلب سجل العامل" };
   }
 }

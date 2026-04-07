@@ -111,7 +111,7 @@ export async function getDashboardStats() {
         totalSupplierDebts,
       }
     };
-  } catch (error) {
+  } catch (_error) {
     return { error: "فشل في جلب إحصائيات لوحة التحكم" };
   }
 }
@@ -137,7 +137,7 @@ export async function getWorkerDashboardStats(workerId: string) {
     });
 
     return { success: true, data: { openTicketsCount, balance, activeTrials } };
-  } catch (error) {
+  } catch (_error) {
     return { error: "فشل جلب بيانات الفني" };
   }
 }

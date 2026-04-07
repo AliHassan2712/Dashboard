@@ -1,13 +1,12 @@
 import Link from "next/link";
-import { Activity, Wallet, TrendingDown, Store, TrendingUp, Calendar, AlertTriangle, ArrowRight, Banknote } from "lucide-react";
+import { Activity, Wallet, TrendingDown, Store, TrendingUp, Calendar, AlertTriangle, ArrowRight, Banknote, LucideIcon } from "lucide-react";
 import { ResponsiveContainer, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, Bar } from "recharts";
 import { ROUTES } from "@/src/constants/paths";
 import { siteConfig } from "@/src/config/site";
 import { DashboardStats } from "@/src/types";
 
 // مكون مصغر لبطاقات الإحصائيات
-const StatCard = ({ title, value, icon: Icon, color, bg }: { title: string, value: number, icon: any, color: string, bg: string }) => (
-  <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow">
+const StatCard = ({ title, value, icon: Icon, color, bg }: { title: string, value: number, icon: LucideIcon, color: string, bg: string }) => (  <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow">
     <div className={`p-4 ${bg} ${color} rounded-2xl`}><Icon className="w-6 h-6" /></div>
     <div>
       <p className="text-sm font-bold text-gray-500">{title}</p>

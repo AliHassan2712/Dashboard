@@ -23,7 +23,7 @@ export async function getFinancialOverview() {
         totalDebts: suppliers._sum.totalDebt || 0,
       }
     };
-  } catch (error) { return { error: "فشل جلب الإحصائيات المالية" }; }
+  } catch (_error) { return { error: "فشل جلب الإحصائيات المالية" }; }
 }
 
 // 2. إدارة المصاريف
@@ -31,7 +31,7 @@ export async function getExpenses() {
   try {
     const expenses = await prisma.expense.findMany({ orderBy: { date: 'desc' } });
     return { success: true, data: expenses };
-  } catch (error) { return { error: "فشل جلب المصاريف" }; }
+  } catch (_error) { return { error: "فشل جلب المصاريف" }; }
 }
 
 export async function addExpense(data: { title: string; amount: number; notes: string; category: ExpenseCategory }) {
@@ -39,7 +39,7 @@ export async function addExpense(data: { title: string; amount: number; notes: s
     await prisma.expense.create({ data });
     revalidatePath(ROUTES.EXPENSES);
     return { success: true };
-  } catch (error) { return { error: "فشل إضافة المصروف" }; }
+  } catch (_error) { return { error: "فشل إضافة المصروف" }; }
 }
 
 export async function deleteExpense(id: string) {
@@ -47,7 +47,7 @@ export async function deleteExpense(id: string) {
     await prisma.expense.delete({ where: { id } });
     revalidatePath(ROUTES.EXPENSES);
     return { success: true };
-  } catch (error) { return { error: "فشل الحذف" }; }
+  } catch (_error) { return { error: "فشل الحذف" }; }
 }
 
 // 3. إدارة الموردين
@@ -55,7 +55,7 @@ export async function getSuppliers() {
   try {
     const suppliers = await prisma.supplier.findMany({ orderBy: { name: 'asc' } });
     return { success: true, data: suppliers };
-  } catch (error) { return { error: "فشل جلب الموردين" }; }
+  } catch (_error) { return { error: "فشل جلب الموردين" }; }
 }
 
 export async function addSupplier(data: { name: string; phone?: string }) {
@@ -63,7 +63,7 @@ export async function addSupplier(data: { name: string; phone?: string }) {
     const newSupplier = await prisma.supplier.create({ data });
     revalidatePath(ROUTES.EXPENSES);
     return { success: true, data: newSupplier };
-  } catch (error) { return { error: "فشل إضافة المورد" }; }
+  } catch (_error) { return { error: "فشل إضافة المورد" }; }
 }
 
 // 4. إدارة فواتير المشتريات
@@ -74,7 +74,7 @@ export async function getPurchaseInvoices() {
       orderBy: { date: 'desc' }
     });
     return { success: true, data: invoices };
-  } catch (error) { 
+  } catch (_error) { 
     return { error: "فشل جلب فواتير المشتريات" }; 
   }
 }
@@ -126,7 +126,6 @@ export async function addPurchaseInvoice(data: {
           supplierId: data.supplierId,
           totalAmount: data.totalAmount,
           paidAmount: data.paidAmount,
-          notes: data.notes,
           items: {
             create: processedItems.map(item => ({
               sparePartId: item.sparePartId,
@@ -165,7 +164,7 @@ export async function addPurchaseInvoice(data: {
     revalidatePath(ROUTES.EXPENSES);
     revalidatePath(ROUTES.INVENTORY);
     return { success: true };
-  } catch (error) { 
+  } catch (_error) { 
     return { error: "فشل إضافة الفاتورة وتحديث المخزون" }; 
   }
 }
@@ -178,7 +177,7 @@ export async function getSupplierPayments() {
       orderBy: { date: 'desc' }
     });
     return { success: true, data: payments };
-  } catch (error) { return { error: "فشل جلب سجل الدفعات" }; }
+  } catch (_error) { return { error: "فشل جلب سجل الدفعات" }; }
 }
 
 export async function addSupplierPayment(data: { supplierId: string; amount: number; notes: string }) {
@@ -189,7 +188,7 @@ export async function addSupplierPayment(data: { supplierId: string; amount: num
     });
     revalidatePath(ROUTES.EXPENSES);
     return { success: true };
-  } catch (error) { return { error: "فشل تسجيل الدفعة" }; }
+  } catch (_error) { return { error: "فشل تسجيل الدفعة" }; }
 }
 
 export async function updateSupplierPayment(paymentId: string, data: { amount: number; notes: string }) {
@@ -209,7 +208,7 @@ export async function updateSupplierPayment(paymentId: string, data: { amount: n
     });
     revalidatePath(ROUTES.EXPENSES);
     return { success: true };
-  } catch (error) { return { error: "فشل تعديل الدفعة" }; }
+  } catch (_error) { return { error: "فشل تعديل الدفعة" }; }
 }
 
 export async function deleteSupplierPayment(paymentId: string) {
@@ -225,7 +224,7 @@ export async function deleteSupplierPayment(paymentId: string) {
     });
     revalidatePath(ROUTES.EXPENSES);
     return { success: true };
-  } catch (error) { return { error: "فشل حذف الدفعة" }; }
+  } catch (_error) { return { error: "فشل حذف الدفعة" }; }
 }
 
 // 6. كشف الحساب
@@ -240,5 +239,5 @@ export async function getSupplierStatement(supplierId: string) {
     });
     if (!supplier) return { error: "التاجر غير موجود" };
     return { success: true, data: supplier };
-  } catch (error) { return { error: "فشل جلب كشف الحساب" }; }
+  } catch (_error) { return { error: "فشل جلب كشف الحساب" }; }
 }

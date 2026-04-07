@@ -1,4 +1,5 @@
 import { getWorkerDetails } from "@/src/server/actions/workers.actions";
+import { WorkerTransaction } from "@prisma/client";
 import { 
   ArrowRight, 
   Calendar, 
@@ -82,7 +83,7 @@ export default async function WorkerProfilePage({ params }: { params: Promise<{ 
                   <td colSpan={4} className="p-10 text-center text-gray-400 font-medium">لا توجد حركات مالية مسجلة بعد لهذا العامل.</td>
                 </tr>
               ) : (
-                worker.transactions.map((tx: any) => (
+                worker.transactions.map((tx: WorkerTransaction) => (
                   <tr key={tx.id} className="hover:bg-gray-50/30 transition">
                     <td className="p-4 text-gray-500 font-mono text-xs">
                       {new Date(tx.date).toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' })}

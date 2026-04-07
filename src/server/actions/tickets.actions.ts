@@ -24,7 +24,7 @@ export async function createTicket(data: CreateTicketValues) {
     });
     revalidatePath(ROUTES.TICKETS);
     return { success: true, data: ticket };
-  } catch (e) {
+  } catch (_error) {
     return { error: "خطأ في الحفظ" };
   }
 }
@@ -38,7 +38,7 @@ export async function updateTicket(ticketId: string, data: UpdateTicketInput) {
     revalidatePath(ROUTES.TICKET_DETAILS(ticketId));
     revalidatePath(ROUTES.TICKETS);
     return { success: true, data: updatedTicket };
-  } catch (error) {
+  } catch (_error) {
     return { error: "حدث خطأ أثناء تعديل بيانات التذكرة." };
   }
 }
@@ -56,7 +56,7 @@ export async function getTicketById(ticketId: string) {
     
     if (!ticket) return { error: "لم يتم العثور على هذه التذكرة." };
     return { success: true, data: ticket };
-  } catch (error) {
+  } catch (_error) {
     return { error: "حدث خطأ أثناء قراءة التذكرة من قاعدة البيانات." };
   }
 }
@@ -71,7 +71,7 @@ export async function getAllTickets() {
       } 
     });
     return { success: true, data: tickets };
-  } catch (error) {
+  } catch (_error) {
     return { error: "تعذر جلب التذاكر." };
   }
 }
@@ -86,7 +86,7 @@ export async function addPaymentToTicket(ticketId: string, amount: number) {
     });
     revalidatePath(ROUTES.TICKET_DETAILS(ticketId));
     return { success: true };
-  } catch (error) {
+  } catch (_error) {
     return { error: "فشل تسجيل الدفعة." };
   }
 }
@@ -99,7 +99,7 @@ export async function updateTicketInvoiceImage(ticketId: string, imageUrl: strin
     });
     revalidatePath(ROUTES.TICKET_DETAILS(ticketId));
     return { success: true };
-  } catch (error) {
+  } catch (_error) {
     return { error: "فشل حفظ صورة الفاتورة." };
   }
 }
@@ -132,7 +132,7 @@ export async function addPartToTicket(data: { ticketId: string; sparePartId: str
 
     revalidatePath(ROUTES.TICKET_DETAILS(data.ticketId));
     return { success: true, data: result };
-  } catch (error) {
+  } catch (_error) {
     return { error: "حدث خطأ أثناء سحب القطعة من المخزون." };
   }
 }
@@ -152,7 +152,7 @@ export async function removePartFromTicket(ticketPartId: string, ticketId: strin
 
     revalidatePath(ROUTES.TICKET_DETAILS(ticketId));
     return { success: true };
-  } catch (error) {
+  } catch (_error) {
     return { error: "حدث خطأ أثناء إرجاع القطعة للمخزون." };
   }
 }
@@ -163,7 +163,7 @@ export async function deleteTicket(ticketId: string) {
     await prisma.ticket.delete({ where: { id: ticketId } });
     revalidatePath(ROUTES.TICKETS);
     return { success: true };
-  } catch (error) {
+  } catch (_error) {
     return { error: "لا يمكن حذف التذكرة لاحتوائها على حركات مالية أو قطع مستهلكة. يرجى تصفيتها أولاً." };
   }
 }

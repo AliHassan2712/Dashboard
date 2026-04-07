@@ -1,12 +1,12 @@
-import { FormEvent } from "react";
+import { Dispatch, FormEvent } from "react";
 import { Loader2, Wallet } from "lucide-react";
 import { Input } from "@/src/components/ui/Input";
 import { Textarea } from "@/src/components/ui/Textarea";
 import { Modal } from "@/src/components/ui/Modal";
 import { ExpensesState } from "@/src/types";
+import { Action } from "@/src/constants/expenses";
 
-export const PaymentModal = ({ state, dispatch, onSave, updateForm }: { state: ExpensesState, dispatch: any, onSave: (e: FormEvent) => void, updateForm: any }) => (
-  <Modal isOpen={state.modals.payment} onClose={() => dispatch({ type: "CLOSE_MODALS" })} title={<><Wallet className="w-5 h-5 text-emerald-600" /> تسديد دفعة لتاجر</>}>
+export const PaymentModal = ({ state, dispatch, onSave, updateForm }: { state: ExpensesState, dispatch: Dispatch<Action>, onSave: (e: FormEvent) => void, updateForm: (form: keyof ExpensesState["forms"], field: string, value: string) => void }) => (  <Modal isOpen={state.modals.payment} onClose={() => dispatch({ type: "CLOSE_MODALS" })} title={<><Wallet className="w-5 h-5 text-emerald-600" /> تسديد دفعة لتاجر</>}>
     <form onSubmit={onSave} className="space-y-5">
       <div className="space-y-1.5">
         <label className="text-sm font-medium text-gray-700">اختر التاجر المراد التسديد له</label>

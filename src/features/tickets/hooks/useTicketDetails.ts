@@ -34,7 +34,7 @@ export function useTicketDetails(ticketId: string) {
       }
       const inv = await getAllSparePartsForDropdown();
       if (inv.data) setInventory(inv.data as SparePart[]);
-    } catch (e) {
+    } catch (_error) {
       toast.error("خطأ في الاتصال بقاعدة البيانات");
     } finally {
       setIsLoadingData(false);

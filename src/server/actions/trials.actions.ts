@@ -16,7 +16,7 @@ export async function getTrialItems() {
       orderBy: { givenAt: 'desc' }
     });
     return { success: true, data: trials };
-  } catch (error) {
+  } catch (_error) {
     return { error: "فشل جلب سجل العهد" };
   }
 }
@@ -51,7 +51,7 @@ export async function createTrialItem(data: { workerId: string; sparePartId: str
     revalidatePath(ROUTES.TRIALS || "/trials");
     revalidatePath(ROUTES.INVENTORY || "/inventory");
     return { success: true };
-  } catch (error) {
+  } catch (_error) {
     return { error: "فشل تسجيل العهدة" };
   }
 }
@@ -79,7 +79,7 @@ export async function returnTrialItem(id: string) {
 
     revalidatePath(ROUTES.WORKERS);
     return { success: true };
-  } catch (error) {
+  } catch (_error) {
     return { error: "فشل إرجاع العهدة للمخزن" };
   }
 }
@@ -92,7 +92,7 @@ export async function consumeTrialItem(trialId: string) {
     });
     revalidatePath(ROUTES.TRIALS || "/trials");
     return { success: true };
-  } catch (error) {
+  } catch (_error) {
     return { error: "فشل تحديث الحالة" };
   }
 }

@@ -2,12 +2,12 @@
 
 import { useReducer, useEffect, FormEvent } from "react";
 import { toast } from "react-hot-toast";
-import { Expense, Supplier, ExpenseCategory } from "@prisma/client";
+import { Expense, Supplier, ExpenseCategory, SparePart } from "@prisma/client";
 import { ExpensesState, PurchaseInvoiceWithSupplier, SupplierPaymentWithSupplier } from "@/src/types";
 import { Action, initialState } from "@/src/constants/expenses";
-import { 
-  getFinancialOverview, getExpenses, 
-  getSuppliers, getSupplierPayments, addExpense, 
+import {
+  getFinancialOverview, getExpenses,
+  getSuppliers, getSupplierPayments, addExpense,
   addPurchaseInvoice, addSupplier, addSupplierPayment, deleteExpense,
   updateSupplierPayment, deleteSupplierPayment,
   getPurchaseInvoices
@@ -22,16 +22,16 @@ function reducer(state: ExpensesState, action: Action): ExpensesState {
     case "SET_DATA": return { ...state, ...(action.payload as Partial<ExpensesState>) };
     case "OPEN_MODAL": return { ...state, modals: { ...initialState.modals, [action.payload as string]: true } };
     case "CLOSE_MODALS": return { ...state, modals: initialState.modals, editingPaymentId: null, ledgerSupplierId: null };
-    case "UPDATE_FORM": 
-      return { 
-        ...state, 
-        forms: { 
-          ...state.forms, 
-          [action.form]: { 
-            ...state.forms[action.form], 
-            [action.field]: action.value 
-          } 
-        } 
+    case "UPDATE_FORM":
+      return {
+        ...state,
+        forms: {
+          ...state.forms,
+          [action.form]: {
+            ...state.forms[action.form],
+            [action.field]: action.value
+          }
+        }
       };
     default: return state;
   }
@@ -43,10 +43,10 @@ export function useExpenses() {
   const fetchData = async () => {
     dispatch({ type: "SET_LOADING", payload: true });
     const [ovRes, expRes, purRes, supRes, payRes, partsRes] = await Promise.all([
-      getFinancialOverview(), getExpenses(), getPurchaseInvoices(), 
+      getFinancialOverview(), getExpenses(), getPurchaseInvoices(),
       getSuppliers(), getSupplierPayments(), getAllSparePartsForDropdown()
     ]);
-    
+
     dispatch({
       type: "SET_DATA",
       payload: {
@@ -55,8 +55,7 @@ export function useExpenses() {
         purchases: (purRes.data as PurchaseInvoiceWithSupplier[]) || [],
         suppliers: (supRes.data as Supplier[]) || [],
         payments: (payRes.data as SupplierPaymentWithSupplier[]) || [],
-        spareParts: (partsRes.data as any[]) || [], 
-        isLoading: false,
+        spareParts: (partsRes.data as SparePart[]) || [], isLoading: false,
       }
     });
   };
@@ -67,17 +66,17 @@ export function useExpenses() {
     e.preventDefault();
     dispatch({ type: "SET_SUBMITTING", payload: true });
     const res = await addExpense({
-      title: state.forms.expense.title, 
-      amount: parseFloat(state.forms.expense.amount), 
-      category: state.forms.expense.category as ExpenseCategory, 
+      title: state.forms.expense.title,
+      amount: parseFloat(state.forms.expense.amount),
+      category: state.forms.expense.category as ExpenseCategory,
       notes: state.forms.expense.notes
     });
-    if (res.success) { 
-      toast.success("تم تسجيل المصروف"); 
-      dispatch({ type: "CLOSE_MODALS" }); 
-      dispatch({ type: "UPDATE_FORM", form: "expense", field: "title", value: ""}); 
-      dispatch({ type: "UPDATE_FORM", form: "expense", field: "amount", value: ""}); 
-      fetchData(); 
+    if (res.success) {
+      toast.success("تم تسجيل المصروف");
+      dispatch({ type: "CLOSE_MODALS" });
+      dispatch({ type: "UPDATE_FORM", form: "expense", field: "title", value: "" });
+      dispatch({ type: "UPDATE_FORM", form: "expense", field: "amount", value: "" });
+      fetchData();
     } else toast.error(res.error || "خطأ");
     dispatch({ type: "SET_SUBMITTING", payload: false });
   };
@@ -110,16 +109,16 @@ export function useExpenses() {
     e.preventDefault();
     dispatch({ type: "SET_SUBMITTING", payload: true });
     const res = await addSupplierPayment({
-      supplierId: state.forms.payment.supplierId, 
-      amount: parseFloat(state.forms.payment.amount), 
+      supplierId: state.forms.payment.supplierId,
+      amount: parseFloat(state.forms.payment.amount),
       notes: state.forms.payment.notes
     });
-    if (res.success) { 
-        toast.success("تم تسجيل الدفعة وخصمها من الرصيد"); 
-        dispatch({ type: "CLOSE_MODALS" }); 
-        dispatch({ type: "UPDATE_FORM", form: "payment", field: "amount", value: "" });
-        dispatch({ type: "UPDATE_FORM", form: "payment", field: "notes", value: "" });
-        fetchData(); 
+    if (res.success) {
+      toast.success("تم تسجيل الدفعة وخصمها من الرصيد");
+      dispatch({ type: "CLOSE_MODALS" });
+      dispatch({ type: "UPDATE_FORM", form: "payment", field: "amount", value: "" });
+      dispatch({ type: "UPDATE_FORM", form: "payment", field: "notes", value: "" });
+      fetchData();
     } else toast.error(res.error || "خطأ");
     dispatch({ type: "SET_SUBMITTING", payload: false });
   };
@@ -143,7 +142,7 @@ export function useExpenses() {
     e.preventDefault();
     if (!state.editingPaymentId) return;
     dispatch({ type: "SET_SUBMITTING", payload: true });
-    
+
     const res = await updateSupplierPayment(state.editingPaymentId, {
       amount: parseFloat(state.forms.payment.amount),
       notes: state.forms.payment.notes
@@ -156,14 +155,14 @@ export function useExpenses() {
       dispatch({ type: "UPDATE_FORM", form: "payment", field: "notes", value: "" });
       fetchData();
     } else toast.error(res.error || "خطأ");
-    
+
     dispatch({ type: "SET_SUBMITTING", payload: false });
   };
 
   const handleAddPurchase = async (e: FormEvent) => {
     e.preventDefault();
-    const { supplierId, paidAmount,notes, items } = state.forms.purchase;
-    
+    const { supplierId, paidAmount, notes, items } = state.forms.purchase;
+
     if (items.length === 0) return toast.error("يجب إضافة صنف واحد على الأقل للفاتورة");
     if (items.some(i => (!i.sparePartId && !i.isNew) || !i.quantity || !i.unitCost)) return toast.error("يرجى إكمال بيانات كل الأصناف");
     if (items.some(i => i.isNew && !i.newItemName)) return toast.error("يرجى إدخال اسم الصنف الجديد");
@@ -171,15 +170,15 @@ export function useExpenses() {
     const totalAmount = items.reduce((sum, item) => sum + (parseFloat(item.quantity) * parseFloat(item.unitCost)), 0);
 
     dispatch({ type: "SET_SUBMITTING", payload: true });
-    
+
     const processedItems = items.map(i => ({
-        sparePartId: i.sparePartId,
-        isNew: i.isNew,
-        newItemName: i.newItemName,
-        newItemSellingPrice: i.newItemSellingPrice ? parseFloat(i.newItemSellingPrice) : undefined,
-        quantity: Number(i.quantity),
-        unitCost: Number(i.unitCost),
-        notes: i.notes
+      sparePartId: i.sparePartId,
+      isNew: i.isNew,
+      newItemName: i.newItemName,
+      newItemSellingPrice: i.newItemSellingPrice ? parseFloat(i.newItemSellingPrice) : undefined,
+      quantity: Number(i.quantity),
+      unitCost: Number(i.unitCost),
+      notes: i.notes
     }));
 
     const res = await addPurchaseInvoice({
@@ -189,7 +188,7 @@ export function useExpenses() {
       notes,
       items: processedItems
     });
-    
+
     if (res.success) {
       toast.success("تم تسجيل الفاتورة وإضافة البضاعة للمخزون!");
       dispatch({ type: "CLOSE_MODALS" });
@@ -201,12 +200,12 @@ export function useExpenses() {
     dispatch({ type: "SET_SUBMITTING", payload: false });
   };
 
-  return { 
-    state, 
-    dispatch, 
-    actions: { 
-        handleAddExpense, handleDeleteExpense, handleAddPurchase, handleAddSupplier, 
-        handleAddPayment, handleDeletePayment, handleEditPaymentSubmit, openEditPayment, openLedger
-    } 
+  return {
+    state,
+    dispatch,
+    actions: {
+      handleAddExpense, handleDeleteExpense, handleAddPurchase, handleAddSupplier,
+      handleAddPayment, handleDeletePayment, handleEditPaymentSubmit, openEditPayment, openLedger
+    }
   };
 }

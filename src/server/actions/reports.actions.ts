@@ -114,7 +114,7 @@ export async function getFinancialReport(filters: { startDate?: string; endDate?
     };
 
     return { success: true, data: reportData };
-  } catch (error: any) {
+  } catch (_error) {
     return { error: "فشل في إنشاء التقرير المالي" };
   }
 }

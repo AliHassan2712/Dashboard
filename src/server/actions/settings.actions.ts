@@ -20,7 +20,7 @@ export async function getUserProfile() {
     
     if (!user) return { error: "المستخدم غير موجود" };
     return { success: true, data: user };
-  } catch (error) {
+  } catch (_error) {
     return { error: "فشل جلب البيانات" };
   }
 }
@@ -68,7 +68,7 @@ export async function changePassword(data: { currentPass: string; newPass: strin
     });
 
     return { success: true };
-  } catch (error) {
+  } catch (_error) {
     return { error: "فشل تغيير كلمة المرور" };
   }
 }
