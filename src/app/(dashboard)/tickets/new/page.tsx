@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { useNewTicket } from "@/src/features/tickets/hooks/useNewTicket";
-import { NewTicketForm } from "@/src/features/tickets/components/TicketsComponents";
+import { NewTicketForm } from "@/src/features/tickets/components/NewTicketForm";
 
 export default function NewTicketPage() {
   const { form, isLoading, onSubmit } = useNewTicket();
@@ -22,7 +22,7 @@ export default function NewTicketPage() {
         </div>
       </div>
 
-      {/* استدعاء نموذج الإضافة النظيف */}
+      {/* استدعاء نموذج الإضافة  */}
       <NewTicketForm form={form} isLoading={isLoading} onSubmit={onSubmit} />
       
     </div>

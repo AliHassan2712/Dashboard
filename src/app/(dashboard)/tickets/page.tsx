@@ -1,10 +1,7 @@
-import { Ticket as TicketIcon, Plus, AlertCircle } from "lucide-react";
-import Link from "next/link";
-import { getAllTickets } from "@/src/features/tickets/actions";
-import { TicketsTable } from "@/src/features/tickets/components/TicketsComponents";
-
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
+import { AlertCircle } from "lucide-react";
+import { getAllTickets } from "@/src/server/actions/tickets.actions";
+import { TicketsManager } from "@/src/features/tickets/components/TicketsManager";
+import { TicketListItem } from "@/src/types";
 
 export default async function TicketsPage() {
   const result = await getAllTickets();
@@ -21,32 +18,10 @@ export default async function TicketsPage() {
     );
   }
 
+  // تسليم البيانات كـ Props للمكون الذي يدير البحث والتعديل
   return (
-    <div className="space-y-6 animate-in fade-in duration-500 pb-10 max-w-7xl mx-auto">
-      
-      {/* الترويسة وأزرار التحكم */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-        <div className="flex items-center gap-3">
-          <div className="p-3 bg-indigo-50 text-indigo-600 rounded-xl">
-            <TicketIcon className="w-6 h-6" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-black text-gray-900">تذاكر الصيانة</h1>
-            <p className="text-sm text-gray-500 font-medium mt-1">إدارة ومتابعة طلبات صيانة الكمبريسورات للزبائن</p>
-          </div>
-        </div>
-
-        <Link 
-          href="/tickets/new" 
-          className="flex items-center justify-center gap-2 bg-indigo-600 text-white px-6 py-3 rounded-xl hover:bg-indigo-700 transition font-bold shadow-md w-full sm:w-auto"
-        >
-          <Plus className="w-5 h-5" /> فتح تذكرة جديدة
-        </Link>
-      </div>
-
-      {/* استدعاء مكون الجدول النظيف */}
-      <TicketsTable tickets={result.data || []} />
-      
+    <div className="animate-in fade-in duration-500 pb-10 max-w-7xl mx-auto">
+      <TicketsManager initialTickets={(result.data as TicketListItem[]) || []} />
     </div>
   );
 }

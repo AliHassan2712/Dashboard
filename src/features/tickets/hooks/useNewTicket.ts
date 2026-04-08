@@ -5,16 +5,16 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "react-hot-toast";
-import { createTicket } from "../actions";
-import { createTicketSchema, CreateTicketValues } from "../validations";
+import { createTicket } from "@/src/server/actions/tickets.actions";
+import { createTicketSchema, CreateTicketValues } from "../validations/validations";
+import { ROUTES } from "@/src/constants/paths";
 
 export function useNewTicket() {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
-  // إعداد الـ Form مع التحقق (Validation)
   const form = useForm<CreateTicketValues>({
-    resolver: zodResolver(createTicketSchema),
+    resolver: zodResolver(createTicketSchema), 
     defaultValues: { advancePayment: 0 }
   });
 
@@ -26,7 +26,7 @@ export function useNewTicket() {
         toast.error(result.error); 
       } else if (result.success && result.data) {
         toast.success("تم فتح التذكرة بنجاح!");
-        router.push(`/tickets/${result.data.id}`); 
+        router.push(ROUTES.TICKET_DETAILS(result.data.id)); 
       }
     } catch {
       toast.error("حدث خطأ في الاتصال.");

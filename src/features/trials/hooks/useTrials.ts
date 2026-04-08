@@ -2,51 +2,48 @@
 
 import { useState, useEffect } from "react";
 import { toast } from "react-hot-toast";
-import { getTrialItems, createTrialItem, returnTrialItem, consumeTrialItem } from "../actions";
-import { getAllSparePartsForDropdown } from "../../inventory/actions";
-import { getWorkersWithBalance } from "../../workers/actions";
+import { getAllSparePartsForDropdown } from "@/src/server/actions/inventory.actions";
+import { getWorkersWithBalance } from "@/src/server/actions/workers.actions";
+import { TrialItemData, WorkerOption, PartOption } from "@/src/types";
+import { getTrialItems, createTrialItem, returnTrialItem, consumeTrialItem } from "@/src/server/actions/trials.actions";
+import { TrialFormValues } from "../validations/validations";
 
 export function useTrials() {
-  const [trials, setTrials] = useState<any[]>([]);
-  const [workers, setWorkers] = useState<any[]>([]);
-  const [parts, setParts] = useState<any[]>([]);
+  const [trials, setTrials] = useState<TrialItemData[]>([]);
+  const [workers, setWorkers] = useState<WorkerOption[]>([]);
+  const [parts, setParts] = useState<PartOption[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  
-  // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formData, setFormData] = useState({ workerId: "", sparePartId: "", qty: "1", notes: "" });
 
   const fetchData = async () => {
     setIsLoading(true);
     const [trialsRes, workersRes, partsRes] = await Promise.all([
       getTrialItems(), getWorkersWithBalance(), getAllSparePartsForDropdown()
     ]);
-    if (trialsRes.success) setTrials(trialsRes.data || []);
-    if (workersRes) setWorkers(workersRes);
-    if (partsRes.success) setParts(partsRes.data || []);
+    if (trialsRes.success && trialsRes.data) setTrials(trialsRes.data as TrialItemData[]);
+    if (workersRes) setWorkers(workersRes as WorkerOption[]);
+    if (partsRes.success && partsRes.data) setParts(partsRes.data as PartOption[]);
     setIsLoading(false);
   };
 
   useEffect(() => { fetchData(); }, []);
 
-  const handleAddTrial = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
+  const handleAddTrial = async (data: TrialFormValues) => {
     const res = await createTrialItem({
-      workerId: formData.workerId,
-      sparePartId: formData.sparePartId,
-      qty: Number(formData.qty),
-      notes: formData.notes
+      workerId: data.workerId,
+      sparePartId: data.sparePartId,
+      qty: data.qty,
+      notes: data.notes || ""
     });
 
     if (res.success) {
       toast.success("تم تسليم العهدة بنجاح وخصمها من المخزن");
       setIsModalOpen(false);
-      setFormData({ workerId: "", sparePartId: "", qty: "1", notes: "" });
       fetchData();
-    } else toast.error(res.error || "خطأ");
-    setIsSubmitting(false);
+      return true; // لإخبار النافذة بتصفير الحقول
+    }
+    toast.error(res.error || "خطأ");
+    return false;
   };
 
   const handleReturn = async (id: string) => {
@@ -62,11 +59,9 @@ export function useTrials() {
     if (res.success) { toast.success("تم تسجيل الاستهلاك"); fetchData(); }
     else toast.error(res.error || "خطأ");
   };
-
-  return { 
-    trials, workers, parts, isLoading, 
-    isModalOpen, setIsModalOpen, 
-    formData, setFormData, isSubmitting, 
-    actions: { handleAddTrial, handleReturn, handleConsume } 
+  return {
+    trials, workers, parts, isLoading,
+    isModalOpen, setIsModalOpen,
+    actions: { handleAddTrial, handleReturn, handleConsume }
   };
 }

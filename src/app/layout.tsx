@@ -1,15 +1,9 @@
 import type { Metadata } from "next";
 import { Cairo } from 'next/font/google'
 import "./globals.css";
-import Providers from "../components/shared/Providers";
+import Providers from "../providers/Providers";
 import { Toaster } from "react-hot-toast"; 
-
-
-const cairo = Cairo({ 
-  subsets: ['latin', 'arabic'],
-  weight: ['400', '600', '700', '900'],
-})
-
+const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "نظام إدارة ورشة الكمبريسور",

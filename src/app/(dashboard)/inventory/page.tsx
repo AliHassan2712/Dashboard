@@ -2,12 +2,17 @@
 
 import { Loader2 } from "lucide-react";
 import { useInventory } from "@/src/features/inventory/hooks/useInventory";
-import { InventoryModal, InventoryTable, InventoryToolbar } from "@/src/features/inventory/components/InventoryComponents";
+import { InventoryToolbar } from "@/src/features/inventory/components/InventoryToolbar";
+import { InventoryTable } from "@/src/features/inventory/components/InventoryTable";
+import { InventoryModal } from "@/src/features/inventory/components/InventoryModal";
 
 export default function InventoryPage() {
-  const { state, filteredParts, dispatch, actions } = useInventory();
+  const { 
+    filteredParts, searchQuery, setSearchQuery, isLoading, 
+    isModalOpen, setIsModalOpen, editingPart, actions 
+  } = useInventory();
 
-  if (state.isLoading) {
+  if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-[50vh]">
         <Loader2 className="w-10 h-10 animate-spin text-indigo-600" />
@@ -18,15 +23,27 @@ export default function InventoryPage() {
   return (
     <div className="max-w-7xl mx-auto space-y-6 animate-in fade-in duration-500 pb-10">
       
-      {/* 1. الترويسة وشريط البحث */}
-      <InventoryToolbar state={state} dispatch={dispatch} />
+      {/* الترويسة وشريط البحث */}
+      <InventoryToolbar 
+        searchQuery={searchQuery} 
+        setSearchQuery={setSearchQuery} 
+        onOpenAddModal={actions.openAddModal} 
+      />
 
-      {/* 2. جدول المخزون المفلتر */}
-      <InventoryTable parts={filteredParts} dispatch={dispatch} onDelete={actions.handleDelete} />
+      {/* جدول المخزون المفلتر */}
+      <InventoryTable 
+        parts={filteredParts} 
+        onOpenEditModal={actions.openEditModal} 
+        onDelete={actions.handleDelete} 
+      />
 
-      {/* 3. نافذة الإضافة/التعديل المُدارة بالـ Modal */}
-      <InventoryModal state={state} dispatch={dispatch} onSave={actions.handleSavePart} />
-
+      {/* نافذة الإضافة/التعديل */}
+      <InventoryModal 
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        editData={editingPart}
+        onSave={actions.handleSavePart} 
+      />
     </div>
   );
 }

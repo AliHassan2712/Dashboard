@@ -1,115 +1,45 @@
 "use client";
 
-import { useReducer, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "react-hot-toast";
 import { SparePart } from "@prisma/client";
-import { getInventory, addSparePart, updateSparePart, deleteSparePart } from "../actions";
-
-interface InventoryState {
-  parts: SparePart[];
-  searchQuery: string;
-  isLoading: boolean;
-  isSubmitting: boolean;
-  modals: { addEdit: boolean };
-  editingId: string | null;
-  forms: {
-    part: { name: string; quantity: string; averageCost: string; sellingPrice: string; lowStockAlert: string };
-  };
-}
-
-const initialState: InventoryState = {
-  parts: [],
-  searchQuery: "",
-  isLoading: true,
-  isSubmitting: false,
-  modals: { addEdit: false },
-  editingId: null,
-  forms: {
-    part: { name: "", quantity: "0", averageCost: "0", sellingPrice: "0", lowStockAlert: "5" },
-  },
-};
-
-type Action =
-  | { type: "SET_PARTS"; payload: SparePart[] }
-  | { type: "SET_SEARCH"; payload: string }
-  | { type: "SET_LOADING"; payload: boolean }
-  | { type: "SET_SUBMITTING"; payload: boolean }
-  | { type: "OPEN_MODAL"; payload: { type: keyof InventoryState["modals"], editData?: SparePart | null } }
-  | { type: "CLOSE_MODALS" }
-  | { type: "UPDATE_FORM"; field: string; value: any };
-
-function reducer(state: InventoryState, action: Action): InventoryState {
-  switch (action.type) {
-    case "SET_PARTS": return { ...state, parts: action.payload, isLoading: false };
-    case "SET_SEARCH": return { ...state, searchQuery: action.payload };
-    case "SET_LOADING": return { ...state, isLoading: action.payload };
-    case "SET_SUBMITTING": return { ...state, isSubmitting: action.payload };
-    case "OPEN_MODAL": {
-      if (action.payload.editData) {
-        return {
-          ...state,
-          modals: { ...state.modals, [action.payload.type]: true },
-          editingId: action.payload.editData.id,
-          forms: { part: { 
-            name: action.payload.editData.name, 
-            quantity: String(action.payload.editData.quantity), 
-            averageCost: String(action.payload.editData.averageCost || 0),
-            sellingPrice: String(action.payload.editData.sellingPrice),
-            lowStockAlert: String(action.payload.editData.lowStockAlert)
-          }}
-        };
-      }
-      return {
-        ...state,
-        modals: { ...state.modals, [action.payload.type]: true },
-        editingId: null,
-        forms: initialState.forms 
-      };
-    }
-    case "CLOSE_MODALS": return { ...state, modals: initialState.modals, editingId: null };
-    case "UPDATE_FORM": return { ...state, forms: { part: { ...state.forms.part, [action.field]: action.value } } };
-    default: return state;
-  }
-}
+import { getInventory, addSparePart, updateSparePart, deleteSparePart } from "@/src/server/actions/inventory.actions"; 
+import { SparePartFormValues } from "../validations/validations"; 
 
 export function useInventory() {
-  const [state, dispatch] = useReducer(reducer, initialState);
+  const [parts, setParts] = useState<SparePart[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingPart, setEditingPart] = useState<SparePart | null>(null);
 
   const fetchInventory = async () => {
-    dispatch({ type: "SET_LOADING", payload: true });
-    const res = await getInventory(); // 👈 تم التصحيح: هنا نستخدم دالة الجلب وليس الإضافة!
-    if (res.success) dispatch({ type: "SET_PARTS", payload: res.data as SparePart[] || [] });
+    setIsLoading(true);
+    const res = await getInventory(); 
+    if (res.success) setParts((res.data as SparePart[]) || []);
+    setIsLoading(false);
   };
 
   useEffect(() => { fetchInventory(); }, []);
 
-  const handleSavePart = async (e: React.FormEvent) => {
-    e.preventDefault();
-    dispatch({ type: "SET_SUBMITTING", payload: true });
-    
-    const payload = {
-      name: state.forms.part.name,
-      quantity: Number(state.forms.part.quantity),
-      averageCost: Number(state.forms.part.averageCost),
-      sellingPrice: Number(state.forms.part.sellingPrice),
-      lowStockAlert: Number(state.forms.part.lowStockAlert)
-    };
-
+  const handleSavePart = async (data: SparePartFormValues) => {
     let res;
-    if (state.editingId) {
-      res = await updateSparePart(state.editingId, payload);
+    if (editingPart) {
+      res = await updateSparePart(editingPart.id, data);
     } else {
-      res = await addSparePart(payload); // 👈 تم التصحيح: اسم الدالة هو addSparePart
+      res = await addSparePart(data); 
     }
 
     if (res.success) {
-      toast.success(state.editingId ? "تم التعديل بنجاح" : "تمت الإضافة بنجاح");
-      dispatch({ type: "CLOSE_MODALS" });
+      toast.success(editingPart ? "تم التعديل بنجاح" : "تمت الإضافة بنجاح");
+      setIsModalOpen(false);
+      setEditingPart(null);
       fetchInventory();
+      return true; 
     } else {
       toast.error(res.error || "حدث خطأ أثناء الحفظ");
+      return false;
     }
-    dispatch({ type: "SET_SUBMITTING", payload: false });
   };
 
   const handleDelete = async (id: string, name: string) => {
@@ -124,9 +54,24 @@ export function useInventory() {
     }
   };
 
-  const filteredParts = state.parts.filter(part => 
-    part.name.toLowerCase().includes(state.searchQuery.toLowerCase())
+  // دوال مساعدة لفتح النوافذ
+  const openAddModal = () => {
+    setEditingPart(null);
+    setIsModalOpen(true);
+  };
+
+  const openEditModal = (part: SparePart) => {
+    setEditingPart(part);
+    setIsModalOpen(true);
+  };
+
+  const filteredParts = parts.filter(part => 
+    part.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  return { state, filteredParts, dispatch, actions: { handleSavePart, handleDelete } };
+  return { 
+    filteredParts, searchQuery, setSearchQuery, isLoading, 
+    isModalOpen, setIsModalOpen, editingPart, 
+    actions: { handleSavePart, handleDelete, openAddModal, openEditModal } 
+  };
 }

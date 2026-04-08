@@ -2,9 +2,8 @@
 
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Activity } from 'lucide-react';
-import { DashboardStats } from '@/src/types'; // 👈 استيراد النوع
+import { DashboardStats } from '@/src/types'; 
 
-// 👈 استخدام النوع الخاص ببيانات المخطط بدلاً من any
 export function DashboardCharts({ data }: { data: DashboardStats['chartData'] }) {
   return (
     <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">

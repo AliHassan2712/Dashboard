@@ -1,14 +1,21 @@
 "use client";
 
 import { signOut, useSession } from "next-auth/react";
-import { LogOut, User } from "lucide-react";
+import { LogOut, User, Menu } from "lucide-react";
+import { ROUTES } from "@/src/constants/paths"; 
 
-export default function Navbar() {
+export default function Navbar({ onOpenSidebar }: { onOpenSidebar?: () => void }) {
   const { data: session } = useSession();
 
   return (
-<header className="print:hidden bg-white border-b border-gray-200 h-16 flex items-center justify-between px-6 sticky top-0 z-10">      <div className="flex items-center gap-4">
-        <h2 className="text-xl font-semibold text-gray-800">نظام الإدارة</h2>
+    <header className="print:hidden bg-white border-b border-gray-200 h-16 flex items-center justify-between px-4 sm:px-6 sticky top-0 z-10 shadow-sm">      
+      <div className="flex items-center gap-4">
+        {onOpenSidebar && (
+          <button onClick={onOpenSidebar} className="lg:hidden p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition">
+            <Menu className="w-6 h-6" />
+          </button>
+        )}
+        <h2 className="text-xl font-semibold text-gray-800 hidden sm:block">نظام الإدارة</h2>
       </div>
 
       <div className="flex items-center gap-4">
@@ -19,13 +26,13 @@ export default function Navbar() {
               {session?.user?.name || "مستخدم"}
             </span>
             <span className="text-xs text-gray-500">
-              {session?.user?.role === "ADMIN" ? "مدير نظام" : "عامل"}
+              {session?.user?.role === "ADMIN" ? "مدير نظام" : "فني / عامل"}
             </span>
           </div>
         </div>
 
         <button
-          onClick={() => signOut({ callbackUrl: "/login" })}
+          onClick={() => signOut({ callbackUrl: ROUTES.LOGIN })}
           className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition flex items-center gap-2"
           title="تسجيل الخروج"
         >

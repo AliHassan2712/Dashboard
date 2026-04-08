@@ -2,61 +2,72 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useSession } from "next-auth/react"; // 👈 استيراد الجلسة
-import { LayoutDashboard, Ticket, Package, Receipt, Settings, Users, FileText, PieChart, ClipboardList } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { ROUTES } from "@/src/constants/paths";
+import { menuItems } from "@/src/constants/menuItems";
+import { X } from "lucide-react";
 
-export default function Sidebar() {
+interface SidebarProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const pathname = usePathname();
-  const { data: session } = useSession(); // 👈 جلب بيانات المستخدم الحالي
+  const { data: session } = useSession();
 
-  // 👈 تعريف القوائم مع تحديد من يسمح له برؤيتها
-  const menuItems = [
-    { name: "الرئيسية", icon: LayoutDashboard, href: "/", roles: ["ADMIN", "WORKER"] },
-    { name: "التذاكر والصيانة", icon: Ticket, href: "/tickets", roles: ["ADMIN", "WORKER"] },
-    { name: "المخزون والقطع", icon: Package, href: "/inventory", roles: ["ADMIN", "WORKER"] }, // ممكن تخفيها لو حبيت
-    { name: "المشتريات والمصاريف", icon: Receipt, href: "/expenses", roles: ["ADMIN"] }, // للمدير فقط
-    { name: "عروض الأسعار والكتالوج", icon: FileText, href: "/quotations", roles: ["ADMIN"] },
-    { name: "الميزانية والتقارير", icon: PieChart, href: "/reports", roles: ["ADMIN"] },
-    { name: "مخزن الكمبريسورات", icon: Package, href: "/compressors", roles: ["ADMIN"] },
-    { name: "العهد والتجارب", icon: ClipboardList, href: "/trials", roles: ["ADMIN"] },
-    { name: "العمال", icon: Users, href: "/workers", roles: ["ADMIN"] }, // للمدير فقط
-    { name: "الإعدادات", icon: Settings, href: "/settings", roles: ["ADMIN", "WORKER"] },
-  ];
 
-  
-
-  // فلترة القوائم بناءً على صلاحية المستخدم
   const userRole = session?.user?.role || "WORKER";
   const visibleMenu = menuItems.filter(item => item.roles.includes(userRole));
 
   return (
-    <aside className="print:hidden w-64 bg-slate-900 text-white min-h-screen flex flex-col fixed right-0 top-0 bottom-0 z-20">
-      <div className="h-16 flex items-center justify-center border-b border-slate-800">
-        <h1 className="text-xl font-bold tracking-wider text-blue-400">
-          COMPRESSOR<span className="text-white">PRO</span>
-        </h1>
-      </div>
+    <>
+      {/* خلفية ضبابية تظهر في الجوال فقط عند فتح القائمة */}
+      {isOpen && (
+        <div 
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-30 lg:hidden transition-opacity"
+          onClick={onClose}
+        />
+      )}
 
-      <nav className="flex-1 py-6 px-3 space-y-2">
-        {visibleMenu.map((item) => {
-          const isActive = pathname === item.href;
-          const Icon = item.icon;
+      <aside className={`
+        print:hidden bg-slate-900 text-white min-h-screen flex flex-col fixed right-0 top-0 bottom-0 z-40 w-64
+        transition-transform duration-300 ease-in-out shadow-2xl
+        ${isOpen ? "translate-x-0" : "translate-x-full lg:translate-x-0"}
+      `}>
+        <div className="h-16 flex items-center justify-between px-4 border-b border-slate-800">
+          <h1 className="text-xl font-bold tracking-wider text-blue-400 mx-auto">
+            COMPRESSOR<span className="text-white">PRO</span>
+          </h1>
+          <button onClick={onClose} className="lg:hidden p-1 text-gray-400 hover:text-white transition-colors rounded-lg hover:bg-slate-800">
+            <X className="w-6 h-6" />
+          </button>
+        </div>
 
-          return (
-            <Link
-              key={item.name}
-              href={item.href}
-              className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${isActive
-                ? "bg-blue-600 text-white shadow-md"
-                : "text-slate-400 hover:bg-slate-800 hover:text-white"
+        <nav className="flex-1 py-6 px-3 space-y-2 overflow-y-auto custom-scrollbar">
+          {visibleMenu.map((item) => {
+            // تفعيل اللون الأزرق إذا كنا في الصفحة أو أحد تفرعاتها
+            const isActive = pathname === item.href || (item.href !== ROUTES.HOME && pathname.startsWith(item.href));
+            const Icon = item.icon;
+
+            return (
+              <Link
+                key={item.name}
+                href={item.href}
+                onClick={onClose} // إغلاق القائمة تلقائياً عند الضغط في الجوال
+                className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
+                  isActive
+                    ? "bg-blue-600 text-white shadow-md"
+                    : "text-slate-400 hover:bg-slate-800 hover:text-white"
                 }`}
-            >
-              <Icon className="w-5 h-5" />
-              <span className="font-medium">{item.name}</span>
-            </Link>
-          );
-        })}
-      </nav>
-    </aside>
+              >
+                <Icon className="w-5 h-5" />
+                <span className="font-medium">{item.name}</span>
+              </Link>
+            );
+          })}
+        </nav>
+      </aside>
+    </>
   );
 }

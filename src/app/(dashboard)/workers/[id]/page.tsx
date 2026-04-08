@@ -1,4 +1,5 @@
-import { getWorkerDetails } from "@/src/features/workers/actions";
+import { getWorkerDetails } from "@/src/server/actions/workers.actions";
+import { WorkerTransaction } from "@prisma/client";
 import { 
   ArrowRight, 
   Calendar, 
@@ -11,7 +12,7 @@ import {
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-// 1. هنا التعديل: تحويل params إلى Promise
+// 1.  params إلى Promise
 export default async function WorkerProfilePage({ params }: { params: Promise<{ id: string }> }) {
   
   // 2. فك الـ Promise للحصول على الـ id
@@ -53,8 +54,8 @@ export default async function WorkerProfilePage({ params }: { params: Promise<{ 
         
         <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 text-left min-w-[200px]">
           <p className="text-xs font-bold text-gray-400 uppercase mb-1 text-right">الرصيد المستحق الحالي</p>
-          <div className={`text-3xl font-black flex items-center justify-end gap-2 ${worker.balance >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
-            {worker.balance.toFixed(2)} ₪
+          <div className={`text-3xl font-black flex items-center justify-end gap-2 ${worker.currentBalance >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+            {worker.currentBalance.toFixed(2)} ₪ //console.log()
             <Wallet className="w-6 h-6" />
           </div>
         </div>
@@ -82,7 +83,7 @@ export default async function WorkerProfilePage({ params }: { params: Promise<{ 
                   <td colSpan={4} className="p-10 text-center text-gray-400 font-medium">لا توجد حركات مالية مسجلة بعد لهذا العامل.</td>
                 </tr>
               ) : (
-                worker.transactions.map((tx: any) => (
+                worker.transactions.map((tx: WorkerTransaction) => (
                   <tr key={tx.id} className="hover:bg-gray-50/30 transition">
                     <td className="p-4 text-gray-500 font-mono text-xs">
                       {new Date(tx.date).toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' })}

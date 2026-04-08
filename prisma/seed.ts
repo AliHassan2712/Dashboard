@@ -9,7 +9,7 @@ const adapter = new PrismaPg(pool)
 const prisma = new PrismaClient({ adapter })
 
 async function main() {
-  console.log("🚀 بدء تهيئة قاعدة البيانات لشركة حسن أبو صفية...");
+  console.log(" بدء تهيئة قاعدة البيانات لشركة حسن أبو صفية...");
 
   // 1. جلب البيانات الحساسة من المتغيرات البيئية (أو وضع قيم وهمية في حال نسيانها)
   const admin1Phone = process.env.ADMIN1_PHONE || '0590000001';
@@ -45,7 +45,7 @@ async function main() {
   const existingPartsCount = await prisma.sparePart.count();
   
   if (existingPartsCount === 0) {
-    console.log("📦 جرد وإضافة الأصناف للمخزن لأول مرة...");
+    console.log(" جرد وإضافة الأصناف للمخزن لأول مرة...");
     const parts = [
       { name: "بيل ٦٢٠٥", quantity: 50, sellingPrice: 50 },
       { name: "بيل ٦٢٠٤", quantity: 10, sellingPrice: 50 },
@@ -102,13 +102,13 @@ async function main() {
       await prisma.sparePart.create({ data: part });
     }
   } else {
-    console.log("✅ المخزن يحتوي على بيانات بالفعل، تخطي إضافة الأصناف.");
+    console.log(" المخزن يحتوي على بيانات بالفعل، تخطي إضافة الأصناف.");
   }
 
   // 4. التحقق من وجود التذاكر لمنع التكرار
   const existingTicketsCount = await prisma.ticket.count();
   if (existingTicketsCount === 0) {
-    console.log("🎫 توثيق التذاكر التاريخية...");
+    console.log(" توثيق التذاكر التاريخية...");
     const completedTickets = [
       { customerName: "بدوان", issueDescription: "6 قطع كاسكيت 2 من كل نوع", workerId: worker1.id, customerPhone: "0590000000", status: "COMPLETED" },
       { customerName: "ابو كميل", issueDescription: "رينع 47", workerId: worker1.id, customerPhone: "0590000000", status: "COMPLETED" },
@@ -130,15 +130,15 @@ async function main() {
       }
     });
   } else {
-    console.log("✅ سجل التذاكر يحتوي على بيانات بالفعل، تخطي الإضافة.");
+    console.log(" سجل التذاكر يحتوي على بيانات بالفعل، تخطي الإضافة.");
   }
 
-  console.log('🎉 تم استيراد وتهيئة بيانات النظام بنجاح!');
+  console.log(' تم استيراد وتهيئة بيانات النظام بنجاح!');
 }
 
 main()
   .catch((e) => {
-    console.error("❌ حدث خطأ:", e);
+    console.error(" حدث خطأ:", e);
     process.exit(1);
   })
   .finally(async () => {

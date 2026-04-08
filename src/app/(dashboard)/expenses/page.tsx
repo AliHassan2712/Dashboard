@@ -1,24 +1,34 @@
 "use client";
 
+import { useState } from "react";
 import { TrendingDown, Plus, Wallet, Receipt, Truck, History, Loader2 } from "lucide-react";
-import { useExpenses } from "@/src/features/expenses/hooks/useExpenses";
 
-// المكونات المفصولة
+import { useExpenses } from "@/src/features/expenses/hooks/useExpenses";
+import { usePurchases } from "@/src/features/expenses/hooks/usePurchases";
+import { useSuppliers } from "@/src/features/expenses/hooks/useSuppliers";
+
 import { FinancialStats } from "@/src/features/expenses/components/FinancialStats";
-import { ExpensesModals } from "@/src/features/expenses/components/ExpensesModals";
-import { ExpensesTable, PaymentsTable, PurchasesTable } from "@/src/features/expenses/components/ExpensesTable";
+import { ExpenseModal } from "@/src/features/expenses/components/modals/ExpenseModal";
+import { PurchaseModal } from "@/src/features/expenses/components/modals/PurchaseModal";
+import { SupplierModal } from "@/src/features/expenses/components/modals/SupplierModal";
+import { PaymentModal } from "@/src/features/expenses/components/modals/PaymentModal";
+import { SupplierLedgerModal } from "@/src/features/expenses/components/modals/SupplierLedgerModal";
+import { ExpensesTable } from "@/src/features/expenses/components/tables/ExpensesTable";
+import { PaymentsTable } from "@/src/features/expenses/components/tables/PaymentsTable";
+import { PurchasesTable } from "@/src/features/expenses/components/tables/PurchasesTable";
 
 export default function ExpensesPage() {
-  const { state, dispatch, actions } = useExpenses();
+  const [activeTab, setActiveTab] = useState<"expenses" | "purchases" | "payments">("expenses");
 
-  const updateForm = (form: any, field: string, value: any) => {
-    dispatch({ type: "UPDATE_FORM", form, field, value });
-  };
+  const exp = useExpenses();
+  const pur = usePurchases();
+  const sup = useSuppliers();
+
+  // مدمج حالات التحميل
+  const isAnyLoading = exp.isLoading || pur.isLoading || sup.isLoading;
 
   return (
     <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500 pb-10">
-      
-      {/* 1. الترويسة وأزرار التحكم */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
         <div>
           <h1 className="text-2xl font-black text-gray-900 flex items-center gap-2">
@@ -27,45 +37,82 @@ export default function ExpensesPage() {
           <p className="text-gray-500 text-sm mt-1">تابع التدفقات المالية، المشتريات، وتسديد دفعات التجار</p>
         </div>
         <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-          <button onClick={() => dispatch({ type: "OPEN_MODAL", payload: "payment" })} className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold transition shadow-md">
+          <button onClick={() => sup.setPaymentModal({ isOpen: true, editingId: null })} className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold transition shadow-md">
             <Wallet className="w-5 h-5" /> تسديد دفعة للتاجر
           </button>
-          <button onClick={() => dispatch({ type: "OPEN_MODAL", payload: state.activeTab === "expenses" ? "expense" : "purchase" })} className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-2.5 bg-gray-900 hover:bg-black text-white rounded-xl font-bold transition shadow-md">
-            <Plus className="w-5 h-5" /> {state.activeTab === "expenses" ? "مصروف جديد" : "فاتورة مشتريات"}
+          <button onClick={() => activeTab === "expenses" ? exp.setIsModalOpen(true) : pur.setIsModalOpen(true)} className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-2.5 bg-gray-900 hover:bg-black text-white rounded-xl font-bold transition shadow-md">
+            <Plus className="w-5 h-5" /> {activeTab === "expenses" ? "مصروف جديد" : "فاتورة مشتريات"}
           </button>
         </div>
       </div>
 
-      {/* 2. الإحصائيات العلوية */}
-      <FinancialStats overview={state.overview} />
+      <FinancialStats overview={exp.overview} />
 
-      {/* 3. منطقة الجداول والتبويبات */}
       <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
-        
-        {/* أزرار التبويبات */}
         <div className="flex border-b border-gray-100 bg-gray-50/50 p-2 gap-2 overflow-x-auto">
-          <button onClick={() => dispatch({ type: "SET_TAB", payload: "expenses" })} className={`whitespace-nowrap flex-1 py-3 px-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${state.activeTab === "expenses" ? "bg-white text-rose-600 shadow-sm border border-gray-200" : "text-gray-500 hover:bg-gray-100"}`}><Receipt className="w-5 h-5" /> المصاريف التشغيلية</button>
-          <button onClick={() => dispatch({ type: "SET_TAB", payload: "purchases" })} className={`whitespace-nowrap flex-1 py-3 px-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${state.activeTab === "purchases" ? "bg-white text-indigo-600 shadow-sm border border-gray-200" : "text-gray-500 hover:bg-gray-100"}`}><Truck className="w-5 h-5" /> فواتير المشتريات</button>
-          <button onClick={() => dispatch({ type: "SET_TAB", payload: "payments" })} className={`whitespace-nowrap flex-1 py-3 px-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${state.activeTab === "payments" ? "bg-white text-emerald-600 shadow-sm border border-gray-200" : "text-gray-500 hover:bg-gray-100"}`}><History className="w-5 h-5" /> سجل دفعات الموردين</button>
+          <button onClick={() => setActiveTab("expenses")} className={`whitespace-nowrap flex-1 py-3 px-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${activeTab === "expenses" ? "bg-white text-rose-600 shadow-sm border border-gray-200" : "text-gray-500 hover:bg-gray-100"}`}><Receipt className="w-5 h-5" /> المصاريف التشغيلية</button>
+          <button onClick={() => setActiveTab("purchases")} className={`whitespace-nowrap flex-1 py-3 px-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${activeTab === "purchases" ? "bg-white text-indigo-600 shadow-sm border border-gray-200" : "text-gray-500 hover:bg-gray-100"}`}><Truck className="w-5 h-5" /> فواتير المشتريات</button>
+          <button onClick={() => setActiveTab("payments")} className={`whitespace-nowrap flex-1 py-3 px-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${activeTab === "payments" ? "bg-white text-emerald-600 shadow-sm border border-gray-200" : "text-gray-500 hover:bg-gray-100"}`}><History className="w-5 h-5" /> سجل دفعات الموردين</button>
         </div>
 
-        {/* محتوى الجداول */}
         <div className="p-0">
-          {state.isLoading ? (
+          {isAnyLoading ? (
             <div className="py-20 flex justify-center"><Loader2 className="w-8 h-8 animate-spin text-gray-400" /></div>
-          ) : state.activeTab === "expenses" ? (
-            <ExpensesTable expenses={state.expenses} onDelete={actions.handleDeleteExpense} />
-          ) : state.activeTab === "purchases" ? (
-            <PurchasesTable purchases={state.purchases} />
+          ) : activeTab === "expenses" ? (
+            <ExpensesTable expenses={exp.expenses} onDelete={exp.actions.handleDelete} />
+          ) : activeTab === "purchases" ? (
+            <PurchasesTable purchases={pur.purchases} onOpenLedger={sup.setLedgerSupplierId} />
           ) : (
-            <PaymentsTable payments={state.payments} />
+            <PaymentsTable payments={sup.payments} onEdit={(pay) => sup.setPaymentModal({ isOpen: true, editingId: pay.id })} onDelete={sup.actions.handleDeletePayment} />
           )}
         </div>
       </div>
 
-      {/* 4. النوافذ المنبثقة (Modals) */}
-      <ExpensesModals state={state} dispatch={dispatch} actions={actions} updateForm={updateForm} />
+      {/* النوافذ المنبثقة */}
+      <ExpenseModal isOpen={exp.isModalOpen} onClose={() => exp.setIsModalOpen(false)} onSave={exp.actions.handleAdd} />
+      
+      <PurchaseModal 
+        isOpen={pur.isModalOpen} 
+        onClose={() => pur.setIsModalOpen(false)} 
+        suppliers={pur.suppliers} 
+        spareParts={pur.spareParts} 
+        onSave={async (data) => {
+          const success = await pur.actions.handleAddInvoice(data);
+          if (success) { sup.actions.refresh(); exp.actions.refresh(); } // تحديث الإحصائيات والدفعات
+          return success;
+        }} 
+        onOpenSupplierModal={() => {
+          pur.setIsModalOpen(false);
+          setTimeout(() => sup.setIsSupplierModalOpen(true), 100);
+        }} 
+      />
 
+      <SupplierModal 
+        isOpen={sup.isSupplierModalOpen} 
+        onClose={() => sup.setIsSupplierModalOpen(false)} 
+        onBack={() => {
+          sup.setIsSupplierModalOpen(false);
+          setTimeout(() => pur.setIsModalOpen(true), 100);
+        }} 
+        onSave={async (data) => {
+          const success = await sup.actions.handleAddSupplier(data);
+          if (success) { pur.actions.refresh(); } // تحديث قائمة التجار في المشتريات
+          return success;
+        }} 
+      />
+
+      <PaymentModal 
+        isOpen={sup.paymentModal.isOpen} 
+        onClose={() => sup.setPaymentModal({ isOpen: false, editingId: null })} 
+        suppliers={sup.suppliers} 
+        onSave={sup.actions.handleSavePayment} 
+        editData={sup.paymentModal.editingId ? (() => {
+          const p = sup.payments.find(pay => pay.id === sup.paymentModal.editingId);
+          return p ? { supplierId: p.supplierId, amount: p.amount, notes: p.notes || "" } : null;
+        })() : null} 
+      />
+
+      <SupplierLedgerModal isOpen={!!sup.ledgerSupplierId} onClose={() => sup.setLedgerSupplierId(null)} supplierId={sup.ledgerSupplierId} />
     </div>
   );
 }
