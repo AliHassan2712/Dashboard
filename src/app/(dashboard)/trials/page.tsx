@@ -9,7 +9,6 @@ export default function TrialsPage() {
   const { 
     trials, workers, parts, isLoading, 
     isModalOpen, setIsModalOpen, 
-    formData, setFormData, isSubmitting, 
     actions 
   } = useTrials();
 
@@ -42,9 +41,6 @@ export default function TrialsPage() {
       <TrialModal 
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 
-        formData={formData} 
-        setFormData={setFormData} 
-        isSubmitting={isSubmitting} 
         onSave={actions.handleAddTrial} 
         workers={workers} 
         parts={parts} 

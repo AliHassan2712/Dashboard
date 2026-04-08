@@ -14,7 +14,7 @@ export const TicketsManager = ({ initialTickets }: { initialTickets: TicketListI
     filteredTickets, handleDelete,
     isEditModalOpen, setIsEditModalOpen,
     editingTicket, openEditModal,
-    handleEditSubmit, isSubmitting
+    handleEditSubmit
   } = useTicketsManager(initialTickets);
 
   return (
@@ -55,13 +55,11 @@ export const TicketsManager = ({ initialTickets }: { initialTickets: TicketListI
       {/* استدعاء الجدول المفلتر */}
       <TicketsTable tickets={filteredTickets} onEdit={openEditModal} onDelete={handleDelete} />
 
-      {/* نافذة التعديل */}
       <EditTicketModal 
         isOpen={isEditModalOpen} 
         onClose={() => setIsEditModalOpen(false)} 
         ticket={editingTicket} 
         onSubmit={handleEditSubmit} 
-        isSubmitting={isSubmitting} 
       />
     </div>
   );
