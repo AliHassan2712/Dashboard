@@ -1,10 +1,9 @@
 import { CheckCircle, Phone, MapPin, Building2, Quote } from "lucide-react";
 import { siteConfig } from "@/src/config/site";
-import { QuoteData } from "@/src/types";
+import { QuotationFormValues } from "../validations/validations"; 
 
-// 👈 تعريف الـ Interfaces بوضوح
 interface QuotationPrintTemplateProps {
-  quoteData: QuoteData;
+  quoteData: QuotationFormValues;
   priceUsd: number;
   currentDate: string;
   quoteNumber: string;
@@ -57,7 +56,7 @@ export const QuotationPrintTemplate = ({ quoteData, priceUsd, currentDate, quote
         </div>
       </div>
 
-      {/* تفاصيل العرض (الصورة + المواصفات) */}
+      {/* تفاصيل العرض */}
       <div className="flex flex-col sm:flex-row gap-6 mb-6 flex-1 min-h-0">
         {quoteData.imageUrl && (
           <div className="w-full sm:w-5/12 bg-white border-2 border-gray-100 rounded-xl overflow-hidden p-2 shadow-sm shrink-0 h-fit">
@@ -72,7 +71,8 @@ export const QuotationPrintTemplate = ({ quoteData, priceUsd, currentDate, quote
             {quoteData.modelName || "وصف المنتج / الموديل"}
           </h3>
           <ul className="space-y-3 font-medium text-gray-700 text-xs sm:text-sm">
-            {quoteData.specs.split('\n').map((spec: string, index: number) => spec.trim() && (
+            {/* 💡 أضفنا حماية (|| "") عشان ما يضرب الـ split لو كان فاضي */}
+            {(quoteData.specs || "").split('\n').map((spec: string, index: number) => spec.trim() && (
               <li key={index} className="flex items-start gap-2.5 leading-relaxed">
                 <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
                 <span>{spec.trim()}</span>

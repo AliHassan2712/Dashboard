@@ -1,14 +1,12 @@
-import { Dispatch } from "react";
 import { Package, Search } from "lucide-react";
-import { InventoryState } from "@/src/types";
-import { Action } from "@/src/constants/inventory";
 
 interface InventoryToolbarProps {
-  state: InventoryState;
-  dispatch: Dispatch<Action>;
+  searchQuery: string;
+  setSearchQuery: (query: string) => void;
+  onOpenAddModal: () => void;
 }
 
-export const InventoryToolbar = ({ state, dispatch }: InventoryToolbarProps) => (
+export const InventoryToolbar = ({ searchQuery, setSearchQuery, onOpenAddModal }: InventoryToolbarProps) => (
   <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
     <div>
       <h1 className="text-2xl font-black text-gray-900 flex items-center gap-2">
@@ -23,13 +21,13 @@ export const InventoryToolbar = ({ state, dispatch }: InventoryToolbarProps) => 
         <input 
           type="text" 
           placeholder="ابحث عن قطعة..." 
-          value={state.searchQuery}
-          onChange={(e) => dispatch({ type: "SET_SEARCH", payload: e.target.value })}
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
           className="w-full pl-4 pr-10 py-2.5 rounded-xl border border-gray-200 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 outline-none text-sm transition"
         />
       </div>
       <button 
-        onClick={() => dispatch({ type: "OPEN_MODAL", payload: { type: "addEdit" } })}
+        onClick={onOpenAddModal}
         className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl font-bold shadow-md transition whitespace-nowrap"
       >
         + إضافة صنف جديد

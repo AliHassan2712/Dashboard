@@ -1,15 +1,13 @@
-import { Dispatch } from "react";
 import { Edit, Trash2, AlertTriangle } from "lucide-react";
 import { SparePart } from "@prisma/client";
-import { Action } from "@/src/constants/inventory";
 
 interface InventoryTableProps {
   parts: SparePart[];
-  dispatch: Dispatch<Action>;
+  onOpenEditModal: (part: SparePart) => void;
   onDelete: (id: string, name: string) => void;
 }
 
-export const InventoryTable = ({ parts, dispatch, onDelete }: InventoryTableProps) => (
+export const InventoryTable = ({ parts, onOpenEditModal, onDelete }: InventoryTableProps) => (
   <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
     <div className="overflow-x-auto">
       <table className="w-full text-right text-sm">
@@ -41,7 +39,7 @@ export const InventoryTable = ({ parts, dispatch, onDelete }: InventoryTableProp
                   <td className="p-4 font-black text-indigo-600">₪ {part.sellingPrice.toFixed(2)}</td>
                   <td className="p-4 flex justify-center gap-2">
                     <button 
-                      onClick={() => dispatch({ type: "OPEN_MODAL", payload: { type: "addEdit", editData: part } })}
+                      onClick={() => onOpenEditModal(part)}
                       className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition"
                     >
                       <Edit className="w-4 h-4" />

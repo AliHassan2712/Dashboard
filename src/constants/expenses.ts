@@ -1,5 +1,4 @@
 import { ExpensesState } from "@/src/types";
-import { ExpenseCategory } from "@prisma/client";
 
 export const initialState: ExpensesState = {
   activeTab: "expenses",
@@ -12,16 +11,8 @@ export const initialState: ExpensesState = {
   isLoading: true, 
   isSubmitting: false,
   modals: { expense: false, purchase: false, supplier: false, payment: false, ledger: false, editPayment: false },
-  
   ledgerSupplierId: null,
   editingPaymentId: null,
-  
-  forms: {
-    expense: { title: "", amount: "", category: ExpenseCategory.STANDARD, notes: "" },
-    purchase: { supplierId: "", paidAmount: "", notes: "", items: [] }, 
-    supplier: { name: "", phone: "" },
-    payment: { supplierId: "", amount: "", notes: "" },
-  },
 };
 
 export type Action =
@@ -30,10 +21,5 @@ export type Action =
   | { type: "SET_SUBMITTING"; payload: boolean }
   | { type: "SET_DATA"; payload: Partial<ExpensesState> }
   | { type: "OPEN_MODAL"; payload: keyof ExpensesState["modals"] }
-  | { type: "CLOSE_MODALS" }
-  | { 
-      type: "UPDATE_FORM"; 
-      form: keyof ExpensesState["forms"]; 
-      field: string; 
-      value: string | { sparePartId: string; quantity: string; unitCost: string }[]; 
-    };
+  | { type: "CLOSE_MODALS" };
+  // 💡 تم مسح UPDATE_FORM لأنه لم يعد مستخدماً
