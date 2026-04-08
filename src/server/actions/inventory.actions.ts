@@ -4,6 +4,7 @@ import prisma from "@/src/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { sparePartSchema, type SparePartFormValues } from "@/src/features/inventory/validations/validations";
 import { ROUTES } from "@/src/constants/paths"; 
+import { deleteFilesFromUploadThing } from "./uploadthing.actions";
 
 // 1. دالة إضافة قطعة غيار جديدة
 export async function addSparePart(data: SparePartFormValues) {
@@ -58,11 +59,26 @@ export async function updateSparePart(id: string, data: Partial<SparePartFormVal
 }
 
 // 4. دالة حذف قطعة غيار
+
 export async function deleteSparePart(id: string) {
   try {
+    // 1. جلب القطعة لمعرفة رابط الصورة (إن وُجدت)
+    const part = await prisma.sparePart.findUnique({
+      where: { id },
+      select: { imageUrl: true }
+    });
+
+    // 2. الحذف من قاعدة البيانات
     await prisma.sparePart.delete({
       where: { id },
     });
+
+    // 3. تنظيف السحابة: الحذف الفيزيائي
+    if (part?.imageUrl) {
+      deleteFilesFromUploadThing(part.imageUrl).catch(err => 
+        console.error("Failed to delete spare part image in background:", err)
+      );
+    }
 
     revalidatePath(ROUTES.INVENTORY); 
     return { success: true };
@@ -71,7 +87,6 @@ export async function deleteSparePart(id: string) {
     return { error: "لا يمكن حذف القطعة لأنها قد تكون مرتبطة بتذاكر أو فواتير سابقة." };
   }
 }
-
 // دالة جلب كل قطع الغيار (للقائمة المنسدلة)
 export async function getAllSparePartsForDropdown() {
   try {

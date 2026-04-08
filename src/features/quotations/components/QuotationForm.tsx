@@ -4,6 +4,7 @@ import { Textarea } from "@/src/components/ui/Textarea";
 import { UploadButton } from "@/src/lib/uploadthing";
 import { UseFormReturn } from "react-hook-form";
 import { QuotationFormValues } from "../validations/validations";
+import { deleteFilesFromUploadThing } from "@/src/server/actions/uploadthing.actions";
 
 interface QuotationFormProps {
   form: UseFormReturn<QuotationFormValues>;
@@ -39,7 +40,18 @@ export const QuotationForm = ({ form }: QuotationFormProps) => {
         {imageUrl ? (
           <div className="relative aspect-video rounded-xl overflow-hidden border border-gray-200 bg-gray-50 group">
             <img src={imageUrl} className="w-full h-full object-contain" alt="Preview" />
-            <button type="button" onClick={() => setValue('imageUrl', "")} className="absolute top-2 right-2 bg-red-500 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-all"><X className="w-4 h-4" /></button>
+            <button 
+              type="button" 
+              onClick={async () => {
+                if (imageUrl) {
+                  setValue('imageUrl', ""); // إخفاء الصورة فوراً
+                  await deleteFilesFromUploadThing(imageUrl).catch(console.error); // الحذف الفعلي من السحابة
+                }
+              }} 
+              className="absolute top-2 right-2 bg-red-500 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-all"
+            >
+              <X className="w-4 h-4" />
+            </button>
           </div>
         ) : (
           <div className="text-center p-6 border-2 border-dashed border-gray-200 rounded-xl bg-gray-50">

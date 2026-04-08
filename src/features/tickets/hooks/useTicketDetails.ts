@@ -2,22 +2,23 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { toast } from "react-hot-toast";
-import { 
-  getTicketById, updateTicket, addPartToTicket, 
-  removePartFromTicket, addPaymentToTicket, updateTicketInvoiceImage 
+import {
+  getTicketById, updateTicket, addPartToTicket,
+  removePartFromTicket, addPaymentToTicket, updateTicketInvoiceImage
 } from "@/src/server/actions/tickets.actions";
 import { TicketWithDetails } from "@/src/types";
 import { SparePart, TicketStatus } from "@prisma/client";
 import { getAllSparePartsForDropdown } from "@/src/server/actions/inventory.actions";
+import { deleteFilesFromUploadThing } from "@/src/server/actions/uploadthing.actions";
 
 export function useTicketDetails(ticketId: string) {
   const [ticketData, setTicketData] = useState<TicketWithDetails | null>(null);
   const [inventory, setInventory] = useState<SparePart[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
-  
+
   const [status, setStatus] = useState<TicketStatus>("OPEN");
   const [laborCost, setLaborCost] = useState(0);
-  const [discountPercentage, setDiscountPercentage] = useState(0); 
+  const [discountPercentage, setDiscountPercentage] = useState(0);
   const [isSaving, setIsSaving] = useState(false);
   const [isUpdatingPart, setIsUpdatingPart] = useState(false);
 
@@ -87,13 +88,33 @@ export function useTicketDetails(ticketId: string) {
     fetchData();
   };
 
-  const handleRemoveImage = async (urlToRemove: string) => {
-    const currentUrls = ticketData?.invoiceImageUrl || "";
-    const newUrls = currentUrls.split(',').filter(u => u !== urlToRemove).join(',');
-    await updateTicketInvoiceImage(ticketId, newUrls);
-    fetchData();
-  };
 
+  const handleRemoveImage = async (urlToRemove: string) => {
+    setIsUpdatingPart(true); 
+    try {
+      const currentUrls = ticketData?.invoiceImageUrl || "";
+      const newUrls = currentUrls.split(',').filter(u => u !== urlToRemove).join(',');
+
+      // 1. تحديث قاعدة البيانات (PostgreSQL)
+      await updateTicketInvoiceImage(ticketId, newUrls);
+
+      // 2. الحذف الفيزيائي من السحابة (UploadThing)
+      const deleteRes = await deleteFilesFromUploadThing(urlToRemove);
+
+      if (deleteRes.success) {
+        toast.success("تم مسح الصورة من النظام والسحابة بنجاح");
+      } else {
+        // في حال فشل الحذف من السحابة، نظهر تحذير ولكن تستمر العملية
+        toast.error("تم إزالة الصورة من التذكرة، ولكن حدث خطأ في السحابة");
+      }
+      
+      fetchData();
+    } catch (error) {
+      toast.error("حدث خطأ غير متوقع أثناء مسح الصورة");
+    } finally {
+      setIsUpdatingPart(false);
+    }
+  };
   return {
     ticketData, inventory, isLoadingData, isSaving, isUpdatingPart,
     status, setStatus, laborCost, setLaborCost, discountPercentage, setDiscountPercentage,

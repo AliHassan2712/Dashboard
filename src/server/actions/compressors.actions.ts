@@ -3,6 +3,7 @@
 import prisma from "@/src/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { ROUTES } from "@/src/constants/paths";
+import { deleteFilesFromUploadThing } from "./uploadthing.actions";
 
 // 1. جلب البيانات
 export async function getCompressors() {
@@ -63,7 +64,22 @@ export async function updateCompressorStatus(id: string, status: string) {
 // 4. الحذف
 export async function deleteCompressor(id: string) {
   try {
+    // 1. جلب الكمبريسور لمعرفة رابط الصورة قبل الحذف
+    const compressor = await prisma.compressor.findUnique({
+      where: { id },
+      select: { imageUrl: true }
+    });
+
+    // 2. الحذف من قاعدة البيانات
     await prisma.compressor.delete({ where: { id } });
+
+    // 3. تنظيف السحابة: الحذف الفيزيائي من UploadThing
+    if (compressor?.imageUrl) {
+      deleteFilesFromUploadThing(compressor.imageUrl).catch(err => 
+        console.error("Failed to delete compressor image in background:", err)
+      );
+    }
+
     revalidatePath(ROUTES.COMPRESSORS); 
     return { success: true };
   } catch (error) { 

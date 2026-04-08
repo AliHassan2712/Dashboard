@@ -7,6 +7,7 @@ import { authOptions } from "@/src/lib/auth";
 import { UpdateTicketInput } from "@/src/types";
 import { CreateTicketValues } from "@/src/features/tickets/validations/validations";
 import { ROUTES } from "@/src/constants/paths";
+import { deleteFilesFromUploadThing } from "./uploadthing.actions";
 
 // ==========================================
 // 1. إنشاء وتعديل التذاكر
@@ -158,9 +159,29 @@ export async function removePartFromTicket(ticketPartId: string, ticketId: strin
 }
 
 
+
 export async function deleteTicket(ticketId: string) {
   try {
+    // 1. جلب التذكرة أولاً للتحقق من وجود صور مرفقة
+    const ticket = await prisma.ticket.findUnique({ 
+      where: { id: ticketId },
+      select: { invoiceImageUrl: true } 
+    });
+
+    // 2. حذف التذكرة من قاعدة البيانات
     await prisma.ticket.delete({ where: { id: ticketId } });
+
+    // 3. تنظيف السحابة: إذا كان هناك صور، قم بحذفها فيزيائياً
+    if (ticket?.invoiceImageUrl) {
+      const urlsToDelete = ticket.invoiceImageUrl.split(',').filter(Boolean);
+      if (urlsToDelete.length > 0) {
+        // لا ننتظر النتيجة (await) لكي لا نؤخر استجابة الواجهة للمستخدم
+        deleteFilesFromUploadThing(urlsToDelete).catch(err => 
+          console.error("Failed to cleanup ticket images in background:", err)
+        );
+      }
+    }
+
     revalidatePath(ROUTES.TICKETS);
     return { success: true };
   } catch (_error) {
