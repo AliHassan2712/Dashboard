@@ -1,27 +1,19 @@
 "use client";
 
-import { useState, useEffect, FormEvent } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "react-hot-toast";
 import { getUserProfile, updateProfile, changePassword } from "@/src/server/actions/settings.actions";
-import { UserProfileData } from "@/src/types";
+import { ProfileFormValues, PasswordFormValues } from "../validations/validations";
 
 export function useSettings() {
   const [isLoading, setIsLoading] = useState(true);
-  const [profileData, setProfileData] = useState<UserProfileData>({ name: "", phone: "", role: "" });
-  
-  const [isSavingProfile, setIsSavingProfile] = useState(false);
-  const [isSavingPass, setIsSavingPass] = useState(false);
+  const [initialProfile, setInitialProfile] = useState<{ name: string; phone: string; role: string } | null>(null);
 
-  // تحميل البيانات
   useEffect(() => {
     const loadProfile = async () => {
       const res = await getUserProfile();
       if (res.success && res.data) {
-        setProfileData({
-          name: res.data.name,
-          phone: res.data.phone,
-          role: res.data.role
-        });
+        setInitialProfile(res.data as any);
       } else {
         toast.error(res.error || "تعذر تحميل البيانات");
       }
@@ -30,60 +22,25 @@ export function useSettings() {
     loadProfile();
   }, []);
 
-  // حفظ الملف الشخصي
-  const handleProfileUpdate = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setIsSavingProfile(true);
-    
-    const res = await updateProfile({ name: profileData.name, phone: profileData.phone });
+  const handleProfileUpdate = async (data: ProfileFormValues) => {
+    const res = await updateProfile(data);
     if (res.success) {
       toast.success("تم تحديث البيانات الشخصية بنجاح");
-    } else {
-      toast.error(res.error || "فشل تحديث البيانات");
+      return true;
     }
-    setIsSavingProfile(false);
+    toast.error(res.error || "فشل تحديث البيانات");
+    return false;
   };
 
-  // تغيير كلمة المرور
-  const handlePasswordChange = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setIsSavingPass(true);
-    
-    const form = e.currentTarget;
-    const formData = new FormData(form);
-    const currentPass = formData.get("currentPass") as string;
-    const newPass = formData.get("newPass") as string;
-    const confirmPass = formData.get("confirmPass") as string;
-
-    if (newPass !== confirmPass) {
-      toast.error("كلمة المرور الجديدة غير متطابقة");
-      setIsSavingPass(false);
-      return;
-    }
-
-    if (newPass.length < 6) {
-      toast.error("كلمة المرور يجب أن تكون 6 أحرف على الأقل");
-      setIsSavingPass(false);
-      return;
-    }
-
-    const res = await changePassword({ currentPass, newPass });
+  const handlePasswordChange = async (data: PasswordFormValues) => {
+    const res = await changePassword({ currentPass: data.currentPass, newPass: data.newPass });
     if (res.success) {
       toast.success("تم تغيير كلمة المرور بنجاح");
-      form.reset();
-    } else {
-      toast.error(res.error || "فشل تغيير كلمة المرور");
+      return true;
     }
-    setIsSavingPass(false);
+    toast.error(res.error || "فشل تغيير كلمة المرور");
+    return false;
   };
 
-  return {
-    isLoading,
-    profileData,
-    setProfileData,
-    isSavingProfile,
-    isSavingPass,
-    handleProfileUpdate,
-    handlePasswordChange
-  };
+  return { isLoading, initialProfile, actions: { handleProfileUpdate, handlePasswordChange } };
 }

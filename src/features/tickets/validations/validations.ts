@@ -9,3 +9,14 @@ export const createTicketSchema = z.object({
 });
 
 export type CreateTicketValues = z.infer<typeof createTicketSchema>;
+
+
+export const updateTicketSchema = z.object({
+  customerName: z.string().min(2, "الرجاء إدخال اسم الزبون"),
+  customerPhone: z.string().min(9, "يجب أن يكون 9 أرقام على الأقل"),
+  compressorModel: z.string().optional(),
+  issueDescription: z.string().optional(),
+});
+
+export type UpdateTicketFormValues = z.infer<typeof updateTicketSchema>;
+

@@ -1,21 +1,19 @@
-"use client";
-
-import { useState, useMemo, FormEvent } from "react";
+import { useState, useMemo } from "react";
 import { toast } from "react-hot-toast";
 import { deleteTicket, updateTicket } from "@/src/server/actions/tickets.actions";
-import { TicketListItem, UpdateTicketInput } from "@/src/types";
+import { TicketListItem } from "@/src/types";
+import { UpdateTicketFormValues } from "../validations/validations";
 
 export function useTicketsManager(initialTickets: TicketListItem[]) {
   const [searchQuery, setSearchQuery] = useState("");
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingTicket, setEditingTicket] = useState<TicketListItem | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // 1. نظام البحث (يحدث تلقائياً عند الكتابة)
   const filteredTickets = useMemo(() => {
     if (!searchQuery.trim()) return initialTickets;
     const query = searchQuery.toLowerCase();
-    return initialTickets.filter(t => 
+    return initialTickets.filter(t =>
       t.customerName.toLowerCase().includes(query) ||
       t.customerPhone.includes(query) ||
       t.id.toLowerCase().includes(query) ||
@@ -35,36 +33,33 @@ export function useTicketsManager(initialTickets: TicketListItem[]) {
     }
   };
 
-  // 3. فتح نافذة التعديل
   const openEditModal = (ticket: TicketListItem) => {
     setEditingTicket(ticket);
     setIsEditModalOpen(true);
   };
 
-  // 4. حفظ التعديلات
-  const handleEditSubmit = async (e: FormEvent, formData: UpdateTicketInput) => {
-    e.preventDefault();
-    if (!editingTicket) return;
-    
-    setIsSubmitting(true);
-    const res = await updateTicket(editingTicket.id, formData);
-    
+  // الدالة أصبحت تقبل بيانات Zod النظيفة، وترجع Promise<boolean>
+  const handleEditSubmit = async (data: UpdateTicketFormValues) => {
+    if (!editingTicket) return false;
+
+    const res = await updateTicket(editingTicket.id, data);
+
     if (res.success) {
       toast.success("تم تعديل بيانات التذكرة بنجاح");
       setIsEditModalOpen(false);
       setEditingTicket(null);
-    } else {
-      toast.error(res.error || "خطأ في التعديل");
+      return true;
     }
-    setIsSubmitting(false);
+    toast.error(res.error || "خطأ في التعديل");
+    return false;
   };
 
   return {
-    searchQuery, setSearchQuery,
-    filteredTickets,
-    handleDelete,
-    isEditModalOpen, setIsEditModalOpen,
-    editingTicket, openEditModal,
-    handleEditSubmit, isSubmitting
+    searchQuery, setSearchQuery, filteredTickets, handleDelete,
+    isEditModalOpen, setIsEditModalOpen, editingTicket, openEditModal,
+    handleEditSubmit
   };
 }
+
+
+

@@ -1,26 +1,22 @@
 "use client";
 
-import { useState, useEffect, useCallback, FormEvent } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { toast } from "react-hot-toast";
-import { Compressor } from "@prisma/client"; 
-import { CompressorFormData } from "@/src/types"; 
-import { getCompressors, addCompressor, updateCompressorStatus, deleteCompressor } from "@/src/server/actions/compressors.actions";
+import { Compressor } from "@prisma/client";
+import { 
+  getCompressors, 
+  addCompressor, 
+  updateCompressorStatus, 
+  deleteCompressor 
+} from "@/src/server/actions/compressors.actions";
+import { CompressorFormValues } from "../validations/validations";
 
 export function useCompressors() {
   const [compressors, setCompressors] = useState<Compressor[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const [formData, setFormData] = useState<CompressorFormData>({
-    serialNumber: "",
-    model: "",
-    buildCost: "",
-    sellingPrice: "",
-    description: "",
-    imageUrl: ""
-  });
-
+  // 1. جلب البيانات
   const fetchData = useCallback(async () => {
     setIsLoading(true);
     const res = await getCompressors();
@@ -32,32 +28,33 @@ export function useCompressors() {
     setIsLoading(false);
   }, []);
 
-  useEffect(() => { fetchData(); }, [fetchData]);
+  useEffect(() => { 
+    fetchData(); 
+  }, [fetchData]);
 
-  const handleAdd = async (e: FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    
+  // 2. إضافة كمبريسور جديد (تستقبل البيانات النظيفة من Zod مباشرة)
+  const handleAdd = async (data: CompressorFormValues) => {
     const res = await addCompressor({
-      modelName: formData.model, 
-      serialNumber: formData.serialNumber.trim() || undefined,
-      productionCost: Number(formData.buildCost), 
-      sellingPrice: Number(formData.sellingPrice),
-      description: formData.description,
-      imageUrl: formData.imageUrl || undefined
+      modelName: data.modelName, 
+      serialNumber: data.serialNumber?.trim() || undefined,
+      productionCost: data.productionCost, 
+      sellingPrice: data.sellingPrice,
+      description: data.description,
+      imageUrl: data.imageUrl
     });
 
     if (res.success) {
       toast.success("تمت إضافة الكمبريسور للمخزون");
-      setIsModalOpen(false);
-      setFormData({ serialNumber: "", model: "", buildCost: "", sellingPrice: "", description: "", imageUrl: "" });
-      await fetchData(); 
+      setIsModalOpen(false); // إغلاق النافذة
+      await fetchData();     // تحديث الجدول
+      return true;           // إرجاع true للنافذة لكي تقوم بتصفير الحقول (reset)
     } else {
-      toast.error(res.error || "خطأ");
+      toast.error(res.error || "فشل الإضافة");
+      return false;
     }
-    setIsSubmitting(false);
   };
 
+  // 3. تحديث حالة الكمبريسور (متاح، مباع، صيانة)
   const handleStatusChange = async (id: string, status: string) => {
     const res = await updateCompressorStatus(id, status);
     if (res.success) {
@@ -68,6 +65,7 @@ export function useCompressors() {
     }
   };
 
+  // 4. حذف كمبريسور
   const handleDelete = async (id: string) => {
     if (!confirm("هل أنت متأكد من الحذف؟")) return;
     const res = await deleteCompressor(id);
@@ -80,8 +78,11 @@ export function useCompressors() {
   };
 
   return { 
-    compressors, isLoading, isModalOpen, setIsModalOpen, 
-    formData, setFormData, isSubmitting, fetchData,
+    compressors, 
+    isLoading, 
+    isModalOpen, 
+    setIsModalOpen, 
+    fetchData,
     actions: { handleAdd, handleStatusChange, handleDelete } 
   };
 }
