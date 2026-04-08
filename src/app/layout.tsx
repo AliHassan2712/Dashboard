@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Cairo } from 'next/font/google'
 import "./globals.css";
 import Providers from "../providers/Providers";
 import { Toaster } from "react-hot-toast"; 
@@ -17,7 +17,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ar" dir="rtl">
-      <body className={inter.className}>
+      <body className={cairo.className}>
         {/* تغليف التطبيق بمزود المصادقة */}
         <Providers>
           <Toaster position="top-center" />
