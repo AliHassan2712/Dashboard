@@ -17,7 +17,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ar" dir="rtl">
-      <body className={cairo.className}>
+      <body className={inter.className}>
         {/* تغليف التطبيق بمزود المصادقة */}
         <Providers>
           <Toaster position="top-center" />
