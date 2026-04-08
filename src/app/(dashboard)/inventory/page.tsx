@@ -26,8 +26,12 @@ export default function InventoryPage() {
       <InventoryTable parts={filteredParts} dispatch={dispatch} onDelete={actions.handleDelete} />
 
       {/* 3. نافذة الإضافة/التعديل المُدارة بالـ Modal */}
-      <InventoryModal state={state} dispatch={dispatch} onSave={actions.handleSavePart} />
-
+      <InventoryModal 
+        isOpen={state.modals.addEdit}
+        onClose={() => dispatch({ type: "CLOSE_MODALS" })}
+        editData={state.editingId ? state.parts.find(p => p.id === state.editingId) : null}
+        onSave={actions.handleSavePart} 
+      />
     </div>
   );
 }

@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { Store, Loader2, FileText, ArrowDownRight, ArrowUpRight } from "lucide-react";
 import { Modal } from "@/src/components/ui/Modal";
-import { getSupplierStatement } from "@/src/server/actions/expenses.actions";
 import { SupplierStatementData } from "@/src/types";
+import { getSupplierStatement } from "@/src/server/actions/suppliers.actions";
 
 interface Props {
   isOpen: boolean;

@@ -8,9 +8,6 @@ export const initialState: InventoryState = {
   isSubmitting: false,
   modals: { addEdit: false },
   editingId: null,
-  forms: {
-    part: { name: "", quantity: "0", averageCost: "0", sellingPrice: "0", lowStockAlert: "5" },
-  },
 };
 
 export type Action =
@@ -20,8 +17,3 @@ export type Action =
   | { type: "SET_SUBMITTING"; payload: boolean }
   | { type: "OPEN_MODAL"; payload: { type: keyof InventoryState["modals"], editData?: SparePart | null } }
   | { type: "CLOSE_MODALS" }
-  | { 
-      type: "UPDATE_FORM"; 
-      field: keyof InventoryState["forms"]["part"]; 
-      value: string; 
-    };

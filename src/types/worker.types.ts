@@ -11,5 +11,4 @@ export interface WorkersState {
   isSubmitting: boolean;
   txModal: { isOpen: boolean; userId: string; type: string; name: string };
   txData: { amount: string; method: string; notes: string };
-  workerForm: { name: string; phone: string; password: string };
 }

@@ -7,6 +7,7 @@ export const ROUTES = {
   NEW_TICKET: "/tickets/new",
   
   INVENTORY: "/inventory",
+  TRANSACTIONS: "/transactions",
   EXPENSES: "/expenses",
   QUOTATIONS: "/quotations",
   REPORTS: "/reports",

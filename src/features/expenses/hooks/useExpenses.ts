@@ -2,17 +2,12 @@
 
 import { useReducer, useEffect, FormEvent } from "react";
 import { toast } from "react-hot-toast";
-import { Expense, Supplier, ExpenseCategory, SparePart } from "@prisma/client";
+import { Expense, Supplier, SparePart } from "@prisma/client";
 import { ExpensesState, PurchaseInvoiceWithSupplier, SupplierPaymentWithSupplier } from "@/src/types";
 import { Action, initialState } from "@/src/constants/expenses";
-import {
-  getFinancialOverview, getExpenses,
-  getSuppliers, getSupplierPayments, addExpense,
-  addPurchaseInvoice, addSupplier, addSupplierPayment, deleteExpense,
-  updateSupplierPayment, deleteSupplierPayment,
-  getPurchaseInvoices
-} from "@/src/server/actions/expenses.actions";
+import { getFinancialOverview, getExpenses, addExpense, deleteExpense, getPurchaseInvoices, addPurchaseInvoice, getSuppliers, getSupplierPayments, updateSupplierPayment, addSupplierPayment, addSupplier, deleteSupplierPayment } from "@/src/server/actions/expenses.actions";
 import { getAllSparePartsForDropdown } from "@/src/server/actions/inventory.actions";
+import { ExpenseFormValues, InvoiceFormValues, PaymentFormValues, SupplierFormValues } from "../validations/validations";
 
 function reducer(state: ExpensesState, action: Action): ExpensesState {
   switch (action.type) {
@@ -55,49 +50,65 @@ export function useExpenses() {
         purchases: (purRes.data as PurchaseInvoiceWithSupplier[]) || [],
         suppliers: (supRes.data as Supplier[]) || [],
         payments: (payRes.data as SupplierPaymentWithSupplier[]) || [],
-        spareParts: (partsRes.data as SparePart[]) || [], isLoading: false,
+        spareParts: partsRes.success ? (partsRes as { success: true; data: SparePart[] }).data : [], isLoading: false,
       }
     });
   };
 
   useEffect(() => { fetchData(); }, []);
 
-  const handleAddExpense = async (e: FormEvent) => {
-    e.preventDefault();
-    dispatch({ type: "SET_SUBMITTING", payload: true });
+  const handleAddExpense = async (data: ExpenseFormValues) => {
     const res = await addExpense({
-      title: state.forms.expense.title,
-      amount: parseFloat(state.forms.expense.amount),
-      category: state.forms.expense.category as ExpenseCategory,
-      notes: state.forms.expense.notes
+      title: data.title,
+      amount: data.amount,
+      category: data.category,
+      notes: data.notes || ""
     });
+
     if (res.success) {
       toast.success("تم تسجيل المصروف");
-      dispatch({ type: "CLOSE_MODALS" });
-      dispatch({ type: "UPDATE_FORM", form: "expense", field: "title", value: "" });
-      dispatch({ type: "UPDATE_FORM", form: "expense", field: "amount", value: "" });
       fetchData();
-    } else toast.error(res.error || "خطأ");
-    dispatch({ type: "SET_SUBMITTING", payload: false });
+      return true;
+    } else {
+      toast.error(res.error || "خطأ");
+      return false;
+    }
   };
-
   const handleDeleteExpense = async (id: string) => {
     if (!confirm("تأكيد الحذف؟")) return;
     const res = await deleteExpense(id);
     if (res.success) { toast.success("تم الحذف"); fetchData(); }
   };
 
-  const handleAddSupplier = async (e: FormEvent) => {
-    e.preventDefault();
-    dispatch({ type: "SET_SUBMITTING", payload: true });
-    const res = await addSupplier({ name: state.forms.supplier.name, phone: state.forms.supplier.phone });
+  const handleAddSupplier = async (data: SupplierFormValues) => {
+    const res = await addSupplier({ name: data.name, phone: data.phone });
     if (res.success) {
       toast.success("تمت إضافة المورد بنجاح");
-      dispatch({ type: "OPEN_MODAL", payload: "purchase" });
-      dispatch({ type: "UPDATE_FORM", form: "purchase", field: "supplierId", value: res.data?.id || "" });
       fetchData();
-    } else toast.error(res.error || "خطأ");
-    dispatch({ type: "SET_SUBMITTING", payload: false });
+      dispatch({ type: "OPEN_MODAL", payload: "purchase" });
+      return true;
+    } else {
+      toast.error(res.error || "خطأ");
+      return false;
+    }
+  };
+
+  const handleSavePayment = async (data: PaymentFormValues) => {
+    let res;
+    if (state.editingPaymentId) {
+      res = await updateSupplierPayment(state.editingPaymentId, { amount: data.amount, notes: data.notes || "" });
+    } else {
+      res = await addSupplierPayment({ supplierId: data.supplierId, amount: data.amount, notes: data.notes || "" });
+    }
+
+    if (res.success) {
+      toast.success(state.editingPaymentId ? "تم تعديل الدفعة بنجاح" : "تم تسجيل الدفعة وخصمها من الدين");
+      fetchData();
+      return true;
+    } else {
+      toast.error(res.error || "خطأ في تسجيل الدفعة");
+      return false;
+    }
   };
 
   const openLedger = (supplierId: string) => {
@@ -105,23 +116,6 @@ export function useExpenses() {
     dispatch({ type: "OPEN_MODAL", payload: "ledger" });
   };
 
-  const handleAddPayment = async (e: FormEvent) => {
-    e.preventDefault();
-    dispatch({ type: "SET_SUBMITTING", payload: true });
-    const res = await addSupplierPayment({
-      supplierId: state.forms.payment.supplierId,
-      amount: parseFloat(state.forms.payment.amount),
-      notes: state.forms.payment.notes
-    });
-    if (res.success) {
-      toast.success("تم تسجيل الدفعة وخصمها من الرصيد");
-      dispatch({ type: "CLOSE_MODALS" });
-      dispatch({ type: "UPDATE_FORM", form: "payment", field: "amount", value: "" });
-      dispatch({ type: "UPDATE_FORM", form: "payment", field: "notes", value: "" });
-      fetchData();
-    } else toast.error(res.error || "خطأ");
-    dispatch({ type: "SET_SUBMITTING", payload: false });
-  };
 
   const handleDeletePayment = async (id: string) => {
     if (!confirm("تحذير: حذف الدفعة سيعيد المبلغ كدين على الورشة. هل أنت متأكد؟")) return;
@@ -138,26 +132,6 @@ export function useExpenses() {
     dispatch({ type: "OPEN_MODAL", payload: "editPayment" });
   };
 
-  const handleEditPaymentSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-    if (!state.editingPaymentId) return;
-    dispatch({ type: "SET_SUBMITTING", payload: true });
-
-    const res = await updateSupplierPayment(state.editingPaymentId, {
-      amount: parseFloat(state.forms.payment.amount),
-      notes: state.forms.payment.notes
-    });
-
-    if (res.success) {
-      toast.success("تم تعديل الدفعة وتحديث رصيد التاجر");
-      dispatch({ type: "CLOSE_MODALS" });
-      dispatch({ type: "UPDATE_FORM", form: "payment", field: "amount", value: "" });
-      dispatch({ type: "UPDATE_FORM", form: "payment", field: "notes", value: "" });
-      fetchData();
-    } else toast.error(res.error || "خطأ");
-
-    dispatch({ type: "SET_SUBMITTING", payload: false });
-  };
 
   const handleAddPurchase = async (e: FormEvent) => {
     e.preventDefault();
@@ -194,18 +168,36 @@ export function useExpenses() {
       dispatch({ type: "CLOSE_MODALS" });
       dispatch({ type: "UPDATE_FORM", form: "purchase", field: "items", value: [] });
       dispatch({ type: "UPDATE_FORM", form: "purchase", field: "paidAmount", value: "" });
-      dispatch({ type: "UPDATE_FORM", form: "purchase", field: "notes", value: "" }); // 👈 تصفير الوصف
+      dispatch({ type: "UPDATE_FORM", form: "purchase", field: "notes", value: "" });
       fetchData();
     } else toast.error(res.error || "خطأ");
     dispatch({ type: "SET_SUBMITTING", payload: false });
   };
 
+
+// 3. دالة إضافة فاتورة المشتريات
+  const handleAddInvoice = async (data: InvoiceFormValues) => {
+    
+    // نبعت البيانات المجهزة (formattedData) بدل (data)
+    const res = await addPurchaseInvoice(data); 
+    
+    if (res.success) {
+      toast.success("تم اعتماد الفاتورة وتحديث المخزن بنجاح");
+      fetchData(); 
+      return true; 
+    } else {
+      toast.error(res.error || "حدث خطأ أثناء حفظ الفاتورة");
+      return false;
+    }
+  };
+
+  
   return {
     state,
     dispatch,
     actions: {
       handleAddExpense, handleDeleteExpense, handleAddPurchase, handleAddSupplier,
-      handleAddPayment, handleDeletePayment, handleEditPaymentSubmit, openEditPayment, openLedger
+      handleDeletePayment, openEditPayment, openLedger, handleSavePayment , handleAddInvoice
     }
   };
 }

@@ -22,8 +22,7 @@ export default function WorkersPage() {
     <div className="p-6 space-y-8 max-w-6xl mx-auto animate-in fade-in duration-500">
       
       {/* 1. نموذج إضافة فني جديد */}
-      <AddWorkerForm state={state} dispatch={dispatch} onAdd={actions.handleAddWorker} />
-      
+        <AddWorkerForm onAdd={actions.handleAddWorker} />      
       {/* 2. جدول الفنيين وأرصدتهم */}
       <WorkersTable workers={state.workers} dispatch={dispatch} onDelete={actions.handleDelete} />
       

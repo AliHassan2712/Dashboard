@@ -1,55 +1,79 @@
-import { Dispatch, FormEvent } from "react";
+import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "@/src/components/ui/Input";
 import { Modal } from "@/src/components/ui/Modal";
 import { Loader2 } from "lucide-react";
-import { InventoryState } from "@/src/types";
-import { Action } from "@/src/constants/inventory";
+import { sparePartSchema, type SparePartFormValues } from "../validations/validations";
+import { SparePart } from "@prisma/client";
 
 interface InventoryModalProps {
-  state: InventoryState;
-  dispatch: Dispatch<Action>;
-  onSave: (e: FormEvent) => void;
+  isOpen: boolean;
+  onClose: () => void;
+  editData: SparePart | null | undefined;
+  onSave: (data: SparePartFormValues) => Promise<boolean>;
 }
 
-export const InventoryModal = ({ state, dispatch, onSave }: InventoryModalProps) => {
+export const InventoryModal = ({ isOpen, onClose, editData, onSave }: InventoryModalProps) => {
+  const { register, handleSubmit, reset, formState: { errors ,isSubmitting } } = useForm<SparePartFormValues>({
+    resolver: zodResolver(sparePartSchema) as any,
+    defaultValues: { quantity: 0, averageCost: 0, sellingPrice: 0, lowStockAlert: 5 }
+  });
+
+  // تعبئة البيانات تلقائياً في حالة "التعديل"، أو تصفيرها في حالة "الإضافة"
+  useEffect(() => {
+    if (isOpen) {
+      if (editData) {
+        reset({
+          name: editData.name,
+          quantity: editData.quantity,
+          averageCost: editData.averageCost || 0,
+          sellingPrice: editData.sellingPrice,
+          lowStockAlert: editData.lowStockAlert
+        });
+      } else {
+        reset({ name: "", quantity: 0, averageCost: 0, sellingPrice: 0, lowStockAlert: 5 });
+      }
+    }
+  }, [isOpen, editData, reset]);
+
+  const onSubmit = async (data: SparePartFormValues) => {
+    const success = await onSave(data);
+    if (success) onClose(); 
+  };
+
   return (
     <Modal 
-      isOpen={state.modals.addEdit} 
-      onClose={() => dispatch({ type: "CLOSE_MODALS" })} 
-      title={state.editingId ? "تعديل بيانات القطعة" : "إضافة قطعة جديدة"}
+      isOpen={isOpen} 
+      onClose={onClose} 
+      title={editData ? "تعديل بيانات القطعة" : "إضافة قطعة جديدة"}
     >
-      <form onSubmit={onSave} className="space-y-5">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
         <Input 
           label="اسم القطعة" 
-          value={state.forms.part.name} 
-          onChange={(e) => dispatch({ type: "UPDATE_FORM", field: "name", value: e.target.value })} 
-          required 
+          error={errors.name?.message}
+          {...register("name")} 
         />
         
         <Input 
           label="الكمية المتوفرة" 
           type="number" 
-          value={state.forms.part.quantity} 
-          onChange={(e) => dispatch({ type: "UPDATE_FORM", field: "quantity", value: e.target.value })} 
-          required 
+          error={errors.quantity?.message}
+          {...register("quantity")} 
         />
 
         <div className="grid grid-cols-2 gap-4 border-t border-gray-100 pt-4 mt-2">
           <Input 
             label="سعر التكلفة/الشراء (₪)" 
-            type="number" 
-            step="0.01" 
-            value={state.forms.part.averageCost} 
-            onChange={(e) => dispatch({ type: "UPDATE_FORM", field: "averageCost", value: e.target.value })} 
-            required 
+            type="number" step="0.01" 
+            error={errors.averageCost?.message}
+            {...register("averageCost")} 
           />
           <Input 
             label="سعر البيع للزبون (₪)" 
-            type="number" 
-            step="0.01" 
-            value={state.forms.part.sellingPrice} 
-            onChange={(e) => dispatch({ type: "UPDATE_FORM", field: "sellingPrice", value: e.target.value })} 
-            required 
+            type="number" step="0.01" 
+            error={errors.sellingPrice?.message}
+            {...register("sellingPrice")} 
           />
         </div>
 
@@ -57,13 +81,13 @@ export const InventoryModal = ({ state, dispatch, onSave }: InventoryModalProps)
           <Input 
             label="تنبيه النواقص (متى يظهر التنبيه؟)" 
             type="number" 
-            value={state.forms.part.lowStockAlert} 
-            onChange={(e) => dispatch({ type: "UPDATE_FORM", field: "lowStockAlert", value: e.target.value })} 
+            error={errors.lowStockAlert?.message}
+            {...register("lowStockAlert")} 
           />
         </div>
 
-        <button disabled={state.isSubmitting} type="submit" className="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold flex justify-center items-center hover:bg-indigo-700 mt-2 transition">
-          {state.isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : "حفظ بيانات القطعة"}
+        <button disabled={isSubmitting} type="submit" className="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold flex justify-center items-center hover:bg-indigo-700 mt-2 transition">
+          {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : "حفظ بيانات القطعة"}
         </button>
       </form>
     </Modal>

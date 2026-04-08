@@ -1,11 +1,12 @@
 "use client";
 
-import { useReducer, useEffect, FormEvent } from "react";
+import { useReducer, useEffect } from "react";
 import { toast } from "react-hot-toast";
 import { SparePart } from "@prisma/client";
 import { getInventory, addSparePart, updateSparePart, deleteSparePart } from "@/src/server/actions/inventory.actions"; 
 import { Action, initialState } from "@/src/constants/inventory";
 import { InventoryState } from "@/src/types";
+import { SparePartFormValues } from "../validations/validations"; 
 
 function reducer(state: InventoryState, action: Action): InventoryState {
   switch (action.type) {
@@ -13,30 +14,13 @@ function reducer(state: InventoryState, action: Action): InventoryState {
     case "SET_SEARCH": return { ...state, searchQuery: action.payload };
     case "SET_LOADING": return { ...state, isLoading: action.payload };
     case "SET_SUBMITTING": return { ...state, isSubmitting: action.payload };
-    case "OPEN_MODAL": {
-      if (action.payload.editData) {
-        return {
-          ...state,
-          modals: { ...state.modals, [action.payload.type]: true },
-          editingId: action.payload.editData.id,
-          forms: { part: { 
-            name: action.payload.editData.name, 
-            quantity: String(action.payload.editData.quantity), 
-            averageCost: String(action.payload.editData.averageCost || 0),
-            sellingPrice: String(action.payload.editData.sellingPrice),
-            lowStockAlert: String(action.payload.editData.lowStockAlert)
-          }}
-        };
-      }
+    case "OPEN_MODAL": 
       return {
         ...state,
         modals: { ...state.modals, [action.payload.type]: true },
-        editingId: null,
-        forms: initialState.forms 
+        editingId: action.payload.editData ? action.payload.editData.id : null,
       };
-    }
     case "CLOSE_MODALS": return { ...state, modals: initialState.modals, editingId: null };
-    case "UPDATE_FORM": return { ...state, forms: { part: { ...state.forms.part, [action.field]: action.value } } };
     default: return state;
   }
 }
@@ -52,33 +36,22 @@ export function useInventory() {
 
   useEffect(() => { fetchInventory(); }, []);
 
-  const handleSavePart = async (e: FormEvent) => {
-    e.preventDefault();
-    dispatch({ type: "SET_SUBMITTING", payload: true });
-    
-    const payload = {
-      name: state.forms.part.name,
-      quantity: Number(state.forms.part.quantity),
-      averageCost: Number(state.forms.part.averageCost),
-      sellingPrice: Number(state.forms.part.sellingPrice),
-      lowStockAlert: Number(state.forms.part.lowStockAlert)
-    };
-
+  const handleSavePart = async (data: SparePartFormValues) => {
     let res;
     if (state.editingId) {
-      res = await updateSparePart(state.editingId, payload);
+      res = await updateSparePart(state.editingId, data);
     } else {
-      res = await addSparePart(payload); 
+      res = await addSparePart(data); 
     }
 
     if (res.success) {
       toast.success(state.editingId ? "تم التعديل بنجاح" : "تمت الإضافة بنجاح");
-      dispatch({ type: "CLOSE_MODALS" });
       fetchInventory();
+      return true; 
     } else {
       toast.error(res.error || "حدث خطأ أثناء الحفظ");
+      return false;
     }
-    dispatch({ type: "SET_SUBMITTING", payload: false });
   };
 
   const handleDelete = async (id: string, name: string) => {

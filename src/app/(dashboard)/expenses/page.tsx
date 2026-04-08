@@ -8,7 +8,6 @@ import { PurchaseModal } from "@/src/features/expenses/components/modals/Purchas
 import { SupplierModal } from "@/src/features/expenses/components/modals/SupplierModal";
 import { PaymentModal } from "@/src/features/expenses/components/modals/PaymentModal";
 import { SupplierLedgerModal } from "@/src/features/expenses/components/modals/SupplierLedgerModal";
-import { ExpensesState, PurchaseItemForm } from "@/src/types";
 import { ExpensesTable } from "@/src/features/expenses/components/tables/ExpensesTable";
 import { PaymentsTable } from "@/src/features/expenses/components/tables/PaymentsTable";
 import { PurchasesTable } from "@/src/features/expenses/components/tables/PurchasesTable";
@@ -17,9 +16,7 @@ import { PurchasesTable } from "@/src/features/expenses/components/tables/Purcha
 export default function ExpensesPage() {
   const { state, dispatch, actions } = useExpenses();
 
-  const updateForm = (form: keyof ExpensesState["forms"], field: string, value: string | PurchaseItemForm[]) => {
-    dispatch({ type: "UPDATE_FORM", form, field, value });
-  };
+
 
   return (
     <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500 pb-10">
@@ -62,10 +59,43 @@ export default function ExpensesPage() {
         </div>
       </div>
 
-      <ExpenseModal state={state} dispatch={dispatch} onSave={actions.handleAddExpense} updateForm={updateForm} />
-      <PurchaseModal state={state} dispatch={dispatch} onSave={actions.handleAddPurchase} updateForm={updateForm} />
-      <SupplierModal state={state} dispatch={dispatch} onSave={actions.handleAddSupplier} updateForm={updateForm} />
-      <PaymentModal state={state} dispatch={dispatch} onSave={state.editingPaymentId ? actions.handleEditPaymentSubmit : actions.handleAddPayment} updateForm={updateForm} />
+      <ExpenseModal
+        isOpen={state.modals.expense}
+        onClose={() => dispatch({ type: "CLOSE_MODALS" })}
+        onSave={actions.handleAddExpense}
+      />
+      <PurchaseModal
+        isOpen={state.modals.purchase}
+        onClose={() => dispatch({ type: "CLOSE_MODALS" })}
+        suppliers={state.suppliers}
+        spareParts={state.spareParts}
+        onSave={actions.handleAddInvoice}
+        onOpenSupplierModal={() => {
+          // إغلاق نافذة المشتريات مؤقتاً وفتح نافذة التاجر
+          dispatch({ type: "CLOSE_MODALS" });
+          setTimeout(() => dispatch({ type: "OPEN_MODAL", payload: "supplier" }), 100);
+        }}
+      /><SupplierModal
+        isOpen={state.modals.supplier}
+        onClose={() => dispatch({ type: "CLOSE_MODALS" })}
+        onBack={() => dispatch({ type: "OPEN_MODAL", payload: "purchase" })}
+        onSave={actions.handleAddSupplier}
+      />
+
+      <PaymentModal
+        isOpen={state.modals.payment || state.modals.editPayment}
+        onClose={() => dispatch({ type: "CLOSE_MODALS" })}
+        suppliers={state.suppliers}
+        onSave={actions.handleSavePayment}
+        editData={
+          state.editingPaymentId
+            ? (() => {
+              const p = state.payments.find(pay => pay.id === state.editingPaymentId);
+              return p ? { supplierId: p.supplierId, amount: p.amount, notes: p.notes || "" } : null;
+            })()
+            : null
+        }
+      />
       <SupplierLedgerModal isOpen={state.modals.ledger} onClose={() => dispatch({ type: "CLOSE_MODALS" })} supplierId={state.ledgerSupplierId} />
     </div>
   );

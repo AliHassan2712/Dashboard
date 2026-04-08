@@ -7,7 +7,5 @@ export interface InventoryState {
   isSubmitting: boolean;
   modals: { addEdit: boolean };
   editingId: string | null;
-  forms: {
-    part: { name: string; quantity: string; averageCost: string; sellingPrice: string; lowStockAlert: string };
-  };
+
 }

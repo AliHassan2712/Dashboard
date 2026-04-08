@@ -1,11 +1,12 @@
 "use client";
 
-import { useReducer, useEffect, FormEvent } from "react";
+import { useReducer, useEffect } from "react";
 import { toast } from "react-hot-toast";
 import { registerWorker, getWorkersWithBalance, addWorkerTransaction, deleteWorker } from "@/src/server/actions/workers.actions";
 import { Action, initialState } from "@/src/constants/worker";
 import { WorkersState } from "@/src/types";
 import { TypesWorkerTransaction } from "@prisma/client";
+import { AddWorkerValues } from "../validations/validations"; 
 
 function reducer(state: WorkersState, action: Action): WorkersState {
   switch (action.type) {
@@ -15,8 +16,6 @@ function reducer(state: WorkersState, action: Action): WorkersState {
     case "OPEN_TX_MODAL": return { ...state, txModal: { isOpen: true, ...action.payload } };
     case "CLOSE_TX_MODAL": return { ...state, txModal: initialState.txModal, txData: initialState.txData };
     case "UPDATE_TX_DATA": return { ...state, txData: { ...state.txData, [action.field]: action.value } };
-    case "UPDATE_WORKER_FORM": return { ...state, workerForm: { ...state.workerForm, [action.field]: action.value } };
-    case "RESET_FORMS": return { ...state, workerForm: initialState.workerForm, txData: initialState.txData };
     default: return state;
   }
 }
@@ -32,16 +31,16 @@ export function useWorkers() {
 
   useEffect(() => { loadWorkers(); }, []);
 
-  const handleAddWorker = async (e: FormEvent) => {
-    e.preventDefault();
-    dispatch({ type: "SET_SUBMITTING", payload: true });
-    const res = await registerWorker(state.workerForm);
+  const handleAddWorker = async (data: AddWorkerValues) => {
+    const res = await registerWorker(data);
     if (res.success) {
       toast.success("تم تسجيل الفني بنجاح");
-      dispatch({ type: "RESET_FORMS" });
       loadWorkers();
-    } else toast.error(res.error || "حدث خطأ");
-    dispatch({ type: "SET_SUBMITTING", payload: false });
+      return true;
+    } else {
+      toast.error(res.error || "حدث خطأ");
+      return false;
+    }
   };
 
   const handleConfirmTx = async () => {
@@ -49,7 +48,7 @@ export function useWorkers() {
       return toast.error("يرجى إدخال مبلغ صحيح");
     }
     dispatch({ type: "SET_SUBMITTING", payload: true });
-    
+
     const typeLabel = state.txModal.type === 'STAKE' ? 'استحقاق' : state.txModal.type === 'ADVANCE' ? 'سلفة' : 'تصفية';
     const finalDesc = `${typeLabel} - ${state.txData.method}${state.txData.notes ? `: ${state.txData.notes}` : ''}`;
 
