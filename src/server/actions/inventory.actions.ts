@@ -87,6 +87,51 @@ export async function deleteSparePart(id: string) {
     return { error: "لا يمكن حذف القطعة لأنها قد تكون مرتبطة بتذاكر أو فواتير سابقة." };
   }
 }
+
+// 5. دالة بيع قطعة غيار مباشرة (تسجيلها كتذكرة مكتملة بدون عميل محدد)
+export async function sellPartDirectly(sparePartId: string, quantity: number, price: number) {
+  try {
+    const part = await prisma.sparePart.findUnique({ where: { id: sparePartId } });
+    if (!part || part.quantity < quantity) return { error: "الكمية غير متوفرة في المخزن!" };
+
+    await prisma.$transaction(async (tx) => {
+      // 1. إنشاء تذكرة "مكتملة" باسم مبيعات نقدية
+      const ticket = await tx.ticket.create({
+        data: {
+          customerName: "مبيعات نقدية (قطعة غيار)",
+          customerPhone: "000000000",
+          status: "COMPLETED",
+          totalCost: price * quantity,
+          advancePayment: price * quantity // مدفوعة بالكامل
+        }
+      });
+
+      // 2. تسجيل القطعة المباعة
+      await tx.ticketPart.create({
+        data: {
+          ticketId: ticket.id,
+          sparePartId: sparePartId,
+          quantity: quantity,
+          priceAtTime: price
+        }
+      });
+
+      // 3. خصم من المخزن
+      await tx.sparePart.update({
+        where: { id: sparePartId },
+        data: { quantity: { decrement: quantity } }
+      });
+    });
+
+    revalidatePath(ROUTES.INVENTORY);
+    revalidatePath(ROUTES.TRANSACTIONS); // لتحديث السجل المالي
+    return { success: true };
+  } catch (error) {
+    return { error: "حدث خطأ أثناء إتمام عملية البيع." };
+  }
+}
+
+
 // دالة جلب كل قطع الغيار (للقائمة المنسدلة)
 export async function getAllSparePartsForDropdown() {
   try {

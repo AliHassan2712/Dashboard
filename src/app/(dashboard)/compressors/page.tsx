@@ -10,7 +10,7 @@ import { Compressor } from "@prisma/client";
 export default function CompressorsPage() {
   const { 
     compressors, isLoading, isModalOpen, setIsModalOpen, 
-     fetchData, actions 
+     fetchData, actions  ,inventory
   } = useCompressors();
 
   // --- تجهيز البيانات للتصدير ---
@@ -79,6 +79,7 @@ export default function CompressorsPage() {
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 
         onSave={actions.handleAdd} 
+        inventory={inventory}
       />
     </div>
   );

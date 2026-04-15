@@ -3,7 +3,6 @@ export * from "./worker.types";
 export * from "./expense.types";
 export * from "./inventory.types";
 export * from "./dashboard.types";
-export * from "./compressor.types";
 export * from "./quotations.types";
 export * from "./report.types";
 export * from "./settings.types";

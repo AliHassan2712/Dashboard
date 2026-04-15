@@ -1,13 +1,14 @@
-import { Edit, Trash2, AlertTriangle } from "lucide-react";
+import { Edit, Trash2, AlertTriangle, BadgeDollarSign } from "lucide-react";
 import { SparePart } from "@prisma/client";
 
 interface InventoryTableProps {
   parts: SparePart[];
   onOpenEditModal: (part: SparePart) => void;
   onDelete: (id: string, name: string) => void;
+  onOpenSellModal: (part: SparePart) => void;
 }
 
-export const InventoryTable = ({ parts, onOpenEditModal, onDelete }: InventoryTableProps) => (
+export const InventoryTable = ({ parts, onOpenEditModal, onDelete, onOpenSellModal }: InventoryTableProps) => (
   <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
     <div className="overflow-x-auto">
       <table className="w-full text-right text-sm">
@@ -38,14 +39,21 @@ export const InventoryTable = ({ parts, onOpenEditModal, onDelete }: InventoryTa
                   <td className="p-4 font-bold text-gray-500">₪ {part.averageCost?.toFixed(2) || "0.00"}</td>
                   <td className="p-4 font-black text-indigo-600">₪ {part.sellingPrice.toFixed(2)}</td>
                   <td className="p-4 flex justify-center gap-2">
-                    <button 
+                    <button
+                      onClick={() => onOpenSellModal(part)}
+                      className="p-2 text-emerald-500 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg transition"
+                      title="بيع مباشر"
+                    >
+                      <BadgeDollarSign className="w-4 h-4" />
+                    </button>
+                    <button
                       onClick={() => onOpenEditModal(part)}
                       className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition"
                     >
                       <Edit className="w-4 h-4" />
                     </button>
-                    <button 
-                      onClick={() => onDelete(part.id, part.name)} 
+                    <button
+                      onClick={() => onDelete(part.id, part.name)}
                       className="p-2 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition"
                     >
                       <Trash2 className="w-4 h-4" />

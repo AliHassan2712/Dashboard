@@ -5,11 +5,13 @@ import { useInventory } from "@/src/features/inventory/hooks/useInventory";
 import { InventoryToolbar } from "@/src/features/inventory/components/InventoryToolbar";
 import { InventoryTable } from "@/src/features/inventory/components/InventoryTable";
 import { InventoryModal } from "@/src/features/inventory/components/InventoryModal";
+import { SellPartModal } from "@/src/features/inventory/components/SellPartModal"; 
 
 export default function InventoryPage() {
   const { 
     filteredParts, searchQuery, setSearchQuery, isLoading, 
-    isModalOpen, setIsModalOpen, editingPart, actions 
+    isModalOpen, setIsModalOpen, editingPart, 
+    sellModal, setSellModal, actions  
   } = useInventory();
 
   if (isLoading) {
@@ -23,26 +25,31 @@ export default function InventoryPage() {
   return (
     <div className="max-w-7xl mx-auto space-y-6 animate-in fade-in duration-500 pb-10">
       
-      {/* الترويسة وشريط البحث */}
       <InventoryToolbar 
         searchQuery={searchQuery} 
         setSearchQuery={setSearchQuery} 
         onOpenAddModal={actions.openAddModal} 
       />
 
-      {/* جدول المخزون المفلتر */}
       <InventoryTable 
         parts={filteredParts} 
         onOpenEditModal={actions.openEditModal} 
         onDelete={actions.handleDelete} 
+        onOpenSellModal={actions.openSellModal}
       />
 
-      {/* نافذة الإضافة/التعديل */}
       <InventoryModal 
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         editData={editingPart}
         onSave={actions.handleSavePart} 
+      />
+
+      <SellPartModal 
+        isOpen={sellModal.isOpen}
+        onClose={() => setSellModal({ isOpen: false, part: null })}
+        part={sellModal.part}
+        onSave={actions.handleSellPart}
       />
     </div>
   );
