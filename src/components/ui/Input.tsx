@@ -1,40 +1,57 @@
-import { forwardRef, InputHTMLAttributes, ReactNode } from "react";
+import { InputHTMLAttributes, forwardRef } from "react";
+import { AlertCircle } from "lucide-react";
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label?: string;
   error?: string;
-  wrapperClassName?: string;
-  rightIcon?: ReactNode; // أيقونة في البداية (يمين)
-  leftIcon?: ReactNode;  // أيقونة في النهاية (يسار)
+  icon?: React.ReactNode;
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ label, error, wrapperClassName = "w-full", rightIcon, leftIcon, className = "", ...props }, ref) => {
+  ({ label, error, icon, className = "", ...props }, ref) => {
     return (
-      <div className={wrapperClassName}>
+      <div className="w-full flex flex-col gap-1.5">
+        {/* 1. تحسين لون الـ Label ليكون غامقاً وواضحاً */}
         {label && (
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="text-sm font-bold text-slate-800">
             {label}
           </label>
         )}
+        
         <div className="relative">
-          {rightIcon && <div className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">{rightIcon}</div>}
+          {icon && (
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500">
+              {icon}
+            </div>
+          )}
+          
           <input
             ref={ref}
             className={`
-              w-full border rounded-lg outline-none transition
-              ${error ? "border-red-300 focus:ring-2 focus:ring-red-100" : "border-gray-300 focus:ring-2 focus:ring-indigo-100"}
-              disabled:bg-gray-50 disabled:text-gray-500
-              ${rightIcon ? "pr-10" : "pr-4"}
-              ${leftIcon ? "pl-10" : "pl-4"}
-              ${className.includes('py-') || className.includes('p-') ? '' : 'py-2.5'}
+              w-full bg-white px-4 py-3 rounded-xl outline-none transition-all
+              text-sm font-bold text-slate-900 
+              border-2 /* زيادة سمك الإطار */
+              ${icon ? "pr-10" : ""}
+              ${
+                error 
+                  ? "border-rose-500 focus:ring-4 focus:ring-rose-500/20 bg-rose-50/50" 
+                  : "border-slate-200 focus:border-indigo-600 focus:ring-4 focus:ring-indigo-600/20 hover:border-slate-300"
+              }
+              /* 2. تحسين لون الـ Placeholder ليكون واضحاً (opacity 1) */
+              placeholder:text-slate-400 placeholder:opacity-100
               ${className}
             `}
             {...props}
           />
-          {leftIcon && <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-bold">{leftIcon}</div>}
         </div>
-        {error && <p className="mt-1.5 text-xs text-red-600 font-medium">{error}</p>}
+
+        {/* 3. تحسين عرض الأخطاء */}
+        {error && (
+          <span className="text-xs font-bold text-rose-500 flex items-center gap-1 mt-0.5">
+            <AlertCircle className="w-3.5 h-3.5" />
+            {error}
+          </span>
+        )}
       </div>
     );
   }

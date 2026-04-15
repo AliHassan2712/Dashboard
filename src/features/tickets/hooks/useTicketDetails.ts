@@ -4,7 +4,9 @@ import { useState, useEffect, useCallback } from "react";
 import { toast } from "react-hot-toast";
 import {
   getTicketById, updateTicket, addPartToTicket,
-  removePartFromTicket, addPaymentToTicket, updateTicketInvoiceImage
+  removePartFromTicket, addPaymentToTicket, updateTicketInvoiceImage,
+  deleteTicketPayment,
+  updateTicketPayment
 } from "@/src/server/actions/tickets.actions";
 import { TicketWithDetails } from "@/src/types";
 import { SparePart, TicketStatus } from "@prisma/client";
@@ -115,10 +117,23 @@ export function useTicketDetails(ticketId: string) {
       setIsUpdatingPart(false);
     }
   };
+
+const handleEditPayment = async (paymentId: string, newAmount: number) => {
+  const res = await updateTicketPayment(paymentId, newAmount, ticketId);
+  if (res.success) { toast.success("تم تعديل الدفعة"); fetchData(); }
+};
+
+const handleDeletePayment = async (paymentId: string) => {
+  if(!confirm("هل أنت متأكد من حذف الدفعة؟")) return;
+  const res = await deleteTicketPayment(paymentId, ticketId);
+  if (res.success) { toast.success("تم حذف الدفعة"); fetchData(); }
+};
+
+
   return {
     ticketData, inventory, isLoadingData, isSaving, isUpdatingPart,
     status, setStatus, laborCost, setLaborCost, discountPercentage, setDiscountPercentage,
     finance,
-    actions: { handleSaveTicket, handleAddPart, handleRemovePart, handleAddPayment, handleUpdateImage, handleRemoveImage }
+    actions: { handleSaveTicket, handleAddPart, handleRemovePart, handleAddPayment, handleUpdateImage, handleRemoveImage , handleDeletePayment , handleEditPayment }
   };
 }

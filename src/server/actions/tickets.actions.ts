@@ -92,6 +92,31 @@ export async function addPaymentToTicket(ticketId: string, amount: number) {
   }
 }
 
+
+export async function updateTicketPayment(paymentId: string, amount: number, ticketId: string) {
+  try {
+    await prisma.payment.update({
+      where: { id: paymentId },
+      data: { amount }
+    });
+    revalidatePath(ROUTES.TICKET_DETAILS(ticketId));
+    return { success: true };
+  } catch (_error) {
+    return { error: "فشل تعديل الدفعة." };
+  }
+}
+
+export async function deleteTicketPayment(paymentId: string, ticketId: string) {
+  try {
+    await prisma.payment.delete({ where: { id: paymentId } });
+    revalidatePath(ROUTES.TICKET_DETAILS(ticketId));
+    return { success: true };
+  } catch (_error) {
+    return { error: "فشل حذف الدفعة." };
+  }
+}
+
+
 export async function updateTicketInvoiceImage(ticketId: string, imageUrl: string) {
   try {
     await prisma.ticket.update({

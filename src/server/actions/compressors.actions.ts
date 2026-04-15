@@ -22,27 +22,52 @@ export async function getCompressors() {
 export async function addCompressor(data: {
   serialNumber?: string;
   modelName: string; 
-  productionCost: number;
+  productionCost: number; // أجرة اليد والتكاليف الأخرى
   sellingPrice: number;
   description?: string;
-  imageUrl?: string; 
+  imageUrl?: string;
+  parts: { sparePartId: string; quantity: number; unitCost: number }[]; 
 }) {
   try {
-    const compressor = await prisma.compressor.create({
-      data: {
-        modelName: data.modelName,
-        productionCost: data.productionCost,
-        sellingPrice: data.sellingPrice,
-        status: "AVAILABLE",
-        imageUrl: data.imageUrl, 
-        ...(data.serialNumber ? { serialNumber: data.serialNumber } : {}),
+    await prisma.$transaction(async (tx) => {
+      // 1. حساب إجمالي تكلفة القطع
+      const partsTotalCost = data.parts.reduce((sum, p) => sum + (p.quantity * p.unitCost), 0);
+      
+      // 2. إنشاء الكمبريسور
+      const compressor = await tx.compressor.create({
+        data: {
+          modelName: data.modelName,
+          serialNumber: data.serialNumber,
+          productionCost: data.productionCost + partsTotalCost, // التكلفة الكلية
+          sellingPrice: data.sellingPrice,
+          description: data.description,
+          imageUrl: data.imageUrl,
+          status: "AVAILABLE",
+          partsUsed: {
+            create: data.parts.map(p => ({
+              sparePartId: p.sparePartId,
+              quantity: p.quantity,
+              unitCost: p.unitCost
+            }))
+          }
+        }
+      });
+
+      // 3. خصم القطع من المخزن
+      for (const part of data.parts) {
+        await tx.sparePart.update({
+          where: { id: part.sparePartId },
+          data: { quantity: { decrement: part.quantity } }
+        });
       }
     });
-    revalidatePath(ROUTES.COMPRESSORS); 
-    return { success: true, data: compressor };
+
+    revalidatePath(ROUTES.COMPRESSORS);
+    revalidatePath(ROUTES.INVENTORY);
+    return { success: true };
   } catch (error) {
-    console.error("Add Error:", error);
-    return { error: "فشل إضافة الكمبريسور" };
+    console.error("🔥 Prisma Add Compressor Error:", error); 
+    return { error: "فشل إضافة الكمبريسور وخصم القطع" };
   }
 }
 
@@ -61,29 +86,53 @@ export async function updateCompressorStatus(id: string, status: string) {
   }
 }
 
-// 4. الحذف
+// 4. الحذف واسترجاع القطع للمخزن
 export async function deleteCompressor(id: string) {
   try {
-    // 1. جلب الكمبريسور لمعرفة رابط الصورة قبل الحذف
+    // 1. جلب الكمبريسور مع القطع المرتبطة به لمعرفة الكميات المسحوبة
     const compressor = await prisma.compressor.findUnique({
       where: { id },
-      select: { imageUrl: true }
+      include: { partsUsed: true } 
     });
 
-    // 2. الحذف من قاعدة البيانات
-    await prisma.compressor.delete({ where: { id } });
+    if (!compressor) return { error: "الكمبريسور غير موجود" };
 
-    // 3. تنظيف السحابة: الحذف الفيزيائي من UploadThing
-    if (compressor?.imageUrl) {
+    // 2. استخدام Transaction لضمان تزامن العمليات (إرجاع القطع ثم الحذف)
+    await prisma.$transaction(async (tx) => {
+      
+      // أ. إرجاع القطع إلى المخزن (Increment)
+      for (const part of compressor.partsUsed) {
+        await tx.sparePart.update({
+          where: { id: part.sparePartId },
+          data: { quantity: { increment: part.quantity } }
+        });
+      }
+
+      // ب. حذف القطع المرتبطة من الجدول الوسيط (CompressorPart)
+      await tx.compressorPart.deleteMany({
+        where: { compressorId: id }
+      });
+
+      // ج. حذف الكمبريسور نفسه
+      await tx.compressor.delete({ 
+        where: { id } 
+      });
+    });
+
+    // 3. تنظيف السحابة: الحذف الفيزيائي للصورة
+    if (compressor.imageUrl) {
       deleteFilesFromUploadThing(compressor.imageUrl).catch(err => 
         console.error("Failed to delete compressor image in background:", err)
       );
     }
 
+    // 4. تحديث صفحة الكمبريسورات وصفحة المخزون لظهور القطع المسترجعة!
     revalidatePath(ROUTES.COMPRESSORS); 
+    revalidatePath(ROUTES.INVENTORY); 
     return { success: true };
+
   } catch (error) { 
     console.error("Delete Error:", error);
-    return { error: "فشل الحذف" }; 
+    return { error: "حدث خطأ أثناء محاولة حذف الكمبريسور واسترجاع القطع." }; 
   }
 }

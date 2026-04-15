@@ -9,22 +9,33 @@ import {
   updateCompressorStatus, 
   deleteCompressor 
 } from "@/src/server/actions/compressors.actions";
+import { getAllSparePartsForDropdown } from "@/src/server/actions/inventory.actions"; 
 import { CompressorFormValues } from "../validations/validations";
 
 export function useCompressors() {
   const [compressors, setCompressors] = useState<Compressor[]>([]);
+  const [inventory, setInventory] = useState<any[]>([]); 
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // 1. جلب البيانات
+  // 1. جلب البيانات (الكمبريسورات وقطع المخزون معاً)
   const fetchData = useCallback(async () => {
     setIsLoading(true);
-    const res = await getCompressors();
-    if (res.success) {
-      setCompressors((res.data as Compressor[]) || []);
+    const [compRes, invRes] = await Promise.all([
+      getCompressors(),
+      getAllSparePartsForDropdown()
+    ]);
+
+    if (compRes.success) {
+      setCompressors((compRes.data as Compressor[]) || []);
     } else {
-      toast.error(res.error || "خطأ في الجلب");
+      toast.error(compRes.error || "خطأ في الجلب");
     }
+
+    if (invRes.success) {
+      setInventory(invRes.data || []);
+    }
+
     setIsLoading(false);
   }, []);
 
@@ -40,11 +51,12 @@ export function useCompressors() {
       productionCost: data.productionCost, 
       sellingPrice: data.sellingPrice,
       description: data.description,
-      imageUrl: data.imageUrl
+      imageUrl: data.imageUrl,
+      parts: data.parts || [] 
     });
 
     if (res.success) {
-      toast.success("تمت إضافة الكمبريسور للمخزون");
+      toast.success("تمت إضافة الكمبريسور للمخزون وخصم القطع بنجاح");
       setIsModalOpen(false); // إغلاق النافذة
       await fetchData();     // تحديث الجدول
       return true;           // إرجاع true للنافذة لكي تقوم بتصفير الحقول (reset)
@@ -78,7 +90,8 @@ export function useCompressors() {
   };
 
   return { 
-    compressors, 
+    compressors,
+    inventory, // 👈 إرجاع المخزون لكي نمرره للـ Modal 
     isLoading, 
     isModalOpen, 
     setIsModalOpen, 

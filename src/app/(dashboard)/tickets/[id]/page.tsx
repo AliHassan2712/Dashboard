@@ -102,6 +102,8 @@ export default function TicketDetailsPage({ params }: { params: Promise<{ id: st
             payments={ticketData.payments} 
             advancePayment={ticketData.advancePayment}
             onAddPayment={actions.handleAddPayment}
+            onDeletePayment={actions.handleDeletePayment}
+            onEditPayment={actions.handleEditPayment}
           />
         </div>
 
