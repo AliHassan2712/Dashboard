@@ -179,6 +179,7 @@ src/server/actions/settings.actions.ts
 src/server/actions/tickets.actions.ts
 src/server/actions/transactions.actions.ts
 src/server/actions/trials.actions.ts
+src/server/actions/uploadthing.actions.ts
 src/server/actions/workers.actions.ts
 src/types/compressor.types.ts
 src/types/dashboard.types.ts
@@ -197,201 +198,6 @@ tsconfig.json
 
 <files>
 This section contains the contents of the repository's files.
-
-<file path="src/features/expenses/hooks/usePurchases.ts">
-"use client";
-
-import { useState, useEffect, useCallback } from "react";
-import { toast } from "react-hot-toast";
-import { Supplier, SparePart } from "@prisma/client";
-import { PurchaseInvoiceWithSupplier } from "@/src/types";
-import { getPurchaseInvoices, addPurchaseInvoice, getSuppliers } from "@/src/server/actions/expenses.actions";
-import { getAllSparePartsForDropdown } from "@/src/server/actions/inventory.actions";
-import { InvoiceFormValues } from "../validations/validations";
-
-export function usePurchases() {
-  const [purchases, setPurchases] = useState<PurchaseInvoiceWithSupplier[]>([]);
-  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
-  const [spareParts, setSpareParts] = useState<SparePart[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
-  const fetchData = useCallback(async () => {
-    setIsLoading(true);
-    const [purRes, supRes, partsRes] = await Promise.all([
-      getPurchaseInvoices(), getSuppliers(), getAllSparePartsForDropdown()
-    ]);
-    if (purRes.success) setPurchases((purRes.data as PurchaseInvoiceWithSupplier[]) || []);
-    if (supRes.success) setSuppliers((supRes.data as Supplier[]) || []);
-    if (partsRes.success) setSpareParts((partsRes.data as SparePart[]) || []);
-    setIsLoading(false);
-  }, []);
-
-  useEffect(() => { fetchData(); }, [fetchData]);
-
-  const handleAddInvoice = async (data: InvoiceFormValues) => {
-    const res = await addPurchaseInvoice(data);
-    if (res.success) {
-      toast.success("تم اعتماد الفاتورة وتحديث المخزن بنجاح");
-      setIsModalOpen(false);
-      fetchData();
-      return true;
-    }
-    toast.error(res.error || "حدث خطأ أثناء حفظ الفاتورة");
-    return false;
-  };
-
-  return { purchases, suppliers, spareParts, isLoading, isModalOpen, setIsModalOpen, actions: { handleAddInvoice, refresh: fetchData } };
-}
-</file>
-
-<file path="src/features/expenses/hooks/useSuppliers.ts">
-"use client";
-
-import { useState, useEffect, useCallback } from "react";
-import { toast } from "react-hot-toast";
-import { Supplier } from "@prisma/client";
-import { SupplierPaymentWithSupplier } from "@/src/types";
-import { getSuppliers, getSupplierPayments, addSupplier, addSupplierPayment, updateSupplierPayment, deleteSupplierPayment } from "@/src/server/actions/expenses.actions";
-import { SupplierFormValues, PaymentFormValues } from "../validations/validations";
-
-export function useSuppliers() {
-  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
-  const [payments, setPayments] = useState<SupplierPaymentWithSupplier[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  // حالات النوافذ المنبثقة
-  const [isSupplierModalOpen, setIsSupplierModalOpen] = useState(false);
-  const [paymentModal, setPaymentModal] = useState<{ isOpen: boolean; editingId: string | null }>({ isOpen: false, editingId: null });
-  const [ledgerSupplierId, setLedgerSupplierId] = useState<string | null>(null);
-
-  const fetchData = useCallback(async () => {
-    setIsLoading(true);
-    const [supRes, payRes] = await Promise.all([getSuppliers(), getSupplierPayments()]);
-    if (supRes.success) setSuppliers((supRes.data as Supplier[]) || []);
-    if (payRes.success) setPayments((payRes.data as SupplierPaymentWithSupplier[]) || []);
-    setIsLoading(false);
-  }, []);
-
-  useEffect(() => { fetchData(); }, [fetchData]);
-
-  const handleAddSupplier = async (data: SupplierFormValues) => {
-    const res = await addSupplier({ name: data.name, phone: data.phone });
-    if (res.success) {
-      toast.success("تمت إضافة المورد بنجاح");
-      setIsSupplierModalOpen(false);
-      fetchData();
-      return true;
-    }
-    toast.error(res.error || "خطأ"); return false;
-  };
-
-  const handleSavePayment = async (data: PaymentFormValues) => {
-    let res;
-    if (paymentModal.editingId) {
-      res = await updateSupplierPayment(paymentModal.editingId, { amount: data.amount, notes: data.notes || "" });
-    } else {
-      res = await addSupplierPayment({ supplierId: data.supplierId, amount: data.amount, notes: data.notes || "" });
-    }
-
-    if (res.success) {
-      toast.success(paymentModal.editingId ? "تم تعديل الدفعة بنجاح" : "تم تسجيل الدفعة وخصمها من الدين");
-      setPaymentModal({ isOpen: false, editingId: null });
-      fetchData();
-      return true;
-    }
-    toast.error(res.error || "خطأ في تسجيل الدفعة"); return false;
-  };
-
-  const handleDeletePayment = async (id: string) => {
-    if (!confirm("تحذير: حذف الدفعة سيعيد المبلغ كدين على الورشة. هل أنت متأكد؟")) return;
-    const res = await deleteSupplierPayment(id);
-    if (res.success) { toast.success("تم حذف الدفعة وتحديث الرصيد التلقائي"); fetchData(); }
-    else toast.error(res.error || "خطأ");
-  };
-
-  return {
-    suppliers, payments, isLoading,
-    isSupplierModalOpen, setIsSupplierModalOpen,
-    paymentModal, setPaymentModal,
-    ledgerSupplierId, setLedgerSupplierId,
-    actions: { handleAddSupplier, handleSavePayment, handleDeletePayment, refresh: fetchData }
-  };
-}
-</file>
-
-<file path="src/features/quotations/hooks/useQuotations.ts">
-"use client";
-
-import { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { quotationSchema, type QuotationFormValues } from "../validations/validations";
-
-export function useQuotation() {
-  const form = useForm<QuotationFormValues>({
-    resolver: zodResolver(quotationSchema),
-    defaultValues: {
-      customerName: "",
-      modelName: "",
-      specs: "",
-      priceIls: 0,
-      exchangeRate: 3.75,
-      imageUrl: "",
-      notes: "1. الأسعار سارية لمدة أسبوع من تاريخ العرض.\n2. السعر يشمل التوريد والتركيب والتشغيل المبدئي.\n3. الضمان لمدة عام كامل ضد العيوب المصنعية."
-    }
-  });
-
-  // 2. مراقبة التغييرات الحية لطباعتها على ورقة A4 مباشرة
-  const quoteData = form.watch();
-
-  const [priceUsd, setPriceUsd] = useState(0);
-  const [currentDate, setCurrentDate] = useState("");
-  const [quoteNumber, setQuoteNumber] = useState("");
-
-  // 3. الحساب التلقائي للـ USD
-  useEffect(() => {
-    const ils = Number(quoteData.priceIls) || 0;
-    const rate = Number(quoteData.exchangeRate) || 1;
-    setPriceUsd(rate > 0 ? ils / rate : 0);
-  }, [quoteData.priceIls, quoteData.exchangeRate]);
-
-  useEffect(() => {
-    setCurrentDate(new Date().toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' }));
-    setQuoteNumber(`QT-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`);
-  }, []);
-
-  return { form, quoteData, priceUsd, currentDate, quoteNumber };
-}
-</file>
-
-<file path="src/features/quotations/validations/validations.ts">
-import * as z from "zod";
-
-export const quotationSchema = z.object({
-  customerName: z.string().optional(),
-  modelName: z.string().min(2, "وصف الجهاز / الموديل مطلوب"),
-  specs: z.string().optional(),
-  priceIls: z.number({ error: "السعر مطلوب" }).min(0, "السعر لا يمكن أن يكون سالباً"),
-  exchangeRate: z.number({ error: "سعر الصرف مطلوب" }).min(1, "سعر الصرف غير صالح"),
-  imageUrl: z.string().optional(),
-  notes: z.string().optional(),
-});
-
-export type QuotationFormValues = z.infer<typeof quotationSchema>;
-</file>
-
-<file path="src/types/quotations.types.ts">
-export interface QuoteData {
-  customerName: string;
-  modelName: string;
-  specs: string;
-  priceIls: string;
-  exchangeRate: string;
-  imageUrl: string;
-  notes: string;
-}
-</file>
 
 <file path=".agents/skills/neon-postgres/SKILL.md">
 ---
@@ -781,35 +587,6 @@ import { ourFileRouter } from "./core";
 export const { GET, POST } = createRouteHandler({
   router: ourFileRouter,
 });
-</file>
-
-<file path="src/app/globals.css">
-@import "tailwindcss";
-
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
-}
 </file>
 
 <file path="src/components/shared/DashboardLayoutClient.tsx">
@@ -1408,6 +1185,128 @@ export const SuppliersTable = ({ suppliers, onOpenLedger }: SuppliersTableProps)
 );
 </file>
 
+<file path="src/features/expenses/hooks/usePurchases.ts">
+"use client";
+
+import { useState, useEffect, useCallback } from "react";
+import { toast } from "react-hot-toast";
+import { Supplier, SparePart } from "@prisma/client";
+import { PurchaseInvoiceWithSupplier } from "@/src/types";
+import { getPurchaseInvoices, addPurchaseInvoice, getSuppliers } from "@/src/server/actions/expenses.actions";
+import { getAllSparePartsForDropdown } from "@/src/server/actions/inventory.actions";
+import { InvoiceFormValues } from "../validations/validations";
+
+export function usePurchases() {
+  const [purchases, setPurchases] = useState<PurchaseInvoiceWithSupplier[]>([]);
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [spareParts, setSpareParts] = useState<SparePart[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const fetchData = useCallback(async () => {
+    setIsLoading(true);
+    const [purRes, supRes, partsRes] = await Promise.all([
+      getPurchaseInvoices(), getSuppliers(), getAllSparePartsForDropdown()
+    ]);
+    if (purRes.success) setPurchases((purRes.data as PurchaseInvoiceWithSupplier[]) || []);
+    if (supRes.success) setSuppliers((supRes.data as Supplier[]) || []);
+    if (partsRes.success) setSpareParts((partsRes.data as SparePart[]) || []);
+    setIsLoading(false);
+  }, []);
+
+  useEffect(() => { fetchData(); }, [fetchData]);
+
+  const handleAddInvoice = async (data: InvoiceFormValues) => {
+    const res = await addPurchaseInvoice(data);
+    if (res.success) {
+      toast.success("تم اعتماد الفاتورة وتحديث المخزن بنجاح");
+      setIsModalOpen(false);
+      fetchData();
+      return true;
+    }
+    toast.error(res.error || "حدث خطأ أثناء حفظ الفاتورة");
+    return false;
+  };
+
+  return { purchases, suppliers, spareParts, isLoading, isModalOpen, setIsModalOpen, actions: { handleAddInvoice, refresh: fetchData } };
+}
+</file>
+
+<file path="src/features/expenses/hooks/useSuppliers.ts">
+"use client";
+
+import { useState, useEffect, useCallback } from "react";
+import { toast } from "react-hot-toast";
+import { Supplier } from "@prisma/client";
+import { SupplierPaymentWithSupplier } from "@/src/types";
+import { getSuppliers, getSupplierPayments, addSupplier, addSupplierPayment, updateSupplierPayment, deleteSupplierPayment } from "@/src/server/actions/expenses.actions";
+import { SupplierFormValues, PaymentFormValues } from "../validations/validations";
+
+export function useSuppliers() {
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [payments, setPayments] = useState<SupplierPaymentWithSupplier[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // حالات النوافذ المنبثقة
+  const [isSupplierModalOpen, setIsSupplierModalOpen] = useState(false);
+  const [paymentModal, setPaymentModal] = useState<{ isOpen: boolean; editingId: string | null }>({ isOpen: false, editingId: null });
+  const [ledgerSupplierId, setLedgerSupplierId] = useState<string | null>(null);
+
+  const fetchData = useCallback(async () => {
+    setIsLoading(true);
+    const [supRes, payRes] = await Promise.all([getSuppliers(), getSupplierPayments()]);
+    if (supRes.success) setSuppliers((supRes.data as Supplier[]) || []);
+    if (payRes.success) setPayments((payRes.data as SupplierPaymentWithSupplier[]) || []);
+    setIsLoading(false);
+  }, []);
+
+  useEffect(() => { fetchData(); }, [fetchData]);
+
+  const handleAddSupplier = async (data: SupplierFormValues) => {
+    const res = await addSupplier({ name: data.name, phone: data.phone });
+    if (res.success) {
+      toast.success("تمت إضافة المورد بنجاح");
+      setIsSupplierModalOpen(false);
+      fetchData();
+      return true;
+    }
+    toast.error(res.error || "خطأ"); return false;
+  };
+
+  const handleSavePayment = async (data: PaymentFormValues) => {
+    let res;
+    if (paymentModal.editingId) {
+      res = await updateSupplierPayment(paymentModal.editingId, { amount: data.amount, notes: data.notes || "" });
+    } else {
+      res = await addSupplierPayment({ supplierId: data.supplierId, amount: data.amount, notes: data.notes || "" });
+    }
+
+    if (res.success) {
+      toast.success(paymentModal.editingId ? "تم تعديل الدفعة بنجاح" : "تم تسجيل الدفعة وخصمها من الدين");
+      setPaymentModal({ isOpen: false, editingId: null });
+      fetchData();
+      return true;
+    }
+    toast.error(res.error || "خطأ في تسجيل الدفعة"); return false;
+  };
+
+  const handleDeletePayment = async (id: string) => {
+    if (!confirm("تحذير: حذف الدفعة سيعيد المبلغ كدين على الورشة. هل أنت متأكد؟")) return;
+    const res = await deleteSupplierPayment(id);
+    if (res.success) { toast.success("تم حذف الدفعة وتحديث الرصيد التلقائي"); fetchData(); }
+    else toast.error(res.error || "خطأ");
+  };
+
+  return {
+    suppliers, payments, isLoading,
+    isSupplierModalOpen, setIsSupplierModalOpen,
+    paymentModal, setPaymentModal,
+    ledgerSupplierId, setLedgerSupplierId,
+    actions: { handleAddSupplier, handleSavePayment, handleDeletePayment, refresh: fetchData }
+  };
+}
+</file>
+
 <file path="src/features/expenses/validations/validations.ts">
 import * as z from "zod";
 import { ExpenseCategory } from "@prisma/client";
@@ -1463,46 +1362,6 @@ export type InvoiceFormInput = z.input<typeof invoiceSchema>;   // نوع الإ
 export type InvoiceFormValues = z.output<typeof invoiceSchema>; // نوع المخرج النظيف (للسيرفر)
 </file>
 
-<file path="src/features/inventory/components/InventoryToolbar.tsx">
-import { Package, Search } from "lucide-react";
-
-interface InventoryToolbarProps {
-  searchQuery: string;
-  setSearchQuery: (query: string) => void;
-  onOpenAddModal: () => void;
-}
-
-export const InventoryToolbar = ({ searchQuery, setSearchQuery, onOpenAddModal }: InventoryToolbarProps) => (
-  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-    <div>
-      <h1 className="text-2xl font-black text-gray-900 flex items-center gap-2">
-        <Package className="w-6 h-6 text-indigo-600" /> إدارة المخزون
-      </h1>
-      <p className="text-gray-500 text-sm mt-1">تتبع كميات قطع الغيار وأسعارها وتنبيهات النواقص</p>
-    </div>
-    
-    <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-      <div className="relative flex-1 sm:w-64">
-        <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-        <input 
-          type="text" 
-          placeholder="ابحث عن قطعة..." 
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full pl-4 pr-10 py-2.5 rounded-xl border border-gray-200 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 outline-none text-sm transition"
-        />
-      </div>
-      <button 
-        onClick={onOpenAddModal}
-        className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl font-bold shadow-md transition whitespace-nowrap"
-      >
-        + إضافة صنف جديد
-      </button>
-    </div>
-  </div>
-);
-</file>
-
 <file path="src/features/inventory/validations/validations.ts">
 import * as z from "zod";
 
@@ -1519,6 +1378,67 @@ export const sparePartSchema = z.object({
 
 // استخراج النوع (Type) لنستخدمه لاحقاً في الواجهات
 export type SparePartFormValues = z.infer<typeof sparePartSchema>;
+</file>
+
+<file path="src/features/quotations/hooks/useQuotations.ts">
+"use client";
+
+import { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { quotationSchema, type QuotationFormValues } from "../validations/validations";
+
+export function useQuotation() {
+  const form = useForm<QuotationFormValues>({
+    resolver: zodResolver(quotationSchema),
+    defaultValues: {
+      customerName: "",
+      modelName: "",
+      specs: "",
+      priceIls: 0,
+      exchangeRate: 3.75,
+      imageUrl: "",
+      notes: "1. الأسعار سارية لمدة أسبوع من تاريخ العرض.\n2. السعر يشمل التوريد والتركيب والتشغيل المبدئي.\n3. الضمان لمدة عام كامل ضد العيوب المصنعية."
+    }
+  });
+
+  // 2. مراقبة التغييرات الحية لطباعتها على ورقة A4 مباشرة
+  const quoteData = form.watch();
+
+  const [priceUsd, setPriceUsd] = useState(0);
+  const [currentDate, setCurrentDate] = useState("");
+  const [quoteNumber, setQuoteNumber] = useState("");
+
+  // 3. الحساب التلقائي للـ USD
+  useEffect(() => {
+    const ils = Number(quoteData.priceIls) || 0;
+    const rate = Number(quoteData.exchangeRate) || 1;
+    setPriceUsd(rate > 0 ? ils / rate : 0);
+  }, [quoteData.priceIls, quoteData.exchangeRate]);
+
+  useEffect(() => {
+    setCurrentDate(new Date().toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' }));
+    setQuoteNumber(`QT-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`);
+  }, []);
+
+  return { form, quoteData, priceUsd, currentDate, quoteNumber };
+}
+</file>
+
+<file path="src/features/quotations/validations/validations.ts">
+import * as z from "zod";
+
+export const quotationSchema = z.object({
+  customerName: z.string().optional(),
+  modelName: z.string().min(2, "وصف الجهاز / الموديل مطلوب"),
+  specs: z.string().optional(),
+  priceIls: z.number({ error: "السعر مطلوب" }).min(0, "السعر لا يمكن أن يكون سالباً"),
+  exchangeRate: z.number({ error: "سعر الصرف مطلوب" }).min(1, "سعر الصرف غير صالح"),
+  imageUrl: z.string().optional(),
+  notes: z.string().optional(),
+});
+
+export type QuotationFormValues = z.infer<typeof quotationSchema>;
 </file>
 
 <file path="src/features/settings/validations/validations.ts">
@@ -1770,177 +1690,6 @@ export default function Providers({ children }: { children: React.ReactNode }) {
 }
 </file>
 
-<file path="src/server/actions/compressors.actions.ts">
-"use server";
-
-import prisma from "@/src/lib/prisma";
-import { revalidatePath } from "next/cache";
-import { ROUTES } from "@/src/constants/paths";
-
-// 1. جلب البيانات
-export async function getCompressors() {
-  try {
-    const compressors = await prisma.compressor.findMany({
-      orderBy: { createdAt: 'desc' }
-    });
-    return { success: true, data: compressors };
-  } catch (error) {
-    console.error("Fetch Error:", error);
-    return { error: "فشل جلب قائمة الكمبريسورات" };
-  }
-}
-
-// 2. الإضافة
-export async function addCompressor(data: {
-  serialNumber?: string;
-  modelName: string; 
-  productionCost: number;
-  sellingPrice: number;
-  description?: string;
-  imageUrl?: string; 
-}) {
-  try {
-    const compressor = await prisma.compressor.create({
-      data: {
-        modelName: data.modelName,
-        productionCost: data.productionCost,
-        sellingPrice: data.sellingPrice,
-        status: "AVAILABLE",
-        imageUrl: data.imageUrl, 
-        ...(data.serialNumber ? { serialNumber: data.serialNumber } : {}),
-      }
-    });
-    revalidatePath(ROUTES.COMPRESSORS); 
-    return { success: true, data: compressor };
-  } catch (error) {
-    console.error("Add Error:", error);
-    return { error: "فشل إضافة الكمبريسور" };
-  }
-}
-
-// 3. التحديث
-export async function updateCompressorStatus(id: string, status: string) {
-  try {
-    await prisma.compressor.update({
-      where: { id },
-      data: { status }
-    });
-    revalidatePath(ROUTES.COMPRESSORS); 
-    return { success: true };
-  } catch (error) { 
-    console.error("Update Error:", error);
-    return { error: "فشل التحديث" }; 
-  }
-}
-
-// 4. الحذف
-export async function deleteCompressor(id: string) {
-  try {
-    await prisma.compressor.delete({ where: { id } });
-    revalidatePath(ROUTES.COMPRESSORS); 
-    return { success: true };
-  } catch (error) { 
-    console.error("Delete Error:", error);
-    return { error: "فشل الحذف" }; 
-  }
-}
-</file>
-
-<file path="src/server/actions/inventory.actions.ts">
-"use server"; 
-
-import prisma from "@/src/lib/prisma";
-import { revalidatePath } from "next/cache";
-import { sparePartSchema, type SparePartFormValues } from "@/src/features/inventory/validations/validations";
-import { ROUTES } from "@/src/constants/paths"; 
-
-// 1. دالة إضافة قطعة غيار جديدة
-export async function addSparePart(data: SparePartFormValues) {
-  try {
-    const parsedData = sparePartSchema.safeParse(data);
-    
-    if (!parsedData.success) {
-      return { error: "بيانات غير صالحة تم إرسالها للسيرفر" };
-    }
-
-    const newPart = await prisma.sparePart.create({
-      data: parsedData.data,
-    });
-
-    revalidatePath(ROUTES.INVENTORY); 
-
-    return { success: true, data: newPart };
-  } catch (error) {
-    console.error("Error creating spare part:", error);
-    return { error: "حدث خطأ في قاعدة البيانات أثناء إضافة القطعة" };
-  }
-}
-
-// 2. دالة جلب كل قطع الغيار
-export async function getInventory() {
-  try {
-    const parts = await prisma.sparePart.findMany({
-      orderBy: { name: 'asc' }, 
-    });
-    
-    return { success: true, data: parts };
-  } catch (error) {
-    console.error("Error fetching spare parts:", error);
-    return { error: "حدث خطأ أثناء جلب المخزون" };
-  }
-}
-
-// 3. دالة تعديل قطعة غيار
-export async function updateSparePart(id: string, data: Partial<SparePartFormValues> & { imageUrl?: string }) {
-  try {
-    const updatedPart = await prisma.sparePart.update({
-      where: { id },
-      data: data,
-    });
-
-    revalidatePath(ROUTES.INVENTORY); 
-    return { success: true, data: updatedPart };
-  } catch (error) {
-    console.error("Error updating spare part:", error);
-    return { error: "حدث خطأ أثناء تعديل القطعة" };
-  }
-}
-
-// 4. دالة حذف قطعة غيار
-export async function deleteSparePart(id: string) {
-  try {
-    await prisma.sparePart.delete({
-      where: { id },
-    });
-
-    revalidatePath(ROUTES.INVENTORY); 
-    return { success: true };
-  } catch (error) {
-    console.error("Error deleting spare part:", error);
-    return { error: "لا يمكن حذف القطعة لأنها قد تكون مرتبطة بتذاكر أو فواتير سابقة." };
-  }
-}
-
-// دالة جلب كل قطع الغيار (للقائمة المنسدلة)
-export async function getAllSparePartsForDropdown() {
-  try {
-    const parts = await prisma.sparePart.findMany({
-      select: {
-        id: true,
-        name: true,
-        sellingPrice: true,
-        quantity: true, 
-      },
-      orderBy: { name: 'asc' } 
-    });
-    return { success: true, data: parts };
-  } catch (error) {
-    console.error("خطأ في جلب قطع الغيار:", error);
-    return { error: "تعذر جلب قائمة قطع الغيار من المستودع." };
-  }
-}
-</file>
-
 <file path="src/server/actions/transactions.actions.ts">
 "use server";
 
@@ -1978,6 +1727,39 @@ export async function getAllTransactions(filters: { startDate?: string; endDate?
     return { success: true, data: unified };
   } catch (_error) {
     return { error: "فشل في جلب السجل المالي" };
+  }
+}
+</file>
+
+<file path="src/server/actions/uploadthing.actions.ts">
+"use server";
+
+import { UTApi } from "uploadthing/server";
+
+// تهيئة الخدمة للاتصال بسيرفرات UploadThing
+const utapi = new UTApi();
+
+/**
+ * دالة لحذف ملف واحد أو عدة ملفات من UploadThing باستخدام الرابط (URL)
+ */
+export async function deleteFilesFromUploadThing(fileUrls: string | string[]) {
+  try {
+    const urls = Array.isArray(fileUrls) ? fileUrls : [fileUrls];
+    
+    // استخراج الـ fileKey من الروابط (UploadThing يعتمد على الـ Key للحذف)
+    const fileKeys = urls
+      .map(url => url.split('/f/')[1])
+      .filter(Boolean); // فلترة أي قيم فارغة
+
+    if (fileKeys.length === 0) return { success: false, error: "لم يتم العثور على مفاتيح ملفات صالحة" };
+
+    // إرسال أمر الحذف الفيزيائي للسيرفرات
+    await utapi.deleteFiles(fileKeys);
+    
+    return { success: true };
+  } catch (error) {
+    console.error("🔴 [UploadThing Delete Error]:", error);
+    return { success: false, error: "فشل حذف الملف من خوادم التخزين" };
   }
 }
 </file>
@@ -2028,32 +1810,15 @@ export type WorkerDashboardStats = {
 };
 </file>
 
-<file path="src/types/expense.types.ts">
-import { PurchaseInvoice, SupplierPayment, Expense, Supplier, SparePart } from "@prisma/client";
-
-export type PurchaseInvoiceWithSupplier = PurchaseInvoice & { supplier: { name: string } };
-export type SupplierPaymentWithSupplier = SupplierPayment & { supplier: { name: string } };
-
-export type FinancialOverview = { totalExpenses: number; totalPurchases: number; totalDebts: number; };
-
-export type SupplierStatementData = Supplier & {
-  invoices: PurchaseInvoice[];
-  payments: SupplierPayment[];
-};
-
-export interface ExpensesState {
-  activeTab: "expenses" | "purchases" | "payments";
-  overview: FinancialOverview;
-  expenses: Expense[];
-  purchases: PurchaseInvoiceWithSupplier[];
-  suppliers: Supplier[];
-  spareParts: SparePart[]; 
-  payments: SupplierPaymentWithSupplier[];
-  isLoading: boolean;
-  isSubmitting: boolean;
-  modals: { expense: boolean; purchase: boolean; supplier: boolean; payment: boolean; ledger: boolean; editPayment: boolean; };
-  ledgerSupplierId: string | null; 
-  editingPaymentId: string | null;
+<file path="src/types/quotations.types.ts">
+export interface QuoteData {
+  customerName: string;
+  modelName: string;
+  specs: string;
+  priceIls: string;
+  exchangeRate: string;
+  imageUrl: string;
+  notes: string;
 }
 </file>
 
@@ -2229,6 +1994,39 @@ import DashboardLayoutClient from "@/src/components/shared/DashboardLayoutClient
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return <DashboardLayoutClient>{children}</DashboardLayoutClient>;
+}
+</file>
+
+<file path="src/app/globals.css">
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+::placeholder {
+  color: #80776b;
 }
 </file>
 
@@ -2770,197 +2568,42 @@ export const InventoryModal = ({ isOpen, onClose, editData, onSave }: InventoryM
 };
 </file>
 
-<file path="src/features/quotations/components/QuotationForm.tsx">
-import { FileText, Camera, X } from "lucide-react";
-import { Input } from "@/src/components/ui/Input";
-import { Textarea } from "@/src/components/ui/Textarea";
-import { UploadButton } from "@/src/lib/uploadthing";
-import { UseFormReturn } from "react-hook-form";
-import { QuotationFormValues } from "../validations/validations";
+<file path="src/features/inventory/components/InventoryToolbar.tsx">
+import { Package, Search } from "lucide-react";
 
-interface QuotationFormProps {
-  form: UseFormReturn<QuotationFormValues>;
+interface InventoryToolbarProps {
+  searchQuery: string;
+  setSearchQuery: (query: string) => void;
+  onOpenAddModal: () => void;
 }
 
-export const QuotationForm = ({ form }: QuotationFormProps) => {
-  const { register, setValue, watch, formState: { errors } } = form;
-  const imageUrl = watch("imageUrl");
-
-  return (
-    <div className="w-full lg:w-1/3 space-y-6 print:hidden">
-      <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm space-y-4">
-        <h2 className="font-bold flex items-center gap-2 border-b border-gray-100 pb-3 mb-4 text-indigo-900">
-          <FileText className="w-5 h-5" /> بيانات العرض الفني
-        </h2>
-
-        <Input label="اسم الزبون / الشركة" placeholder="شركة المقاولات..." error={errors.customerName?.message} {...register("customerName")} />
-        <Input label="وصف الجهاز (الموديل)" placeholder="كمبريسور 500 لتر" error={errors.modelName?.message} {...register("modelName")} />
-
-        <div className="grid grid-cols-2 gap-4">
-          <Input label="السعر (شيكل)" type="number" step="0.01" className="font-bold text-indigo-700" error={errors.priceIls?.message} {...register("priceIls", { valueAsNumber: true })} />
-          <Input label="سعر الصرف ($)" type="number" step="0.01" error={errors.exchangeRate?.message} {...register("exchangeRate", { valueAsNumber: true })} />
-        </div>
-
-        <Textarea label="المواصفات الفنية (كل ميزة في سطر)" rows={5} error={errors.specs?.message} {...register("specs")} />
-        <Textarea label="الشروط والملاحظات" rows={3} error={errors.notes?.message} {...register("notes")} />
-      </div>
-
-      <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
-        <h2 className="font-bold flex items-center gap-2 border-b border-gray-100 pb-3 mb-4 text-indigo-900">
-          <Camera className="w-5 h-5" /> صورة الجهاز المرفقة
-        </h2>
-        {imageUrl ? (
-          <div className="relative aspect-video rounded-xl overflow-hidden border border-gray-200 bg-gray-50 group">
-            <img src={imageUrl} className="w-full h-full object-contain" alt="Preview" />
-            <button type="button" onClick={() => setValue('imageUrl', "")} className="absolute top-2 right-2 bg-red-500 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-all"><X className="w-4 h-4" /></button>
-          </div>
-        ) : (
-          <div className="text-center p-6 border-2 border-dashed border-gray-200 rounded-xl bg-gray-50">
-            <UploadButton 
-              endpoint="imageUploader" 
-              onClientUploadComplete={(res: { url: string }[]) => setValue('imageUrl', res[0].url)} 
-              appearance={{ button: "bg-indigo-900 text-white px-4 py-2 text-sm rounded-lg" }} 
-            />
-          </div>
-        )}
-      </div>
-    </div>
-  );
-};
-</file>
-
-<file path="src/features/quotations/components/QuotationPrintTemplate.tsx">
-import { CheckCircle, Phone, MapPin, Building2, Quote } from "lucide-react";
-import { siteConfig } from "@/src/config/site";
-import { QuotationFormValues } from "../validations/validations"; 
-
-interface QuotationPrintTemplateProps {
-  quoteData: QuotationFormValues;
-  priceUsd: number;
-  currentDate: string;
-  quoteNumber: string;
-}
-
-export const QuotationPrintTemplate = ({ quoteData, priceUsd, currentDate, quoteNumber }: QuotationPrintTemplateProps) => (
-  <div id="printable-a4" className="w-full lg:w-2/3 bg-white border border-gray-200 shadow-xl rounded-none sm:rounded-2xl mx-auto overflow-hidden relative font-sans box-border flex flex-col">
-    <div className="h-4 w-full bg-gradient-to-r from-indigo-900 to-indigo-600 shrink-0"></div>
-
-    <div className="p-8 sm:p-10 print:p-[15mm] flex-1 flex flex-col bg-white">
-      {/* الترويسة */}
-      <div className="flex justify-between items-start mb-6 border-b-2 border-gray-200 pb-6 shrink-0">
-        <div className="flex items-center gap-4">
-          <div className="w-16 h-16 bg-indigo-900 text-white rounded-xl flex items-center justify-center font-black text-3xl shadow-sm">
-            {siteConfig.name.charAt(5)}
-          </div>
-          <div>
-            <h1 className="text-3xl font-black text-indigo-900 tracking-tight">{siteConfig.name}</h1>
-            <p className="text-sm font-bold text-gray-500 mt-1 uppercase tracking-widest">{siteConfig.slogan}</p>
-          </div>
-        </div>
-        <div className="text-left text-sm font-bold text-gray-600 space-y-1.5">
-          <p className="flex items-center justify-end gap-2"><Phone className="w-4 h-4 text-indigo-600" /> {siteConfig.phone}</p>
-          <p className="flex items-center justify-end gap-2"><MapPin className="w-4 h-4 text-indigo-600" /> {siteConfig.address}</p>
-        </div>
-      </div>
-
-      {/* عنوان المستند */}
-      <div className="text-center mb-6 shrink-0 relative">
-        <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-gray-200"></div></div>
-        <div className="relative flex justify-center">
-          <span className="bg-white px-6 text-xl sm:text-2xl font-black text-gray-800 tracking-wide flex items-center gap-2">
-            <Quote className="w-5 h-5 text-indigo-600" /> عرض سعر فني ومالي
-          </span>
-        </div>
-      </div>
-
-      {/* مربع بيانات العميل */}
-      <div className="flex justify-between items-start bg-gray-50 border border-gray-200 rounded-xl p-5 mb-6 shrink-0">
-        <div className="space-y-2">
-          <p className="text-xs font-bold text-gray-400 uppercase">مقدم إلى السادة / Prepared For:</p>
-          <p className="text-lg sm:text-xl font-black text-gray-900 flex items-center gap-2">
-            <Building2 className="w-5 h-5 text-indigo-600" />
-            {quoteData.customerName || "......................................................."}
-          </p>
-        </div>
-        <div className="text-left space-y-2 border-r-2 border-gray-200 pr-5">
-          <p className="text-xs sm:text-sm font-bold text-gray-600"><span className="text-gray-400">التاريخ:</span> {currentDate}</p>
-          <p className="text-xs sm:text-sm font-bold text-gray-600"><span className="text-gray-400">المرجع:</span> {quoteNumber}</p>
-        </div>
-      </div>
-
-      {/* تفاصيل العرض */}
-      <div className="flex flex-col sm:flex-row gap-6 mb-6 flex-1 min-h-0">
-        {quoteData.imageUrl && (
-          <div className="w-full sm:w-5/12 bg-white border-2 border-gray-100 rounded-xl overflow-hidden p-2 shadow-sm shrink-0 h-fit">
-            <div className="aspect-square relative rounded-lg overflow-hidden bg-gray-50">
-              <img src={quoteData.imageUrl} className="w-full h-full object-contain" alt="Product" />
-            </div>
-          </div>
-        )}
-
-        <div className="flex-1 bg-white border border-gray-200 rounded-xl p-5 sm:p-6 h-fit shadow-sm">
-          <h3 className="text-base sm:text-lg font-black text-indigo-900 mb-4 border-b border-gray-100 pb-2">
-            {quoteData.modelName || "وصف المنتج / الموديل"}
-          </h3>
-          <ul className="space-y-3 font-medium text-gray-700 text-xs sm:text-sm">
-            {/* 💡 أضفنا حماية (|| "") عشان ما يضرب الـ split لو كان فاضي */}
-            {(quoteData.specs || "").split('\n').map((spec: string, index: number) => spec.trim() && (
-              <li key={index} className="flex items-start gap-2.5 leading-relaxed">
-                <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
-                <span>{spec.trim()}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </div>
-
-      {/* جدول التسعير */}
-      <div className="mb-6 shrink-0 rounded-xl overflow-hidden border border-indigo-900 shadow-sm">
-        <table className="w-full text-center">
-          <thead className="bg-indigo-900 text-white">
-            <tr>
-              <th className="p-3 text-xs sm:text-sm font-bold w-1/2">البيـان / الوصـف</th>
-              <th className="p-3 text-xs sm:text-sm font-bold border-r border-indigo-700">الإجمالي بالشيكل (ILS)</th>
-              <th className="p-3 text-xs sm:text-sm font-bold border-r border-indigo-700">المعادل بالدولار (USD)</th>
-            </tr>
-          </thead>
-          <tbody className="bg-white">
-            <tr>
-              <td className="p-4 sm:p-5 text-sm font-bold text-gray-800 border-b border-gray-100">إجمالي التوريد والتركيب للمنتج المذكور أعلاه</td>
-              <td className="p-4 sm:p-5 font-black text-xl sm:text-2xl text-gray-900 border-r border-b border-gray-100 bg-gray-50">
-                ₪ {quoteData.priceIls || "0.00"}
-              </td>
-              <td className="p-4 sm:p-5 font-black text-lg sm:text-xl text-indigo-700 border-r border-b border-gray-100 bg-indigo-50/50">
-                $ {priceUsd > 0 ? priceUsd.toFixed(2) : "0.00"}
-              </td>
-            </tr>
-          </tbody>
-        </table>
-        <div className="bg-white p-2 text-center text-[10px] sm:text-xs font-bold text-gray-400">
-          * تم احتساب القيمة بالدولار بناءً على سعر صرف تقريبي ({quoteData.exchangeRate}).
-        </div>
-      </div>
-
-      {/* الفوتر والتوقيع */}
-      <div className="mt-auto shrink-0 pt-4">
-        <div className="grid grid-cols-12 gap-4 sm:gap-6">
-          <div className="col-span-8 bg-gray-50 p-4 rounded-xl border border-gray-200">
-            <h4 className="font-black text-indigo-900 mb-2 text-xs sm:text-sm">شروط وملاحظات عامة:</h4>
-            <p className="text-[10px] sm:text-xs text-gray-600 font-medium whitespace-pre-line leading-relaxed">
-              {quoteData.notes}
-            </p>
-          </div>
-          <div className="col-span-4 flex flex-col items-center justify-end pt-2">
-            <div className="w-full text-center border-t-2 border-gray-300 pt-2 mb-1">
-              <p className="font-bold text-gray-900 text-xs sm:text-sm">توقيع واعتماد الإدارة</p>
-              <p className="text-[8px] sm:text-[10px] text-gray-400 uppercase">{siteConfig.name}</p>
-            </div>
-          </div>
-        </div>
-      </div>
+export const InventoryToolbar = ({ searchQuery, setSearchQuery, onOpenAddModal }: InventoryToolbarProps) => (
+  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+    <div>
+      <h1 className="text-2xl font-black text-gray-900 flex items-center gap-2">
+        <Package className="w-6 h-6 text-indigo-600" /> إدارة المخزون
+      </h1>
+      <p className="text-gray-500 text-sm mt-1">تتبع كميات قطع الغيار وأسعارها وتنبيهات النواقص</p>
     </div>
     
-    <div className="h-2 w-full bg-indigo-900 shrink-0"></div>
+    <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+      <div className="relative flex-1 sm:w-64">
+        <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+        <input 
+          type="text" 
+          placeholder="ابحث عن قطعة..." 
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="w-full pl-4 pr-10 py-2.5 rounded-xl border border-gray-200 focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 outline-none text-sm transition"
+        />
+      </div>
+      <button 
+        onClick={onOpenAddModal}
+        className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl font-bold shadow-md transition whitespace-nowrap"
+      >
+        + إضافة صنف جديد
+      </button>
+    </div>
   </div>
 );
 </file>
@@ -3806,6 +3449,98 @@ export default prisma
 if (process.env.NODE_ENV !== 'production') globalThis.prismaGlobal = prisma
 </file>
 
+<file path="src/server/actions/compressors.actions.ts">
+"use server";
+
+import prisma from "@/src/lib/prisma";
+import { revalidatePath } from "next/cache";
+import { ROUTES } from "@/src/constants/paths";
+import { deleteFilesFromUploadThing } from "./uploadthing.actions";
+
+// 1. جلب البيانات
+export async function getCompressors() {
+  try {
+    const compressors = await prisma.compressor.findMany({
+      orderBy: { createdAt: 'desc' }
+    });
+    return { success: true, data: compressors };
+  } catch (error) {
+    console.error("Fetch Error:", error);
+    return { error: "فشل جلب قائمة الكمبريسورات" };
+  }
+}
+
+// 2. الإضافة
+export async function addCompressor(data: {
+  serialNumber?: string;
+  modelName: string; 
+  productionCost: number;
+  sellingPrice: number;
+  description?: string;
+  imageUrl?: string; 
+}) {
+  try {
+    const compressor = await prisma.compressor.create({
+      data: {
+        modelName: data.modelName,
+        productionCost: data.productionCost,
+        sellingPrice: data.sellingPrice,
+        status: "AVAILABLE",
+        imageUrl: data.imageUrl, 
+        ...(data.serialNumber ? { serialNumber: data.serialNumber } : {}),
+      }
+    });
+    revalidatePath(ROUTES.COMPRESSORS); 
+    return { success: true, data: compressor };
+  } catch (error) {
+    console.error("Add Error:", error);
+    return { error: "فشل إضافة الكمبريسور" };
+  }
+}
+
+// 3. التحديث
+export async function updateCompressorStatus(id: string, status: string) {
+  try {
+    await prisma.compressor.update({
+      where: { id },
+      data: { status }
+    });
+    revalidatePath(ROUTES.COMPRESSORS); 
+    return { success: true };
+  } catch (error) { 
+    console.error("Update Error:", error);
+    return { error: "فشل التحديث" }; 
+  }
+}
+
+// 4. الحذف
+export async function deleteCompressor(id: string) {
+  try {
+    // 1. جلب الكمبريسور لمعرفة رابط الصورة قبل الحذف
+    const compressor = await prisma.compressor.findUnique({
+      where: { id },
+      select: { imageUrl: true }
+    });
+
+    // 2. الحذف من قاعدة البيانات
+    await prisma.compressor.delete({ where: { id } });
+
+    // 3. تنظيف السحابة: الحذف الفيزيائي من UploadThing
+    if (compressor?.imageUrl) {
+      deleteFilesFromUploadThing(compressor.imageUrl).catch(err => 
+        console.error("Failed to delete compressor image in background:", err)
+      );
+    }
+
+    revalidatePath(ROUTES.COMPRESSORS); 
+    return { success: true };
+  } catch (error) { 
+    console.error("Delete Error:", error);
+    return { error: "فشل الحذف" }; 
+  }
+}
+</file>
+
 <file path="src/server/actions/dashboard.actions.ts">
 "use server";
 
@@ -3948,6 +3683,116 @@ export async function getWorkerDashboardStats(workerId: string) {
     return { success: true, data: { openTicketsCount, balance, activeTrials } };
   } catch (_error) {
     return { error: "فشل جلب بيانات الفني" };
+  }
+}
+</file>
+
+<file path="src/server/actions/inventory.actions.ts">
+"use server"; 
+
+import prisma from "@/src/lib/prisma";
+import { revalidatePath } from "next/cache";
+import { sparePartSchema, type SparePartFormValues } from "@/src/features/inventory/validations/validations";
+import { ROUTES } from "@/src/constants/paths"; 
+import { deleteFilesFromUploadThing } from "./uploadthing.actions";
+
+// 1. دالة إضافة قطعة غيار جديدة
+export async function addSparePart(data: SparePartFormValues) {
+  try {
+    const parsedData = sparePartSchema.safeParse(data);
+    
+    if (!parsedData.success) {
+      return { error: "بيانات غير صالحة تم إرسالها للسيرفر" };
+    }
+
+    const newPart = await prisma.sparePart.create({
+      data: parsedData.data,
+    });
+
+    revalidatePath(ROUTES.INVENTORY); 
+
+    return { success: true, data: newPart };
+  } catch (error) {
+    console.error("Error creating spare part:", error);
+    return { error: "حدث خطأ في قاعدة البيانات أثناء إضافة القطعة" };
+  }
+}
+
+// 2. دالة جلب كل قطع الغيار
+export async function getInventory() {
+  try {
+    const parts = await prisma.sparePart.findMany({
+      orderBy: { name: 'asc' }, 
+    });
+    
+    return { success: true, data: parts };
+  } catch (error) {
+    console.error("Error fetching spare parts:", error);
+    return { error: "حدث خطأ أثناء جلب المخزون" };
+  }
+}
+
+// 3. دالة تعديل قطعة غيار
+export async function updateSparePart(id: string, data: Partial<SparePartFormValues> & { imageUrl?: string }) {
+  try {
+    const updatedPart = await prisma.sparePart.update({
+      where: { id },
+      data: data,
+    });
+
+    revalidatePath(ROUTES.INVENTORY); 
+    return { success: true, data: updatedPart };
+  } catch (error) {
+    console.error("Error updating spare part:", error);
+    return { error: "حدث خطأ أثناء تعديل القطعة" };
+  }
+}
+
+// 4. دالة حذف قطعة غيار
+
+export async function deleteSparePart(id: string) {
+  try {
+    // 1. جلب القطعة لمعرفة رابط الصورة (إن وُجدت)
+    const part = await prisma.sparePart.findUnique({
+      where: { id },
+      select: { imageUrl: true }
+    });
+
+    // 2. الحذف من قاعدة البيانات
+    await prisma.sparePart.delete({
+      where: { id },
+    });
+
+    // 3. تنظيف السحابة: الحذف الفيزيائي
+    if (part?.imageUrl) {
+      deleteFilesFromUploadThing(part.imageUrl).catch(err => 
+        console.error("Failed to delete spare part image in background:", err)
+      );
+    }
+
+    revalidatePath(ROUTES.INVENTORY); 
+    return { success: true };
+  } catch (error) {
+    console.error("Error deleting spare part:", error);
+    return { error: "لا يمكن حذف القطعة لأنها قد تكون مرتبطة بتذاكر أو فواتير سابقة." };
+  }
+}
+// دالة جلب كل قطع الغيار (للقائمة المنسدلة)
+export async function getAllSparePartsForDropdown() {
+  try {
+    const parts = await prisma.sparePart.findMany({
+      select: {
+        id: true,
+        name: true,
+        sellingPrice: true,
+        quantity: true, 
+      },
+      orderBy: { name: 'asc' } 
+    });
+    return { success: true, data: parts };
+  } catch (error) {
+    console.error("خطأ في جلب قطع الغيار:", error);
+    return { error: "تعذر جلب قائمة قطع الغيار من المستودع." };
   }
 }
 </file>
@@ -4152,178 +3997,6 @@ export async function changePassword(data: { currentPass: string; newPass: strin
 }
 </file>
 
-<file path="src/server/actions/tickets.actions.ts">
-"use server"; 
-
-import prisma from "@/src/lib/prisma";
-import { revalidatePath } from "next/cache";
-import { getServerSession } from "next-auth"; 
-import { authOptions } from "@/src/lib/auth"; 
-import { UpdateTicketInput } from "@/src/types";
-import { CreateTicketValues } from "@/src/features/tickets/validations/validations";
-import { ROUTES } from "@/src/constants/paths";
-
-// ==========================================
-// 1. إنشاء وتعديل التذاكر
-// ==========================================
-export async function createTicket(data: CreateTicketValues) {
-  const session = await getServerSession(authOptions);
-  if (!session) return { error: "يجب تسجيل الدخول أولاً" };
-
-  try {
-    const ticket = await prisma.ticket.create({
-      data: {
-        ...data,
-        workerId: session.user.id, 
-      }
-    });
-    revalidatePath(ROUTES.TICKETS);
-    return { success: true, data: ticket };
-  } catch (_error) {
-    return { error: "خطأ في الحفظ" };
-  }
-}
-
-export async function updateTicket(ticketId: string, data: UpdateTicketInput) {
-  try {
-    const updatedTicket = await prisma.ticket.update({
-      where: { id: ticketId },
-      data: data,
-    });
-    revalidatePath(ROUTES.TICKET_DETAILS(ticketId));
-    revalidatePath(ROUTES.TICKETS);
-    return { success: true, data: updatedTicket };
-  } catch (_error) {
-    return { error: "حدث خطأ أثناء تعديل بيانات التذكرة." };
-  }
-}
-
-export async function getTicketById(ticketId: string) {
-  try {
-    const ticket = await prisma.ticket.findUnique({
-      where: { id: ticketId },
-      include: {
-        partsUsed: { include: { sparePart: true } },
-        worker: { select: { name: true } },
-        payments: { orderBy: { createdAt: 'desc' } } 
-      }
-    });
-    
-    if (!ticket) return { error: "لم يتم العثور على هذه التذكرة." };
-    return { success: true, data: ticket };
-  } catch (_error) {
-    return { error: "حدث خطأ أثناء قراءة التذكرة من قاعدة البيانات." };
-  }
-}
-
-export async function getAllTickets() {
-  try {
-    const tickets = await prisma.ticket.findMany({
-      orderBy: { createdAt: 'desc' },
-      include: { 
-        partsUsed: true,
-        worker: { select: { name: true } }
-      } 
-    });
-    return { success: true, data: tickets };
-  } catch (_error) {
-    return { error: "تعذر جلب التذاكر." };
-  }
-}
-
-// ==========================================
-// 2. دوال الدفعات وصورة الفاتورة
-// ==========================================
-export async function addPaymentToTicket(ticketId: string, amount: number) {
-  try {
-    await prisma.payment.create({
-      data: { ticketId, amount, notes: "دفعة إضافية" }
-    });
-    revalidatePath(ROUTES.TICKET_DETAILS(ticketId));
-    return { success: true };
-  } catch (_error) {
-    return { error: "فشل تسجيل الدفعة." };
-  }
-}
-
-export async function updateTicketInvoiceImage(ticketId: string, imageUrl: string) {
-  try {
-    await prisma.ticket.update({
-      where: { id: ticketId },
-      data: { invoiceImageUrl: imageUrl }
-    });
-    revalidatePath(ROUTES.TICKET_DETAILS(ticketId));
-    return { success: true };
-  } catch (_error) {
-    return { error: "فشل حفظ صورة الفاتورة." };
-  }
-}
-
-// ==========================================
-// 3. دوال الجرد (سحب وإرجاع القطع)
-// ==========================================
-export async function addPartToTicket(data: { ticketId: string; sparePartId: string; quantity: number }) {
-  try {
-    const sparePart = await prisma.sparePart.findUnique({ where: { id: data.sparePartId } });
-    if (!sparePart || sparePart.quantity < data.quantity) {
-      return { error: "الكمية غير كافية بالمخزون." };
-    }
-
-    const result = await prisma.$transaction(async (tx) => {
-      const ticketPart = await tx.ticketPart.create({
-        data: {
-          ticketId: data.ticketId,
-          sparePartId: data.sparePartId,
-          quantity: data.quantity,
-          priceAtTime: sparePart.sellingPrice, 
-        }
-      });
-      await tx.sparePart.update({
-        where: { id: data.sparePartId },
-        data: { quantity: { decrement: data.quantity } }
-      });
-      return ticketPart;
-    });
-
-    revalidatePath(ROUTES.TICKET_DETAILS(data.ticketId));
-    return { success: true, data: result };
-  } catch (_error) {
-    return { error: "حدث خطأ أثناء سحب القطعة من المخزون." };
-  }
-}
-
-export async function removePartFromTicket(ticketPartId: string, ticketId: string) {
-  try {
-    const ticketPart = await prisma.ticketPart.findUnique({ where: { id: ticketPartId } });
-    if (!ticketPart) return { error: "القطعة غير موجودة." };
-
-    await prisma.$transaction(async (tx) => {
-      await tx.ticketPart.delete({ where: { id: ticketPartId } });
-      await tx.sparePart.update({
-        where: { id: ticketPart.sparePartId },
-        data: { quantity: { increment: ticketPart.quantity } }
-      });
-    });
-
-    revalidatePath(ROUTES.TICKET_DETAILS(ticketId));
-    return { success: true };
-  } catch (_error) {
-    return { error: "حدث خطأ أثناء إرجاع القطعة للمخزون." };
-  }
-}
-
-
-export async function deleteTicket(ticketId: string) {
-  try {
-    await prisma.ticket.delete({ where: { id: ticketId } });
-    revalidatePath(ROUTES.TICKETS);
-    return { success: true };
-  } catch (_error) {
-    return { error: "لا يمكن حذف التذكرة لاحتوائها على حركات مالية أو قطع مستهلكة. يرجى تصفيتها أولاً." };
-  }
-}
-</file>
-
 <file path="src/server/actions/workers.actions.ts">
 "use server";
 
@@ -4426,6 +4099,35 @@ export async function getWorkerDetails(userId: string) {
 }
 </file>
 
+<file path="src/types/expense.types.ts">
+import { PurchaseInvoice, SupplierPayment, Expense, Supplier, SparePart } from "@prisma/client";
+
+export type PurchaseInvoiceWithSupplier = PurchaseInvoice & { supplier: { name: string } };
+export type SupplierPaymentWithSupplier = SupplierPayment & { supplier: { name: string } };
+
+export type FinancialOverview = { totalExpenses: number; totalPurchases: number; totalDebts: number; };
+
+export type SupplierStatementData = Supplier & {
+  invoices: PurchaseInvoice[];
+  payments: SupplierPayment[];
+};
+
+export interface ExpensesState {
+  activeTab: "expenses" | "purchases" | "payments";
+  overview: FinancialOverview;
+  expenses: Expense[];
+  purchases: PurchaseInvoiceWithSupplier[];
+  suppliers: Supplier[];
+  spareParts: SparePart[]; 
+  payments: SupplierPaymentWithSupplier[];
+  isLoading: boolean;
+  isSubmitting: boolean;
+  modals: { expense: boolean; purchase: boolean; supplier: boolean; payment: boolean; ledger: boolean; editPayment: boolean; };
+  ledgerSupplierId: string | null; 
+  editingPaymentId: string | null;
+}
+</file>
+
 <file path="src/types/inventory.types.ts">
 import { SparePart } from "@prisma/client";
 
@@ -4514,66 +4216,6 @@ export default defineConfig({
 })
 </file>
 
-<file path="src/app/(dashboard)/quotations/page.tsx">
-"use client";
-
-import { Printer } from "lucide-react";
-import { useQuotation } from "@/src/features/quotations/hooks/useQuotations";
-import { QuotationPrintTemplate } from "@/src/features/quotations/components/QuotationPrintTemplate";
-import { QuotationForm } from "@/src/features/quotations/components/QuotationForm";
-
-export default function QuotationPage() {
-  const { form, quoteData, priceUsd, currentDate, quoteNumber } = useQuotation();
-
-  const handlePrint = () => {
-    form.handleSubmit(() => {
-      window.print();
-    })();
-  };
-
-  return (
-    <div className="max-w-7xl mx-auto pb-20 print:p-0 print:m-0 animate-in fade-in duration-500">
-      
-      <style dangerouslySetInnerHTML={{__html: `
-        @media print {
-          @page { size: A4; margin: 0 !important; }
-          html, body { margin: 0 !important; padding: 0 !important; background-color: white !important; }
-          #printable-a4 {
-            position: absolute !important; top: 0 !important; left: 0 !important; margin: 0 !important;
-            width: 210mm !important; height: 297mm !important; background: white !important;
-            box-shadow: none !important; border: none !important; z-index: 99999 !important;
-          }
-        }
-      `}} />
-
-      <div className="flex justify-between items-center mb-6 print:hidden">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">إنشاء عرض السعر</h1>
-          <p className="text-gray-500 text-sm mt-1">تجهيز عرض فني ومالي رسمي ومعتمد للزبائن</p>
-        </div>
-        <button 
-          onClick={handlePrint} 
-          className="flex items-center gap-2 px-8 py-3 bg-indigo-900 text-white hover:bg-black rounded-xl font-bold transition shadow-xl"
-        >
-          <Printer className="w-5 h-5" /> طباعة العرض الرسمي
-        </button>
-      </div>
-
-      <div className="flex flex-col lg:flex-row gap-8 print:block print:gap-0">
-        <QuotationForm form={form} />
-
-        <QuotationPrintTemplate
-          quoteData={quoteData as any} 
-          priceUsd={priceUsd} 
-          currentDate={currentDate} 
-          quoteNumber={quoteNumber} 
-        />
-      </div>
-    </div>
-  );
-}
-</file>
-
 <file path="src/app/api/auth/[...nextauth]/route.ts">
 import NextAuth from "next-auth";
 import { authOptions } from "@/src/lib/auth";
@@ -4618,34 +4260,6 @@ export default function NotFound() {
     </div>
   );
 }
-</file>
-
-<file path="src/constants/expenses.ts">
-import { ExpensesState } from "@/src/types";
-
-export const initialState: ExpensesState = {
-  activeTab: "expenses",
-  overview: { totalExpenses: 0, totalPurchases: 0, totalDebts: 0 },
-  expenses: [], 
-  purchases: [], 
-  suppliers: [], 
-  spareParts: [], 
-  payments: [],
-  isLoading: true, 
-  isSubmitting: false,
-  modals: { expense: false, purchase: false, supplier: false, payment: false, ledger: false, editPayment: false },
-  ledgerSupplierId: null,
-  editingPaymentId: null,
-};
-
-export type Action =
-  | { type: "SET_TAB"; payload: ExpensesState["activeTab"] }
-  | { type: "SET_LOADING"; payload: boolean }
-  | { type: "SET_SUBMITTING"; payload: boolean }
-  | { type: "SET_DATA"; payload: Partial<ExpensesState> }
-  | { type: "OPEN_MODAL"; payload: keyof ExpensesState["modals"] }
-  | { type: "CLOSE_MODALS" };
-  // 💡 تم مسح UPDATE_FORM لأنه لم يعد مستخدماً
 </file>
 
 <file path="src/constants/inventory.ts">
@@ -4707,89 +4321,6 @@ export type Action =
   | { type: "OPEN_TX_MODAL"; payload: { userId: string; type: string; name: string } }
   | { type: "CLOSE_TX_MODAL" }
   | { type: "UPDATE_TX_DATA"; field: keyof WorkersState["txData"]; value: string }
-</file>
-
-<file path="src/features/compressors/components/CompressorModal.tsx">
-import { useEffect } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Package, Camera, X, Loader2 } from "lucide-react";
-import { Modal } from "@/src/components/ui/Modal";
-import { Input } from "@/src/components/ui/Input";
-import { Textarea } from "@/src/components/ui/Textarea";
-import { UploadButton } from "@/src/lib/uploadthing";
-import { compressorSchema, type CompressorFormValues } from "../validations/validations";
-
-interface Props {
-  isOpen: boolean;
-  onClose: () => void;
-  onSave: (data: CompressorFormValues) => Promise<boolean>;
-}
-
-export const CompressorModal = ({ isOpen, onClose, onSave }: Props) => {
-  const { register, handleSubmit, reset, setValue, watch, formState: { errors, isSubmitting } } = useForm<CompressorFormValues>({
-    resolver: zodResolver(compressorSchema),
-    defaultValues: { modelName: "", serialNumber: "", productionCost: 0, sellingPrice: 0, description: "", imageUrl: "" }
-  });
-
-  const imageUrl = watch("imageUrl"); // نراقب الصورة لعرضها
-
-  useEffect(() => {
-    if (isOpen) reset(); // تصفير عند الفتح
-  }, [isOpen, reset]);
-
-  const onSubmit = async (data: CompressorFormValues) => {
-    const success = await onSave(data);
-    if (success) onClose();
-  };
-
-  return (
-    <Modal isOpen={isOpen} onClose={onClose} title={<><Package className="w-5 h-5 text-indigo-600"/> إضافة كمبريسور للمخزون</>} maxWidth="lg">
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-        
-        {/* قسم رفع الصورة */}
-        <div className="space-y-2">
-          <label className="text-sm font-bold text-gray-700 flex items-center gap-2">
-            <Camera className="w-4 h-4" /> صورة الجهاز
-          </label>
-          
-          {imageUrl ? (
-            <div className="relative h-44 w-full rounded-2xl overflow-hidden border-2 border-indigo-100 group">
-              <img src={imageUrl} className="w-full h-full object-cover" alt="Preview" />
-              <button type="button" onClick={() => setValue("imageUrl", "")} className="absolute top-2 right-2 bg-rose-500 text-white p-1.5 rounded-full shadow-lg hover:bg-rose-600 transition-all">
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-          ) : (
-            <div className="border-2 border-dashed border-gray-200 rounded-2xl p-6 bg-gray-50 flex flex-col items-center justify-center gap-2">
-              <UploadButton
-                endpoint="imageUploader"
-                onClientUploadComplete={(res) => setValue("imageUrl", res[0].url)}
-                appearance={{ button: "bg-indigo-600 text-white px-6 py-2 rounded-xl font-bold text-sm" }}
-              />
-            </div>
-          )}
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Input label="الموديل / الوصف" error={errors.modelName?.message} {...register("modelName")} />
-          <Input label="الرقم التسلسلي (اختياري)" error={errors.serialNumber?.message} {...register("serialNumber")} />
-        </div>
-        
-        <div className="grid grid-cols-2 gap-4">
-          <Input label="تكلفة التجهيز (₪)" type="number" step="0.01" error={errors.productionCost?.message} {...register("productionCost", { valueAsNumber: true })} />
-          <Input label="سعر البيع (₪)" type="number" step="0.01" error={errors.sellingPrice?.message} {...register("sellingPrice", { valueAsNumber: true })} />
-        </div>
-
-        <Textarea label="تفاصيل ومواصفات إضافية" rows={3} error={errors.description?.message} {...register("description")} />
-
-        <button disabled={isSubmitting} type="submit" className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black transition-all flex justify-center items-center gap-2">
-          {isSubmitting ? <><Loader2 className="w-5 h-5 animate-spin" /><span>جاري الحفظ...</span></> : "اعتماد وحفظ في المخزن"}
-        </button>
-      </form>
-    </Modal>
-  );
-};
 </file>
 
 <file path="src/features/dashboard/components/DashboardCharts.tsx">
@@ -5220,6 +4751,142 @@ export const SupplierLedgerModal = ({ isOpen, onClose, supplierId }: Props) => {
     </Modal>
   );
 };
+</file>
+
+<file path="src/features/quotations/components/QuotationPrintTemplate.tsx">
+import { CheckCircle, Phone, MapPin, Building2, Quote } from "lucide-react";
+import { siteConfig } from "@/src/config/site";
+import { QuotationFormValues } from "../validations/validations"; 
+
+interface QuotationPrintTemplateProps {
+  quoteData: QuotationFormValues;
+  priceUsd: number;
+  currentDate: string;
+  quoteNumber: string;
+}
+
+export const QuotationPrintTemplate = ({ quoteData, priceUsd, currentDate, quoteNumber }: QuotationPrintTemplateProps) => (
+  <div id="printable-a4" className="w-full lg:w-2/3 bg-white border border-gray-200 shadow-xl rounded-none sm:rounded-2xl mx-auto overflow-hidden relative font-sans box-border flex flex-col">
+    <div className="h-4 w-full bg-gradient-to-r from-indigo-900 to-indigo-600 shrink-0"></div>
+
+    <div className="p-8 sm:p-10 print:p-[15mm] flex-1 flex flex-col bg-white">
+      {/* الترويسة */}
+      <div className="flex justify-between items-start mb-6 border-b-2 border-gray-200 pb-6 shrink-0">
+        <div className="flex items-center gap-4">
+          <div className="w-16 h-16 bg-indigo-900 text-white rounded-xl flex items-center justify-center font-black text-3xl shadow-sm">
+            {siteConfig.name.charAt(5)}
+          </div>
+          <div>
+            <h1 className="text-3xl font-black text-indigo-900 tracking-tight">{siteConfig.name}</h1>
+            <p className="text-sm font-bold text-gray-500 mt-1 uppercase tracking-widest">{siteConfig.slogan}</p>
+          </div>
+        </div>
+        <div className="text-left text-sm font-bold text-gray-600 space-y-1.5">
+          <p className="flex items-center justify-end gap-2"><Phone className="w-4 h-4 text-indigo-600" /> {siteConfig.phone}</p>
+          <p className="flex items-center justify-end gap-2"><MapPin className="w-4 h-4 text-indigo-600" /> {siteConfig.address}</p>
+        </div>
+      </div>
+
+      {/* عنوان المستند */}
+      <div className="text-center mb-6 shrink-0 relative">
+        <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-gray-200"></div></div>
+        <div className="relative flex justify-center">
+          <span className="bg-white px-6 text-xl sm:text-2xl font-black text-gray-800 tracking-wide flex items-center gap-2">
+            <Quote className="w-5 h-5 text-indigo-600" /> عرض سعر فني ومالي
+          </span>
+        </div>
+      </div>
+
+      {/* مربع بيانات العميل */}
+      <div className="flex justify-between items-start bg-gray-50 border border-gray-200 rounded-xl p-5 mb-6 shrink-0">
+        <div className="space-y-2">
+          <p className="text-xs font-bold text-gray-400 uppercase">مقدم إلى السادة / Prepared For:</p>
+          <p className="text-lg sm:text-xl font-black text-gray-900 flex items-center gap-2">
+            <Building2 className="w-5 h-5 text-indigo-600" />
+            {quoteData.customerName || "......................................................."}
+          </p>
+        </div>
+        <div className="text-left space-y-2 border-r-2 border-gray-200 pr-5">
+          <p className="text-xs sm:text-sm font-bold text-gray-600"><span className="text-gray-400">التاريخ:</span> {currentDate}</p>
+          <p className="text-xs sm:text-sm font-bold text-gray-600"><span className="text-gray-400">المرجع:</span> {quoteNumber}</p>
+        </div>
+      </div>
+
+      {/* تفاصيل العرض */}
+      <div className="flex flex-col sm:flex-row gap-6 mb-6 flex-1 min-h-0">
+        {quoteData.imageUrl && (
+          <div className="w-full sm:w-5/12 bg-white border-2 border-gray-100 rounded-xl overflow-hidden p-2 shadow-sm shrink-0 h-fit">
+            <div className="aspect-square relative rounded-lg overflow-hidden bg-gray-50">
+              <img src={quoteData.imageUrl} className="w-full h-full object-contain" alt="Product" />
+            </div>
+          </div>
+        )}
+
+        <div className="flex-1 bg-white border border-gray-200 rounded-xl p-5 sm:p-6 h-fit shadow-sm">
+          <h3 className="text-base sm:text-lg font-black text-indigo-900 mb-4 border-b border-gray-100 pb-2">
+            {quoteData.modelName || "وصف المنتج / الموديل"}
+          </h3>
+          <ul className="space-y-3 font-medium text-gray-700 text-xs sm:text-sm">
+            {/* 💡 أضفنا حماية (|| "") عشان ما يضرب الـ split لو كان فاضي */}
+            {(quoteData.specs || "").split('\n').map((spec: string, index: number) => spec.trim() && (
+              <li key={index} className="flex items-start gap-2.5 leading-relaxed">
+                <CheckCircle className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                <span>{spec.trim()}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+
+      {/* جدول التسعير */}
+      <div className="mb-6 shrink-0 rounded-xl overflow-hidden border border-indigo-900 shadow-sm">
+        <table className="w-full text-center">
+          <thead className="bg-indigo-900 text-white">
+            <tr>
+              <th className="p-3 text-xs sm:text-sm font-bold w-1/2">البيـان / الوصـف</th>
+              <th className="p-3 text-xs sm:text-sm font-bold border-r border-indigo-700">الإجمالي بالشيكل (ILS)</th>
+              <th className="p-3 text-xs sm:text-sm font-bold border-r border-indigo-700">المعادل بالدولار (USD)</th>
+            </tr>
+          </thead>
+          <tbody className="bg-white">
+            <tr>
+              <td className="p-4 sm:p-5 text-sm font-bold text-gray-800 border-b border-gray-100">إجمالي التوريد والتركيب للمنتج المذكور أعلاه</td>
+              <td className="p-4 sm:p-5 font-black text-xl sm:text-2xl text-gray-900 border-r border-b border-gray-100 bg-gray-50">
+                ₪ {quoteData.priceIls || "0.00"}
+              </td>
+              <td className="p-4 sm:p-5 font-black text-lg sm:text-xl text-indigo-700 border-r border-b border-gray-100 bg-indigo-50/50">
+                $ {priceUsd > 0 ? priceUsd.toFixed(2) : "0.00"}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <div className="bg-white p-2 text-center text-[10px] sm:text-xs font-bold text-gray-400">
+          * تم احتساب القيمة بالدولار بناءً على سعر صرف تقريبي ({quoteData.exchangeRate}).
+        </div>
+      </div>
+
+      {/* الفوتر والتوقيع */}
+      <div className="mt-auto shrink-0 pt-4">
+        <div className="grid grid-cols-12 gap-4 sm:gap-6">
+          <div className="col-span-8 bg-gray-50 p-4 rounded-xl border border-gray-200">
+            <h4 className="font-black text-indigo-900 mb-2 text-xs sm:text-sm">شروط وملاحظات عامة:</h4>
+            <p className="text-[10px] sm:text-xs text-gray-600 font-medium whitespace-pre-line leading-relaxed">
+              {quoteData.notes}
+            </p>
+          </div>
+          <div className="col-span-4 flex flex-col items-center justify-end pt-2">
+            <div className="w-full text-center border-t-2 border-gray-300 pt-2 mb-1">
+              <p className="font-bold text-gray-900 text-xs sm:text-sm">توقيع واعتماد الإدارة</p>
+              <p className="text-[8px] sm:text-[10px] text-gray-400 uppercase">{siteConfig.name}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div className="h-2 w-full bg-indigo-900 shrink-0"></div>
+  </div>
+);
 </file>
 
 <file path="src/features/settings/components/PasswordForm.tsx">
@@ -6022,6 +5689,199 @@ export async function getSupplierStatement(supplierId: string) {
 }
 </file>
 
+<file path="src/server/actions/tickets.actions.ts">
+"use server"; 
+
+import prisma from "@/src/lib/prisma";
+import { revalidatePath } from "next/cache";
+import { getServerSession } from "next-auth"; 
+import { authOptions } from "@/src/lib/auth"; 
+import { UpdateTicketInput } from "@/src/types";
+import { CreateTicketValues } from "@/src/features/tickets/validations/validations";
+import { ROUTES } from "@/src/constants/paths";
+import { deleteFilesFromUploadThing } from "./uploadthing.actions";
+
+// ==========================================
+// 1. إنشاء وتعديل التذاكر
+// ==========================================
+export async function createTicket(data: CreateTicketValues) {
+  const session = await getServerSession(authOptions);
+  if (!session) return { error: "يجب تسجيل الدخول أولاً" };
+
+  try {
+    const ticket = await prisma.ticket.create({
+      data: {
+        ...data,
+        workerId: session.user.id, 
+      }
+    });
+    revalidatePath(ROUTES.TICKETS);
+    return { success: true, data: ticket };
+  } catch (_error) {
+    return { error: "خطأ في الحفظ" };
+  }
+}
+
+export async function updateTicket(ticketId: string, data: UpdateTicketInput) {
+  try {
+    const updatedTicket = await prisma.ticket.update({
+      where: { id: ticketId },
+      data: data,
+    });
+    revalidatePath(ROUTES.TICKET_DETAILS(ticketId));
+    revalidatePath(ROUTES.TICKETS);
+    return { success: true, data: updatedTicket };
+  } catch (_error) {
+    return { error: "حدث خطأ أثناء تعديل بيانات التذكرة." };
+  }
+}
+
+export async function getTicketById(ticketId: string) {
+  try {
+    const ticket = await prisma.ticket.findUnique({
+      where: { id: ticketId },
+      include: {
+        partsUsed: { include: { sparePart: true } },
+        worker: { select: { name: true } },
+        payments: { orderBy: { createdAt: 'desc' } } 
+      }
+    });
+    
+    if (!ticket) return { error: "لم يتم العثور على هذه التذكرة." };
+    return { success: true, data: ticket };
+  } catch (_error) {
+    return { error: "حدث خطأ أثناء قراءة التذكرة من قاعدة البيانات." };
+  }
+}
+
+export async function getAllTickets() {
+  try {
+    const tickets = await prisma.ticket.findMany({
+      orderBy: { createdAt: 'desc' },
+      include: { 
+        partsUsed: true,
+        worker: { select: { name: true } }
+      } 
+    });
+    return { success: true, data: tickets };
+  } catch (_error) {
+    return { error: "تعذر جلب التذاكر." };
+  }
+}
+
+// ==========================================
+// 2. دوال الدفعات وصورة الفاتورة
+// ==========================================
+export async function addPaymentToTicket(ticketId: string, amount: number) {
+  try {
+    await prisma.payment.create({
+      data: { ticketId, amount, notes: "دفعة إضافية" }
+    });
+    revalidatePath(ROUTES.TICKET_DETAILS(ticketId));
+    return { success: true };
+  } catch (_error) {
+    return { error: "فشل تسجيل الدفعة." };
+  }
+}
+
+export async function updateTicketInvoiceImage(ticketId: string, imageUrl: string) {
+  try {
+    await prisma.ticket.update({
+      where: { id: ticketId },
+      data: { invoiceImageUrl: imageUrl }
+    });
+    revalidatePath(ROUTES.TICKET_DETAILS(ticketId));
+    return { success: true };
+  } catch (_error) {
+    return { error: "فشل حفظ صورة الفاتورة." };
+  }
+}
+
+// ==========================================
+// 3. دوال الجرد (سحب وإرجاع القطع)
+// ==========================================
+export async function addPartToTicket(data: { ticketId: string; sparePartId: string; quantity: number }) {
+  try {
+    const sparePart = await prisma.sparePart.findUnique({ where: { id: data.sparePartId } });
+    if (!sparePart || sparePart.quantity < data.quantity) {
+      return { error: "الكمية غير كافية بالمخزون." };
+    }
+
+    const result = await prisma.$transaction(async (tx) => {
+      const ticketPart = await tx.ticketPart.create({
+        data: {
+          ticketId: data.ticketId,
+          sparePartId: data.sparePartId,
+          quantity: data.quantity,
+          priceAtTime: sparePart.sellingPrice, 
+        }
+      });
+      await tx.sparePart.update({
+        where: { id: data.sparePartId },
+        data: { quantity: { decrement: data.quantity } }
+      });
+      return ticketPart;
+    });
+
+    revalidatePath(ROUTES.TICKET_DETAILS(data.ticketId));
+    return { success: true, data: result };
+  } catch (_error) {
+    return { error: "حدث خطأ أثناء سحب القطعة من المخزون." };
+  }
+}
+
+export async function removePartFromTicket(ticketPartId: string, ticketId: string) {
+  try {
+    const ticketPart = await prisma.ticketPart.findUnique({ where: { id: ticketPartId } });
+    if (!ticketPart) return { error: "القطعة غير موجودة." };
+
+    await prisma.$transaction(async (tx) => {
+      await tx.ticketPart.delete({ where: { id: ticketPartId } });
+      await tx.sparePart.update({
+        where: { id: ticketPart.sparePartId },
+        data: { quantity: { increment: ticketPart.quantity } }
+      });
+    });
+
+    revalidatePath(ROUTES.TICKET_DETAILS(ticketId));
+    return { success: true };
+  } catch (_error) {
+    return { error: "حدث خطأ أثناء إرجاع القطعة للمخزون." };
+  }
+}
+
+
+
+export async function deleteTicket(ticketId: string) {
+  try {
+    // 1. جلب التذكرة أولاً للتحقق من وجود صور مرفقة
+    const ticket = await prisma.ticket.findUnique({ 
+      where: { id: ticketId },
+      select: { invoiceImageUrl: true } 
+    });
+
+    // 2. حذف التذكرة من قاعدة البيانات
+    await prisma.ticket.delete({ where: { id: ticketId } });
+
+    // 3. تنظيف السحابة: إذا كان هناك صور، قم بحذفها فيزيائياً
+    if (ticket?.invoiceImageUrl) {
+      const urlsToDelete = ticket.invoiceImageUrl.split(',').filter(Boolean);
+      if (urlsToDelete.length > 0) {
+        // لا ننتظر النتيجة (await) لكي لا نؤخر استجابة الواجهة للمستخدم
+        deleteFilesFromUploadThing(urlsToDelete).catch(err => 
+          console.error("Failed to cleanup ticket images in background:", err)
+        );
+      }
+    }
+
+    revalidatePath(ROUTES.TICKETS);
+    return { success: true };
+  } catch (_error) {
+    return { error: "لا يمكن حذف التذكرة لاحتوائها على حركات مالية أو قطع مستهلكة. يرجى تصفيتها أولاً." };
+  }
+}
+</file>
+
 <file path="src/server/actions/trials.actions.ts">
 "use server";
 
@@ -6120,51 +5980,6 @@ export async function consumeTrialItem(trialId: string) {
   } catch (_error) {
     return { error: "فشل تحديث الحالة" };
   }
-}
-</file>
-
-<file path="tsconfig.json">
-{
-  "compilerOptions": {
-    "target": "ES2017",
-    "lib": [
-      "dom",
-      "dom.iterable",
-      "esnext"
-    ],
-    "allowJs": true,
-    "skipLibCheck": true,
-    "strict": true,
-    "noEmit": true,
-    "esModuleInterop": true,
-    "module": "esnext",
-    "moduleResolution": "bundler",
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "jsx": "preserve",
-    "incremental": true,
-    "plugins": [
-      {
-        "name": "next"
-      }
-    ],
-    "paths": {
-      "@/*": [
-        "./*"
-      ]
-    }
-  },
-  "include": [
-    "next-env.d.ts",
-    "**/*.ts",
-    "**/*.tsx",
-    ".next/types/**/*.ts",
-    "src/app/products/[productId]",
-    ".next/dev/types/**/*.ts"
-  ],
-  "exclude": [
-    "node_modules"
-  ]
 }
 </file>
 
@@ -6318,53 +6133,61 @@ main()
   });
 </file>
 
-<file path="src/app/(dashboard)/inventory/page.tsx">
+<file path="src/app/(dashboard)/quotations/page.tsx">
 "use client";
 
-import { Loader2 } from "lucide-react";
-import { useInventory } from "@/src/features/inventory/hooks/useInventory";
-import { InventoryToolbar } from "@/src/features/inventory/components/InventoryToolbar";
-import { InventoryTable } from "@/src/features/inventory/components/InventoryTable";
-import { InventoryModal } from "@/src/features/inventory/components/InventoryModal";
+import { Printer } from "lucide-react";
+import { useQuotation } from "@/src/features/quotations/hooks/useQuotations";
+import { QuotationPrintTemplate } from "@/src/features/quotations/components/QuotationPrintTemplate";
+import { QuotationForm } from "@/src/features/quotations/components/QuotationForm";
 
-export default function InventoryPage() {
-  const { 
-    filteredParts, searchQuery, setSearchQuery, isLoading, 
-    isModalOpen, setIsModalOpen, editingPart, actions 
-  } = useInventory();
+export default function QuotationPage() {
+  const { form, quoteData, priceUsd, currentDate, quoteNumber } = useQuotation();
 
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center min-h-[50vh]">
-        <Loader2 className="w-10 h-10 animate-spin text-indigo-600" />
-      </div>
-    );
-  }
+  const handlePrint = () => {
+    form.handleSubmit(() => {
+      window.print();
+    })();
+  };
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6 animate-in fade-in duration-500 pb-10">
+    <div className="max-w-7xl mx-auto pb-20 print:p-0 print:m-0 animate-in fade-in duration-500">
       
-      {/* الترويسة وشريط البحث */}
-      <InventoryToolbar 
-        searchQuery={searchQuery} 
-        setSearchQuery={setSearchQuery} 
-        onOpenAddModal={actions.openAddModal} 
-      />
+      <style dangerouslySetInnerHTML={{__html: `
+        @media print {
+          @page { size: A4; margin: 0 !important; }
+          html, body { margin: 0 !important; padding: 0 !important; background-color: white !important; }
+          #printable-a4 {
+            position: absolute !important; top: 0 !important; left: 0 !important; margin: 0 !important;
+            width: 210mm !important; height: 297mm !important; background: white !important;
+            box-shadow: none !important; border: none !important; z-index: 99999 !important;
+          }
+        }
+      `}} />
 
-      {/* جدول المخزون المفلتر */}
-      <InventoryTable 
-        parts={filteredParts} 
-        onOpenEditModal={actions.openEditModal} 
-        onDelete={actions.handleDelete} 
-      />
+      <div className="flex justify-between items-center mb-6 print:hidden">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">إنشاء عرض السعر</h1>
+          <p className="text-gray-500 text-sm mt-1">تجهيز عرض فني ومالي رسمي ومعتمد للزبائن</p>
+        </div>
+        <button 
+          onClick={handlePrint} 
+          className="flex items-center gap-2 px-8 py-3 bg-indigo-900 text-white hover:bg-black rounded-xl font-bold transition shadow-xl"
+        >
+          <Printer className="w-5 h-5" /> طباعة العرض الرسمي
+        </button>
+      </div>
 
-      {/* نافذة الإضافة/التعديل */}
-      <InventoryModal 
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        editData={editingPart}
-        onSave={actions.handleSavePart} 
-      />
+      <div className="flex flex-col lg:flex-row gap-8 print:block print:gap-0">
+        <QuotationForm form={form} />
+
+        <QuotationPrintTemplate
+          quoteData={quoteData as any} 
+          priceUsd={priceUsd} 
+          currentDate={currentDate} 
+          quoteNumber={quoteNumber} 
+        />
+      </div>
     </div>
   );
 }
@@ -6503,6 +6326,34 @@ export default async function WorkerStatementPage({ params }: { params: Promise<
 }
 </file>
 
+<file path="src/constants/expenses.ts">
+import { ExpensesState } from "@/src/types";
+
+export const initialState: ExpensesState = {
+  activeTab: "expenses",
+  overview: { totalExpenses: 0, totalPurchases: 0, totalDebts: 0 },
+  expenses: [], 
+  purchases: [], 
+  suppliers: [], 
+  spareParts: [], 
+  payments: [],
+  isLoading: true, 
+  isSubmitting: false,
+  modals: { expense: false, purchase: false, supplier: false, payment: false, ledger: false, editPayment: false },
+  ledgerSupplierId: null,
+  editingPaymentId: null,
+};
+
+export type Action =
+  | { type: "SET_TAB"; payload: ExpensesState["activeTab"] }
+  | { type: "SET_LOADING"; payload: boolean }
+  | { type: "SET_SUBMITTING"; payload: boolean }
+  | { type: "SET_DATA"; payload: Partial<ExpensesState> }
+  | { type: "OPEN_MODAL"; payload: keyof ExpensesState["modals"] }
+  | { type: "CLOSE_MODALS" };
+  // 💡 تم مسح UPDATE_FORM لأنه لم يعد مستخدماً
+</file>
+
 <file path="src/features/auth/login/components/LoginForm.tsx">
 "use client";
 
@@ -6577,69 +6428,168 @@ export function LoginForm() {
 }
 </file>
 
-<file path="src/features/inventory/components/InventoryTable.tsx">
-import { Edit, Trash2, AlertTriangle } from "lucide-react";
-import { SparePart } from "@prisma/client";
+<file path="src/features/compressors/components/CompressorModal.tsx">
+import { useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Package, Camera, X, Loader2 } from "lucide-react";
+import { Modal } from "@/src/components/ui/Modal";
+import { Input } from "@/src/components/ui/Input";
+import { Textarea } from "@/src/components/ui/Textarea";
+import { UploadButton } from "@/src/lib/uploadthing";
+import { compressorSchema, type CompressorFormValues } from "../validations/validations";
+import { deleteFilesFromUploadThing } from "@/src/server/actions/uploadthing.actions";
 
-interface InventoryTableProps {
-  parts: SparePart[];
-  onOpenEditModal: (part: SparePart) => void;
-  onDelete: (id: string, name: string) => void;
+interface Props {
+  isOpen: boolean;
+  onClose: () => void;
+  onSave: (data: CompressorFormValues) => Promise<boolean>;
 }
 
-export const InventoryTable = ({ parts, onOpenEditModal, onDelete }: InventoryTableProps) => (
-  <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-    <div className="overflow-x-auto">
-      <table className="w-full text-right text-sm">
-        <thead className="bg-gray-50 text-gray-400 font-bold border-b">
-          <tr>
-            <th className="p-4">اسم القطعة</th>
-            <th className="p-4 text-center">الكمية المتوفرة</th>
-            <th className="p-4">سعر التكلفة (₪)</th>
-            <th className="p-4">سعر البيع (₪)</th>
-            <th className="p-4 text-center">إجراءات</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-gray-100">
-          {parts.length === 0 ? (
-            <tr><td colSpan={5} className="text-center py-10 text-gray-400">لا توجد قطع مطابقة.</td></tr>
+export const CompressorModal = ({ isOpen, onClose, onSave }: Props) => {
+  const { register, handleSubmit, reset, setValue, watch, formState: { errors, isSubmitting } } = useForm<CompressorFormValues>({
+    resolver: zodResolver(compressorSchema),
+    defaultValues: { modelName: "", serialNumber: "", productionCost: 0, sellingPrice: 0, description: "", imageUrl: "" }
+  });
+
+  const imageUrl = watch("imageUrl"); 
+
+  useEffect(() => {
+    if (isOpen) reset(); 
+  }, [isOpen, reset]);
+
+  const onSubmit = async (data: CompressorFormValues) => {
+    const success = await onSave(data);
+    if (success) onClose();
+  };
+
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} title={<><Package className="w-5 h-5 text-indigo-600"/> إضافة كمبريسور للمخزون</>} maxWidth="lg">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+        
+        <div className="space-y-2">
+          <label className="text-sm font-bold text-gray-700 flex items-center gap-2">
+            <Camera className="w-4 h-4" /> صورة الجهاز
+          </label>
+          
+          {imageUrl ? (
+            <div className="relative h-44 w-full rounded-2xl overflow-hidden border-2 border-indigo-100 group">
+              <img src={imageUrl} className="w-full h-full object-cover" alt="Preview" />
+              <button 
+                type="button" 
+                onClick={async () => {
+                  const url = watch("imageUrl");
+                  if (url) {
+                    setValue("imageUrl", ""); // إخفاء الصورة فوراً
+                    await deleteFilesFromUploadThing(url).catch(console.error); // الحذف الفعلي من السحابة
+                  }
+                }} 
+                className="absolute top-2 right-2 bg-rose-500 text-white p-1.5 rounded-full shadow-lg hover:bg-rose-600 transition-all"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
           ) : (
-            parts.map(part => {
-              const isLowStock = part.quantity <= part.lowStockAlert;
-              return (
-                <tr key={part.id} className="hover:bg-gray-50 transition">
-                  <td className="p-4 font-bold text-gray-800">{part.name}</td>
-                  <td className="p-4 text-center">
-                    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full font-black text-xs ${isLowStock ? 'bg-rose-50 text-rose-600' : 'bg-emerald-50 text-emerald-600'}`}>
-                      {isLowStock && <AlertTriangle className="w-3 h-3" />}
-                      {part.quantity}
-                    </span>
-                  </td>
-                  <td className="p-4 font-bold text-gray-500">₪ {part.averageCost?.toFixed(2) || "0.00"}</td>
-                  <td className="p-4 font-black text-indigo-600">₪ {part.sellingPrice.toFixed(2)}</td>
-                  <td className="p-4 flex justify-center gap-2">
-                    <button 
-                      onClick={() => onOpenEditModal(part)}
-                      className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition"
-                    >
-                      <Edit className="w-4 h-4" />
-                    </button>
-                    <button 
-                      onClick={() => onDelete(part.id, part.name)} 
-                      className="p-2 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </td>
-                </tr>
-              );
-            })
+            <div className="border-2 border-dashed border-gray-200 rounded-2xl p-6 bg-gray-50 flex flex-col items-center justify-center gap-2">
+              <UploadButton
+                endpoint="imageUploader"
+                onClientUploadComplete={(res) => setValue("imageUrl", res[0].url)}
+                appearance={{ button: "bg-indigo-600 text-white px-6 py-2 rounded-xl font-bold text-sm" }}
+              />
+            </div>
           )}
-        </tbody>
-      </table>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Input label="الموديل / الوصف" error={errors.modelName?.message} {...register("modelName")} />
+          <Input label="الرقم التسلسلي (اختياري)" error={errors.serialNumber?.message} {...register("serialNumber")} />
+        </div>
+        
+        <div className="grid grid-cols-2 gap-4">
+          <Input label="تكلفة التجهيز (₪)" type="number" step="0.01" error={errors.productionCost?.message} {...register("productionCost", { valueAsNumber: true })} />
+          <Input label="سعر البيع (₪)" type="number" step="0.01" error={errors.sellingPrice?.message} {...register("sellingPrice", { valueAsNumber: true })} />
+        </div>
+
+        <Textarea label="تفاصيل ومواصفات إضافية" rows={3} error={errors.description?.message} {...register("description")} />
+
+        <button disabled={isSubmitting} type="submit" className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black transition-all flex justify-center items-center gap-2">
+          {isSubmitting ? <><Loader2 className="w-5 h-5 animate-spin" /><span>جاري الحفظ...</span></> : "اعتماد وحفظ في المخزن"}
+        </button>
+      </form>
+    </Modal>
+  );
+};
+</file>
+
+<file path="src/features/quotations/components/QuotationForm.tsx">
+import { FileText, Camera, X } from "lucide-react";
+import { Input } from "@/src/components/ui/Input";
+import { Textarea } from "@/src/components/ui/Textarea";
+import { UploadButton } from "@/src/lib/uploadthing";
+import { UseFormReturn } from "react-hook-form";
+import { QuotationFormValues } from "../validations/validations";
+import { deleteFilesFromUploadThing } from "@/src/server/actions/uploadthing.actions";
+
+interface QuotationFormProps {
+  form: UseFormReturn<QuotationFormValues>;
+}
+
+export const QuotationForm = ({ form }: QuotationFormProps) => {
+  const { register, setValue, watch, formState: { errors } } = form;
+  const imageUrl = watch("imageUrl");
+
+  return (
+    <div className="w-full lg:w-1/3 space-y-6 print:hidden">
+      <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm space-y-4">
+        <h2 className="font-bold flex items-center gap-2 border-b border-gray-100 pb-3 mb-4 text-indigo-900">
+          <FileText className="w-5 h-5" /> بيانات العرض الفني
+        </h2>
+
+        <Input label="اسم الزبون / الشركة" placeholder="شركة المقاولات..." error={errors.customerName?.message} {...register("customerName")} />
+        <Input label="وصف الجهاز (الموديل)" placeholder="كمبريسور 500 لتر" error={errors.modelName?.message} {...register("modelName")} />
+
+        <div className="grid grid-cols-2 gap-4">
+          <Input label="السعر (شيكل)" type="number" step="0.01" className="font-bold text-indigo-700" error={errors.priceIls?.message} {...register("priceIls", { valueAsNumber: true })} />
+          <Input label="سعر الصرف ($)" type="number" step="0.01" error={errors.exchangeRate?.message} {...register("exchangeRate", { valueAsNumber: true })} />
+        </div>
+
+        <Textarea label="المواصفات الفنية (كل ميزة في سطر)" rows={5} error={errors.specs?.message} {...register("specs")} />
+        <Textarea label="الشروط والملاحظات" rows={3} error={errors.notes?.message} {...register("notes")} />
+      </div>
+
+      <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm">
+        <h2 className="font-bold flex items-center gap-2 border-b border-gray-100 pb-3 mb-4 text-indigo-900">
+          <Camera className="w-5 h-5" /> صورة الجهاز المرفقة
+        </h2>
+        {imageUrl ? (
+          <div className="relative aspect-video rounded-xl overflow-hidden border border-gray-200 bg-gray-50 group">
+            <img src={imageUrl} className="w-full h-full object-contain" alt="Preview" />
+            <button 
+              type="button" 
+              onClick={async () => {
+                if (imageUrl) {
+                  setValue('imageUrl', ""); // إخفاء الصورة فوراً
+                  await deleteFilesFromUploadThing(imageUrl).catch(console.error); // الحذف الفعلي من السحابة
+                }
+              }} 
+              className="absolute top-2 right-2 bg-red-500 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-all"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        ) : (
+          <div className="text-center p-6 border-2 border-dashed border-gray-200 rounded-xl bg-gray-50">
+            <UploadButton 
+              endpoint="imageUploader" 
+              onClientUploadComplete={(res: { url: string }[]) => setValue('imageUrl', res[0].url)} 
+              appearance={{ button: "bg-indigo-900 text-white px-4 py-2 text-sm rounded-lg" }} 
+            />
+          </div>
+        )}
+      </div>
     </div>
-  </div>
-);
+  );
+};
 </file>
 
 <file path="src/features/settings/hooks/useSettings.ts">
@@ -6887,34 +6837,49 @@ export const authOptions: NextAuthOptions = {
 };
 </file>
 
-<file path="src/types/index.ts">
-export * from "./ticket.types";
-export * from "./worker.types";
-export * from "./expense.types";
-export * from "./inventory.types";
-export * from "./dashboard.types";
-export * from "./compressor.types";
-export * from "./quotations.types";
-export * from "./report.types";
-export * from "./settings.types";
-export * from "./trial.types";
-</file>
-
-<file path="next.config.ts">
-import type { NextConfig } from "next";
-
-const nextConfig: NextConfig = {
-  images: {
-    remotePatterns: [
-      { protocol: "https", hostname: "utfs.io" },
-      { protocol: "https", hostname: "uploadthing.com" },
-      { protocol: "https", hostname: "uufs.io" }
+<file path="tsconfig.json">
+{
+  "compilerOptions": {
+    "target": "ES2017",
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
     ],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "react-jsx",
+    "incremental": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "paths": {
+      "@/*": [
+        "./*"
+      ]
+    }
   },
-  // No custom Turbopack configuration needed for Next 15.
-};
-
-export default nextConfig;
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    "src/app/products/[productId]",
+    ".next/dev/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}
 </file>
 
 <file path="src/app/(auth)/login/page.tsx">
@@ -6950,122 +6915,53 @@ export default async function LoginPage() {
 }
 </file>
 
-<file path="src/app/(dashboard)/expenses/page.tsx">
+<file path="src/app/(dashboard)/inventory/page.tsx">
 "use client";
 
-import { useState } from "react";
-import { TrendingDown, Plus, Wallet, Receipt, Truck, History, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
+import { useInventory } from "@/src/features/inventory/hooks/useInventory";
+import { InventoryToolbar } from "@/src/features/inventory/components/InventoryToolbar";
+import { InventoryTable } from "@/src/features/inventory/components/InventoryTable";
+import { InventoryModal } from "@/src/features/inventory/components/InventoryModal";
 
-import { useExpenses } from "@/src/features/expenses/hooks/useExpenses";
-import { usePurchases } from "@/src/features/expenses/hooks/usePurchases";
-import { useSuppliers } from "@/src/features/expenses/hooks/useSuppliers";
+export default function InventoryPage() {
+  const { 
+    filteredParts, searchQuery, setSearchQuery, isLoading, 
+    isModalOpen, setIsModalOpen, editingPart, actions 
+  } = useInventory();
 
-import { FinancialStats } from "@/src/features/expenses/components/FinancialStats";
-import { ExpenseModal } from "@/src/features/expenses/components/modals/ExpenseModal";
-import { PurchaseModal } from "@/src/features/expenses/components/modals/PurchaseModal";
-import { SupplierModal } from "@/src/features/expenses/components/modals/SupplierModal";
-import { PaymentModal } from "@/src/features/expenses/components/modals/PaymentModal";
-import { SupplierLedgerModal } from "@/src/features/expenses/components/modals/SupplierLedgerModal";
-import { ExpensesTable } from "@/src/features/expenses/components/tables/ExpensesTable";
-import { PaymentsTable } from "@/src/features/expenses/components/tables/PaymentsTable";
-import { PurchasesTable } from "@/src/features/expenses/components/tables/PurchasesTable";
-
-export default function ExpensesPage() {
-  const [activeTab, setActiveTab] = useState<"expenses" | "purchases" | "payments">("expenses");
-
-  const exp = useExpenses();
-  const pur = usePurchases();
-  const sup = useSuppliers();
-
-  // مدمج حالات التحميل
-  const isAnyLoading = exp.isLoading || pur.isLoading || sup.isLoading;
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center min-h-[50vh]">
+        <Loader2 className="w-10 h-10 animate-spin text-indigo-600" />
+      </div>
+    );
+  }
 
   return (
-    <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500 pb-10">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-        <div>
-          <h1 className="text-2xl font-black text-gray-900 flex items-center gap-2">
-            <TrendingDown className="w-6 h-6 text-rose-500" /> إدارة المصاريف والمشتريات
-          </h1>
-          <p className="text-gray-500 text-sm mt-1">تابع التدفقات المالية، المشتريات، وتسديد دفعات التجار</p>
-        </div>
-        <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-          <button onClick={() => sup.setPaymentModal({ isOpen: true, editingId: null })} className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold transition shadow-md">
-            <Wallet className="w-5 h-5" /> تسديد دفعة للتاجر
-          </button>
-          <button onClick={() => activeTab === "expenses" ? exp.setIsModalOpen(true) : pur.setIsModalOpen(true)} className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-2.5 bg-gray-900 hover:bg-black text-white rounded-xl font-bold transition shadow-md">
-            <Plus className="w-5 h-5" /> {activeTab === "expenses" ? "مصروف جديد" : "فاتورة مشتريات"}
-          </button>
-        </div>
-      </div>
-
-      <FinancialStats overview={exp.overview} />
-
-      <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
-        <div className="flex border-b border-gray-100 bg-gray-50/50 p-2 gap-2 overflow-x-auto">
-          <button onClick={() => setActiveTab("expenses")} className={`whitespace-nowrap flex-1 py-3 px-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${activeTab === "expenses" ? "bg-white text-rose-600 shadow-sm border border-gray-200" : "text-gray-500 hover:bg-gray-100"}`}><Receipt className="w-5 h-5" /> المصاريف التشغيلية</button>
-          <button onClick={() => setActiveTab("purchases")} className={`whitespace-nowrap flex-1 py-3 px-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${activeTab === "purchases" ? "bg-white text-indigo-600 shadow-sm border border-gray-200" : "text-gray-500 hover:bg-gray-100"}`}><Truck className="w-5 h-5" /> فواتير المشتريات</button>
-          <button onClick={() => setActiveTab("payments")} className={`whitespace-nowrap flex-1 py-3 px-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${activeTab === "payments" ? "bg-white text-emerald-600 shadow-sm border border-gray-200" : "text-gray-500 hover:bg-gray-100"}`}><History className="w-5 h-5" /> سجل دفعات الموردين</button>
-        </div>
-
-        <div className="p-0">
-          {isAnyLoading ? (
-            <div className="py-20 flex justify-center"><Loader2 className="w-8 h-8 animate-spin text-gray-400" /></div>
-          ) : activeTab === "expenses" ? (
-            <ExpensesTable expenses={exp.expenses} onDelete={exp.actions.handleDelete} />
-          ) : activeTab === "purchases" ? (
-            <PurchasesTable purchases={pur.purchases} onOpenLedger={sup.setLedgerSupplierId} />
-          ) : (
-            <PaymentsTable payments={sup.payments} onEdit={(pay) => sup.setPaymentModal({ isOpen: true, editingId: pay.id })} onDelete={sup.actions.handleDeletePayment} />
-          )}
-        </div>
-      </div>
-
-      {/* النوافذ المنبثقة */}
-      <ExpenseModal isOpen={exp.isModalOpen} onClose={() => exp.setIsModalOpen(false)} onSave={exp.actions.handleAdd} />
+    <div className="max-w-7xl mx-auto space-y-6 animate-in fade-in duration-500 pb-10">
       
-      <PurchaseModal 
-        isOpen={pur.isModalOpen} 
-        onClose={() => pur.setIsModalOpen(false)} 
-        suppliers={pur.suppliers} 
-        spareParts={pur.spareParts} 
-        onSave={async (data) => {
-          const success = await pur.actions.handleAddInvoice(data);
-          if (success) { sup.actions.refresh(); exp.actions.refresh(); } // تحديث الإحصائيات والدفعات
-          return success;
-        }} 
-        onOpenSupplierModal={() => {
-          pur.setIsModalOpen(false);
-          setTimeout(() => sup.setIsSupplierModalOpen(true), 100);
-        }} 
+      {/* الترويسة وشريط البحث */}
+      <InventoryToolbar 
+        searchQuery={searchQuery} 
+        setSearchQuery={setSearchQuery} 
+        onOpenAddModal={actions.openAddModal} 
       />
 
-      <SupplierModal 
-        isOpen={sup.isSupplierModalOpen} 
-        onClose={() => sup.setIsSupplierModalOpen(false)} 
-        onBack={() => {
-          sup.setIsSupplierModalOpen(false);
-          setTimeout(() => pur.setIsModalOpen(true), 100);
-        }} 
-        onSave={async (data) => {
-          const success = await sup.actions.handleAddSupplier(data);
-          if (success) { pur.actions.refresh(); } // تحديث قائمة التجار في المشتريات
-          return success;
-        }} 
+      {/* جدول المخزون المفلتر */}
+      <InventoryTable 
+        parts={filteredParts} 
+        onOpenEditModal={actions.openEditModal} 
+        onDelete={actions.handleDelete} 
       />
 
-      <PaymentModal 
-        isOpen={sup.paymentModal.isOpen} 
-        onClose={() => sup.setPaymentModal({ isOpen: false, editingId: null })} 
-        suppliers={sup.suppliers} 
-        onSave={sup.actions.handleSavePayment} 
-        editData={sup.paymentModal.editingId ? (() => {
-          const p = sup.payments.find(pay => pay.id === sup.paymentModal.editingId);
-          return p ? { supplierId: p.supplierId, amount: p.amount, notes: p.notes || "" } : null;
-        })() : null} 
+      {/* نافذة الإضافة/التعديل */}
+      <InventoryModal 
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        editData={editingPart}
+        onSave={actions.handleSavePart} 
       />
-
-      <SupplierLedgerModal isOpen={!!sup.ledgerSupplierId} onClose={() => sup.setLedgerSupplierId(null)} supplierId={sup.ledgerSupplierId} />
     </div>
   );
 }
@@ -7189,6 +7085,514 @@ export default function ReportsPage() {
       {/* قالب العرض والطباعة */}
       <PrintReportTemplate data={reportData} />
 
+    </div>
+  );
+}
+</file>
+
+<file path="src/app/(dashboard)/tickets/page.tsx">
+import { AlertCircle } from "lucide-react";
+import { getAllTickets } from "@/src/server/actions/tickets.actions";
+import { TicketsManager } from "@/src/features/tickets/components/TicketsManager";
+import { TicketListItem } from "@/src/types";
+
+export default async function TicketsPage() {
+  const result = await getAllTickets();
+
+  if (result.error) {
+    return (
+      <div className="space-y-6">
+        <div className="bg-red-50 border border-red-200 text-red-700 p-6 rounded-2xl flex flex-col items-center text-center space-y-3">
+          <AlertCircle className="w-10 h-10 text-red-500" />
+          <h2 className="text-lg font-bold">تعذر عرض التذاكر</h2>
+          <p className="text-sm font-medium">{result.error}</p>
+        </div>
+      </div>
+    );
+  }
+
+  // تسليم البيانات كـ Props للمكون الذي يدير البحث والتعديل
+  return (
+    <div className="animate-in fade-in duration-500 pb-10 max-w-7xl mx-auto">
+      <TicketsManager initialTickets={(result.data as TicketListItem[]) || []} />
+    </div>
+  );
+}
+</file>
+
+<file path="src/app/(dashboard)/workers/[id]/page.tsx">
+import { getWorkerDetails } from "@/src/server/actions/workers.actions";
+import { WorkerTransaction } from "@prisma/client";
+import { 
+  ArrowRight, 
+  Calendar, 
+  ArrowUpCircle, 
+  ArrowDownCircle, 
+  User, 
+  Phone,
+  Wallet
+} from "lucide-react";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+
+// 1.  params إلى Promise
+export default async function WorkerProfilePage({ params }: { params: Promise<{ id: string }> }) {
+  
+  // 2. فك الـ Promise للحصول على الـ id
+  const { id } = await params;
+
+  // 3. تمرير الـ id لدالة جلب البيانات
+  const result = await getWorkerDetails(id);
+
+  if (result.error || !result.data) {
+    return notFound();
+  }
+
+  const worker = result.data;
+
+  return (
+    <div className="p-6 max-w-5xl mx-auto space-y-6 animate-in fade-in duration-500">
+      
+      {/* الترويسة وزر العودة */}
+      <div className="flex items-center justify-between">
+        <Link href="/workers" className="flex items-center gap-2 text-gray-500 hover:text-indigo-600 transition">
+          <ArrowRight className="w-5 h-5" /> رجوع لقائمة العمال
+        </Link>
+      </div>
+
+      {/* بطاقة تعريف العامل */}
+      <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+        <div className="flex items-center gap-5">
+          <div className="w-16 h-16 bg-indigo-100 text-indigo-600 rounded-2xl flex items-center justify-center font-black text-2xl">
+            {worker.name[0]}
+          </div>
+          <div>
+            <h1 className="text-2xl font-black text-gray-900">{worker.name}</h1>
+            <div className="flex gap-4 mt-1 text-sm text-gray-500">
+              <span className="flex items-center gap-1"><Phone className="w-3.5 h-3.5" /> {worker.phone}</span>
+              <span className="flex items-center gap-1"><User className="w-3.5 h-3.5" /> {worker.role}</span>
+            </div>
+          </div>
+        </div>
+        
+        <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 text-left min-w-[200px]">
+          <p className="text-xs font-bold text-gray-400 uppercase mb-1 text-right">الرصيد المستحق الحالي</p>
+          <div className={`text-3xl font-black flex items-center justify-end gap-2 ${worker.currentBalance >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+            {worker.currentBalance.toFixed(2)} ₪ //console.log()
+            <Wallet className="w-6 h-6" />
+          </div>
+        </div>
+      </div>
+
+      {/* سجل المعاملات المالية */}
+      <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+        <div className="p-6 border-b bg-gray-50/50 flex items-center gap-2 font-bold text-gray-700">
+          <Calendar className="w-5 h-5 text-indigo-500" /> كشف حساب الحركات المالية
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-right text-sm">
+            <thead className="bg-gray-50 text-gray-400 text-xs uppercase">
+              <tr>
+                <th className="p-4 font-medium">التاريخ</th>
+                <th className="p-4 font-medium">النوع</th>
+                <th className="p-4 font-medium">التفاصيل / ملاحظات</th>
+                <th className="p-4 font-medium">المبلغ</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {worker.transactions.length === 0 ? (
+                <tr>
+                  <td colSpan={4} className="p-10 text-center text-gray-400 font-medium">لا توجد حركات مالية مسجلة بعد لهذا العامل.</td>
+                </tr>
+              ) : (
+                worker.transactions.map((tx: WorkerTransaction) => (
+                  <tr key={tx.id} className="hover:bg-gray-50/30 transition">
+                    <td className="p-4 text-gray-500 font-mono text-xs">
+                      {new Date(tx.date).toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' })}
+                    </td>
+                    <td className="p-4">
+                      {tx.type === "STAKE" || tx.type === "BONUS" ? (
+                        <span className="inline-flex items-center gap-1 text-emerald-600 font-bold">
+                          <ArrowUpCircle className="w-4 h-4" /> استحقاق/مكافأة
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 text-rose-600 font-bold">
+                          <ArrowDownCircle className="w-4 h-4" /> سحبيات/دفعات
+                        </span>
+                      )}
+                    </td>
+                    <td className="p-4 text-gray-600 font-medium">
+                      {tx.description || "---"}
+                    </td>
+                    <td className={`p-4 font-black text-lg ${tx.type === "STAKE" || tx.type === "BONUS" ? 'text-emerald-600' : 'text-rose-600'}`}>
+                      {tx.type === "STAKE" || tx.type === "BONUS" ? "+" : "-"}
+                      {tx.amount.toFixed(2)} ₪
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  );
+}
+</file>
+
+<file path="src/components/shared/Navbar.tsx">
+"use client";
+
+import { signOut, useSession } from "next-auth/react";
+import { LogOut, User, Menu } from "lucide-react";
+import { ROUTES } from "@/src/constants/paths"; 
+
+export default function Navbar({ onOpenSidebar }: { onOpenSidebar?: () => void }) {
+  const { data: session } = useSession();
+
+  return (
+    <header className="print:hidden bg-white border-b border-gray-200 h-16 flex items-center justify-between px-4 sm:px-6 sticky top-0 z-10 shadow-sm">      
+      <div className="flex items-center gap-4">
+        {onOpenSidebar && (
+          <button onClick={onOpenSidebar} className="lg:hidden p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition">
+            <Menu className="w-6 h-6" />
+          </button>
+        )}
+        <h2 className="text-xl font-semibold text-gray-800 hidden sm:block">نظام الإدارة</h2>
+      </div>
+
+      <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-100">
+          <User className="w-5 h-5 text-gray-500" />
+          <div className="flex flex-col">
+            <span className="text-sm font-medium text-gray-700">
+              {session?.user?.name || "مستخدم"}
+            </span>
+            <span className="text-xs text-gray-500">
+              {session?.user?.role === "ADMIN" ? "مدير نظام" : "فني / عامل"}
+            </span>
+          </div>
+        </div>
+
+        <button
+          onClick={() => signOut({ callbackUrl: ROUTES.LOGIN })}
+          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition flex items-center gap-2"
+          title="تسجيل الخروج"
+        >
+          <LogOut className="w-5 h-5" />
+          <span className="text-sm font-medium hidden sm:block">خروج</span>
+        </button>
+      </div>
+    </header>
+  );
+}
+</file>
+
+<file path="src/features/inventory/components/InventoryTable.tsx">
+import { Edit, Trash2, AlertTriangle } from "lucide-react";
+import { SparePart } from "@prisma/client";
+
+interface InventoryTableProps {
+  parts: SparePart[];
+  onOpenEditModal: (part: SparePart) => void;
+  onDelete: (id: string, name: string) => void;
+}
+
+export const InventoryTable = ({ parts, onOpenEditModal, onDelete }: InventoryTableProps) => (
+  <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+    <div className="overflow-x-auto">
+      <table className="w-full text-right text-sm">
+        <thead className="bg-gray-50 text-gray-400 font-bold border-b">
+          <tr>
+            <th className="p-4">اسم القطعة</th>
+            <th className="p-4 text-center">الكمية المتوفرة</th>
+            <th className="p-4">سعر التكلفة (₪)</th>
+            <th className="p-4">سعر البيع (₪)</th>
+            <th className="p-4 text-center">إجراءات</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-gray-100">
+          {parts.length === 0 ? (
+            <tr><td colSpan={5} className="text-center py-10 text-gray-400">لا توجد قطع مطابقة.</td></tr>
+          ) : (
+            parts.map(part => {
+              const isLowStock = part.quantity <= part.lowStockAlert;
+              return (
+                <tr key={part.id} className="hover:bg-gray-50 transition">
+                  <td className="p-4 font-bold text-gray-800">{part.name}</td>
+                  <td className="p-4 text-center">
+                    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full font-black text-xs ${isLowStock ? 'bg-rose-50 text-rose-600' : 'bg-emerald-50 text-emerald-600'}`}>
+                      {isLowStock && <AlertTriangle className="w-3 h-3" />}
+                      {part.quantity}
+                    </span>
+                  </td>
+                  <td className="p-4 font-bold text-gray-500">₪ {part.averageCost?.toFixed(2) || "0.00"}</td>
+                  <td className="p-4 font-black text-indigo-600">₪ {part.sellingPrice.toFixed(2)}</td>
+                  <td className="p-4 flex justify-center gap-2">
+                    <button 
+                      onClick={() => onOpenEditModal(part)}
+                      className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition"
+                    >
+                      <Edit className="w-4 h-4" />
+                    </button>
+                    <button 
+                      onClick={() => onDelete(part.id, part.name)} 
+                      className="p-2 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </td>
+                </tr>
+              );
+            })
+          )}
+        </tbody>
+      </table>
+    </div>
+  </div>
+);
+</file>
+
+<file path="src/features/workers/hooks/useWorkers.ts">
+"use client";
+
+import { useState, useEffect, useCallback } from "react";
+import { toast } from "react-hot-toast";
+import { registerWorker, getWorkersWithBalance, addWorkerTransaction, deleteWorker } from "@/src/server/actions/workers.actions";
+import { TypesWorkerTransaction } from "@prisma/client";
+import { AddWorkerValues, WorkerTxValues } from "../validations/validations";
+
+export function useWorkers() {
+  const [workers, setWorkers] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  
+  // حالات النوافذ المنبثقة
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [txModal, setTxModal] = useState<{ isOpen: boolean; userId: string; type: TypesWorkerTransaction | null }>({ 
+    isOpen: false, userId: "", type: null 
+  });
+
+  const loadWorkers = useCallback(async () => {
+    setIsLoading(true);
+    const data = await getWorkersWithBalance();
+    setWorkers(data || []);
+    setIsLoading(false);
+  }, []);
+
+  useEffect(() => { loadWorkers(); }, [loadWorkers]);
+
+  const handleAddWorker = async (data: AddWorkerValues) => {
+    const res = await registerWorker({ ...data, baseSalary: data.baseSalary?.toString() });
+    if (res.success) {
+      toast.success("تم تسجيل الفني بنجاح");
+      setIsAddModalOpen(false);
+      loadWorkers();
+      return true;
+    }
+    toast.error(res.error || "حدث خطأ");
+    return false;
+  };
+
+  const handleAddTx = async (data: WorkerTxValues, userId: string) => {
+    const typeLabel = data.type === 'STAKE' ? 'استحقاق/راتب' : data.type === 'ADVANCE' ? 'سلفة/سحب' : data.type === 'BONUS' ? 'مكافأة' : 'خصم';
+    const finalDesc = `${typeLabel}${data.notes ? ` - ${data.notes}` : ''}`;
+
+    const res = await addWorkerTransaction({
+      userId,
+      amount: data.amount,
+      type: data.type,
+      description: finalDesc
+    });
+
+    if (res.success) {
+      toast.success("تم تسجيل العملية بنجاح");
+      setTxModal({ isOpen: false, userId: "", type: null }); // إغلاق النافذة
+      loadWorkers();
+      return true;
+    } 
+    toast.error(res.error || "فشل تسجيل العملية");
+    return false;
+  };
+
+  const handleDelete = async (userId: string, name: string) => {
+    if (!confirm(`هل أنت متأكد من حذف الفني (${name}) نهائياً؟`)) return;
+    const res = await deleteWorker(userId);
+    if (res.success) { 
+      toast.success("تم الحذف"); 
+      loadWorkers(); 
+    } else { 
+      toast.error(res.error || "لا يمكن الحذف لوجود حركات مالية"); 
+    }
+  };
+
+  return { 
+    workers, isLoading, 
+    isAddModalOpen, setIsAddModalOpen, 
+    txModal, setTxModal, 
+    actions: { handleAddWorker, handleAddTx, handleDelete } 
+  };
+}
+</file>
+
+<file path="src/middleware.ts">
+import { withAuth } from "next-auth/middleware";
+import { NextResponse } from "next/server";
+import { ROUTES } from "./constants/paths";
+
+export default withAuth(
+  function middleware(req) {
+    //  فحص إذا كان المستخدم بحاول يدخل صفحة العمال وهو مش مدير
+    const isWorkerPage = req.nextUrl.pathname.startsWith("/workers");
+    const isExpensePage = req.nextUrl.pathname.startsWith("/expenses");
+    
+    if ((isWorkerPage || isExpensePage) && req.nextauth.token?.role !== "ADMIN") {
+      // اطرده للصفحة الرئيسية فوراً
+      return NextResponse.redirect(new URL(`${ROUTES.HOME}`, req.url));
+    }
+  },
+  {
+    pages: {
+      signIn: `${ROUTES.LOGIN}`,
+    },
+  }
+);
+
+export const config = {
+  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|login).*)"],
+};
+</file>
+
+<file path="src/types/index.ts">
+export * from "./ticket.types";
+export * from "./worker.types";
+export * from "./expense.types";
+export * from "./inventory.types";
+export * from "./dashboard.types";
+export * from "./compressor.types";
+export * from "./quotations.types";
+export * from "./report.types";
+export * from "./settings.types";
+export * from "./trial.types";
+</file>
+
+<file path="src/app/(dashboard)/expenses/page.tsx">
+"use client";
+
+import { useState } from "react";
+import { TrendingDown, Plus, Wallet, Receipt, Truck, History, Loader2 } from "lucide-react";
+
+import { useExpenses } from "@/src/features/expenses/hooks/useExpenses";
+import { usePurchases } from "@/src/features/expenses/hooks/usePurchases";
+import { useSuppliers } from "@/src/features/expenses/hooks/useSuppliers";
+
+import { FinancialStats } from "@/src/features/expenses/components/FinancialStats";
+import { ExpenseModal } from "@/src/features/expenses/components/modals/ExpenseModal";
+import { PurchaseModal } from "@/src/features/expenses/components/modals/PurchaseModal";
+import { SupplierModal } from "@/src/features/expenses/components/modals/SupplierModal";
+import { PaymentModal } from "@/src/features/expenses/components/modals/PaymentModal";
+import { SupplierLedgerModal } from "@/src/features/expenses/components/modals/SupplierLedgerModal";
+import { ExpensesTable } from "@/src/features/expenses/components/tables/ExpensesTable";
+import { PaymentsTable } from "@/src/features/expenses/components/tables/PaymentsTable";
+import { PurchasesTable } from "@/src/features/expenses/components/tables/PurchasesTable";
+
+export default function ExpensesPage() {
+  const [activeTab, setActiveTab] = useState<"expenses" | "purchases" | "payments">("expenses");
+
+  const exp = useExpenses();
+  const pur = usePurchases();
+  const sup = useSuppliers();
+
+  // مدمج حالات التحميل
+  const isAnyLoading = exp.isLoading || pur.isLoading || sup.isLoading;
+
+  return (
+    <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500 pb-10">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+        <div>
+          <h1 className="text-2xl font-black text-gray-900 flex items-center gap-2">
+            <TrendingDown className="w-6 h-6 text-rose-500" /> إدارة المصاريف والمشتريات
+          </h1>
+          <p className="text-gray-500 text-sm mt-1">تابع التدفقات المالية، المشتريات، وتسديد دفعات التجار</p>
+        </div>
+        <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+          <button onClick={() => sup.setPaymentModal({ isOpen: true, editingId: null })} className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold transition shadow-md">
+            <Wallet className="w-5 h-5" /> تسديد دفعة للتاجر
+          </button>
+          <button onClick={() => activeTab === "expenses" ? exp.setIsModalOpen(true) : pur.setIsModalOpen(true)} className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-2.5 bg-gray-900 hover:bg-black text-white rounded-xl font-bold transition shadow-md">
+            <Plus className="w-5 h-5" /> {activeTab === "expenses" ? "مصروف جديد" : "فاتورة مشتريات"}
+          </button>
+        </div>
+      </div>
+
+      <FinancialStats overview={exp.overview} />
+
+      <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+        <div className="flex border-b border-gray-100 bg-gray-50/50 p-2 gap-2 overflow-x-auto">
+          <button onClick={() => setActiveTab("expenses")} className={`whitespace-nowrap flex-1 py-3 px-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${activeTab === "expenses" ? "bg-white text-rose-600 shadow-sm border border-gray-200" : "text-gray-500 hover:bg-gray-100"}`}><Receipt className="w-5 h-5" /> المصاريف التشغيلية</button>
+          <button onClick={() => setActiveTab("purchases")} className={`whitespace-nowrap flex-1 py-3 px-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${activeTab === "purchases" ? "bg-white text-indigo-600 shadow-sm border border-gray-200" : "text-gray-500 hover:bg-gray-100"}`}><Truck className="w-5 h-5" /> فواتير المشتريات</button>
+          <button onClick={() => setActiveTab("payments")} className={`whitespace-nowrap flex-1 py-3 px-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${activeTab === "payments" ? "bg-white text-emerald-600 shadow-sm border border-gray-200" : "text-gray-500 hover:bg-gray-100"}`}><History className="w-5 h-5" /> سجل دفعات الموردين</button>
+        </div>
+
+        <div className="p-0">
+          {isAnyLoading ? (
+            <div className="py-20 flex justify-center"><Loader2 className="w-8 h-8 animate-spin text-gray-400" /></div>
+          ) : activeTab === "expenses" ? (
+            <ExpensesTable expenses={exp.expenses} onDelete={exp.actions.handleDelete} />
+          ) : activeTab === "purchases" ? (
+            <PurchasesTable purchases={pur.purchases} onOpenLedger={sup.setLedgerSupplierId} />
+          ) : (
+            <PaymentsTable payments={sup.payments} onEdit={(pay) => sup.setPaymentModal({ isOpen: true, editingId: pay.id })} onDelete={sup.actions.handleDeletePayment} />
+          )}
+        </div>
+      </div>
+
+      {/* النوافذ المنبثقة */}
+      <ExpenseModal isOpen={exp.isModalOpen} onClose={() => exp.setIsModalOpen(false)} onSave={exp.actions.handleAdd} />
+      
+      <PurchaseModal 
+        isOpen={pur.isModalOpen} 
+        onClose={() => pur.setIsModalOpen(false)} 
+        suppliers={pur.suppliers} 
+        spareParts={pur.spareParts} 
+        onSave={async (data) => {
+          const success = await pur.actions.handleAddInvoice(data);
+          if (success) { sup.actions.refresh(); exp.actions.refresh(); } // تحديث الإحصائيات والدفعات
+          return success;
+        }} 
+        onOpenSupplierModal={() => {
+          pur.setIsModalOpen(false);
+          setTimeout(() => sup.setIsSupplierModalOpen(true), 100);
+        }} 
+      />
+
+      <SupplierModal 
+        isOpen={sup.isSupplierModalOpen} 
+        onClose={() => sup.setIsSupplierModalOpen(false)} 
+        onBack={() => {
+          sup.setIsSupplierModalOpen(false);
+          setTimeout(() => pur.setIsModalOpen(true), 100);
+        }} 
+        onSave={async (data) => {
+          const success = await sup.actions.handleAddSupplier(data);
+          if (success) { pur.actions.refresh(); } // تحديث قائمة التجار في المشتريات
+          return success;
+        }} 
+      />
+
+      <PaymentModal 
+        isOpen={sup.paymentModal.isOpen} 
+        onClose={() => sup.setPaymentModal({ isOpen: false, editingId: null })} 
+        suppliers={sup.suppliers} 
+        onSave={sup.actions.handleSavePayment} 
+        editData={sup.paymentModal.editingId ? (() => {
+          const p = sup.payments.find(pay => pay.id === sup.paymentModal.editingId);
+          return p ? { supplierId: p.supplierId, amount: p.amount, notes: p.notes || "" } : null;
+        })() : null} 
+      />
+
+      <SupplierLedgerModal isOpen={!!sup.ledgerSupplierId} onClose={() => sup.setLedgerSupplierId(null)} supplierId={sup.ledgerSupplierId} />
     </div>
   );
 }
@@ -7354,238 +7758,6 @@ export default function TicketDetailsPage({ params }: { params: Promise<{ id: st
 
       </div>
     </div>
-  );
-}
-</file>
-
-<file path="src/app/(dashboard)/tickets/page.tsx">
-import { AlertCircle } from "lucide-react";
-import { getAllTickets } from "@/src/server/actions/tickets.actions";
-import { TicketsManager } from "@/src/features/tickets/components/TicketsManager";
-import { TicketListItem } from "@/src/types";
-
-export default async function TicketsPage() {
-  const result = await getAllTickets();
-
-  if (result.error) {
-    return (
-      <div className="space-y-6">
-        <div className="bg-red-50 border border-red-200 text-red-700 p-6 rounded-2xl flex flex-col items-center text-center space-y-3">
-          <AlertCircle className="w-10 h-10 text-red-500" />
-          <h2 className="text-lg font-bold">تعذر عرض التذاكر</h2>
-          <p className="text-sm font-medium">{result.error}</p>
-        </div>
-      </div>
-    );
-  }
-
-  // تسليم البيانات كـ Props للمكون الذي يدير البحث والتعديل
-  return (
-    <div className="animate-in fade-in duration-500 pb-10 max-w-7xl mx-auto">
-      <TicketsManager initialTickets={(result.data as TicketListItem[]) || []} />
-    </div>
-  );
-}
-</file>
-
-<file path="src/app/(dashboard)/workers/[id]/page.tsx">
-import { getWorkerDetails } from "@/src/server/actions/workers.actions";
-import { WorkerTransaction } from "@prisma/client";
-import { 
-  ArrowRight, 
-  Calendar, 
-  ArrowUpCircle, 
-  ArrowDownCircle, 
-  User, 
-  Phone,
-  Wallet
-} from "lucide-react";
-import Link from "next/link";
-import { notFound } from "next/navigation";
-
-// 1.  params إلى Promise
-export default async function WorkerProfilePage({ params }: { params: Promise<{ id: string }> }) {
-  
-  // 2. فك الـ Promise للحصول على الـ id
-  const { id } = await params;
-
-  // 3. تمرير الـ id لدالة جلب البيانات
-  const result = await getWorkerDetails(id);
-
-  if (result.error || !result.data) {
-    return notFound();
-  }
-
-  const worker = result.data;
-
-  return (
-    <div className="p-6 max-w-5xl mx-auto space-y-6 animate-in fade-in duration-500">
-      
-      {/* الترويسة وزر العودة */}
-      <div className="flex items-center justify-between">
-        <Link href="/workers" className="flex items-center gap-2 text-gray-500 hover:text-indigo-600 transition">
-          <ArrowRight className="w-5 h-5" /> رجوع لقائمة العمال
-        </Link>
-      </div>
-
-      {/* بطاقة تعريف العامل */}
-      <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-        <div className="flex items-center gap-5">
-          <div className="w-16 h-16 bg-indigo-100 text-indigo-600 rounded-2xl flex items-center justify-center font-black text-2xl">
-            {worker.name[0]}
-          </div>
-          <div>
-            <h1 className="text-2xl font-black text-gray-900">{worker.name}</h1>
-            <div className="flex gap-4 mt-1 text-sm text-gray-500">
-              <span className="flex items-center gap-1"><Phone className="w-3.5 h-3.5" /> {worker.phone}</span>
-              <span className="flex items-center gap-1"><User className="w-3.5 h-3.5" /> {worker.role}</span>
-            </div>
-          </div>
-        </div>
-        
-        <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 text-left min-w-[200px]">
-          <p className="text-xs font-bold text-gray-400 uppercase mb-1 text-right">الرصيد المستحق الحالي</p>
-          <div className={`text-3xl font-black flex items-center justify-end gap-2 ${worker.currentBalance >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
-            {worker.currentBalance.toFixed(2)} ₪ //console.log()
-            <Wallet className="w-6 h-6" />
-          </div>
-        </div>
-      </div>
-
-      {/* سجل المعاملات المالية */}
-      <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
-        <div className="p-6 border-b bg-gray-50/50 flex items-center gap-2 font-bold text-gray-700">
-          <Calendar className="w-5 h-5 text-indigo-500" /> كشف حساب الحركات المالية
-        </div>
-
-        <div className="overflow-x-auto">
-          <table className="w-full text-right text-sm">
-            <thead className="bg-gray-50 text-gray-400 text-xs uppercase">
-              <tr>
-                <th className="p-4 font-medium">التاريخ</th>
-                <th className="p-4 font-medium">النوع</th>
-                <th className="p-4 font-medium">التفاصيل / ملاحظات</th>
-                <th className="p-4 font-medium">المبلغ</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {worker.transactions.length === 0 ? (
-                <tr>
-                  <td colSpan={4} className="p-10 text-center text-gray-400 font-medium">لا توجد حركات مالية مسجلة بعد لهذا العامل.</td>
-                </tr>
-              ) : (
-                worker.transactions.map((tx: WorkerTransaction) => (
-                  <tr key={tx.id} className="hover:bg-gray-50/30 transition">
-                    <td className="p-4 text-gray-500 font-mono text-xs">
-                      {new Date(tx.date).toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' })}
-                    </td>
-                    <td className="p-4">
-                      {tx.type === "STAKE" || tx.type === "BONUS" ? (
-                        <span className="inline-flex items-center gap-1 text-emerald-600 font-bold">
-                          <ArrowUpCircle className="w-4 h-4" /> استحقاق/مكافأة
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 text-rose-600 font-bold">
-                          <ArrowDownCircle className="w-4 h-4" /> سحبيات/دفعات
-                        </span>
-                      )}
-                    </td>
-                    <td className="p-4 text-gray-600 font-medium">
-                      {tx.description || "---"}
-                    </td>
-                    <td className={`p-4 font-black text-lg ${tx.type === "STAKE" || tx.type === "BONUS" ? 'text-emerald-600' : 'text-rose-600'}`}>
-                      {tx.type === "STAKE" || tx.type === "BONUS" ? "+" : "-"}
-                      {tx.amount.toFixed(2)} ₪
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-    </div>
-  );
-}
-</file>
-
-<file path="src/app/layout.tsx">
-import type { Metadata } from "next";
-import { Inter } from "next/font/google";
-import "./globals.css";
-import Providers from "../providers/Providers";
-import { Toaster } from "react-hot-toast"; 
-const inter = Inter({ subsets: ["latin"] });
-
-export const metadata: Metadata = {
-  title: "نظام إدارة ورشة الكمبريسور",
-  description: "نظام إداري مخصص لورش صيانة وتجميع الكمبريسورات",
-};
-
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
-  return (
-    <html lang="ar" dir="rtl">
-      <body className={inter.className}>
-        {/* تغليف التطبيق بمزود المصادقة */}
-        <Providers>
-          <Toaster position="top-center" />
-          {children}
-        </Providers>
-      </body>
-    </html>
-  );
-}
-</file>
-
-<file path="src/components/shared/Navbar.tsx">
-"use client";
-
-import { signOut, useSession } from "next-auth/react";
-import { LogOut, User, Menu } from "lucide-react";
-import { ROUTES } from "@/src/constants/paths"; 
-
-export default function Navbar({ onOpenSidebar }: { onOpenSidebar?: () => void }) {
-  const { data: session } = useSession();
-
-  return (
-    <header className="print:hidden bg-white border-b border-gray-200 h-16 flex items-center justify-between px-4 sm:px-6 sticky top-0 z-10 shadow-sm">      
-      <div className="flex items-center gap-4">
-        {onOpenSidebar && (
-          <button onClick={onOpenSidebar} className="lg:hidden p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition">
-            <Menu className="w-6 h-6" />
-          </button>
-        )}
-        <h2 className="text-xl font-semibold text-gray-800 hidden sm:block">نظام الإدارة</h2>
-      </div>
-
-      <div className="flex items-center gap-4">
-        <div className="flex items-center gap-2 bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-100">
-          <User className="w-5 h-5 text-gray-500" />
-          <div className="flex flex-col">
-            <span className="text-sm font-medium text-gray-700">
-              {session?.user?.name || "مستخدم"}
-            </span>
-            <span className="text-xs text-gray-500">
-              {session?.user?.role === "ADMIN" ? "مدير نظام" : "فني / عامل"}
-            </span>
-          </div>
-        </div>
-
-        <button
-          onClick={() => signOut({ callbackUrl: ROUTES.LOGIN })}
-          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition flex items-center gap-2"
-          title="تسجيل الخروج"
-        >
-          <LogOut className="w-5 h-5" />
-          <span className="text-sm font-medium hidden sm:block">خروج</span>
-        </button>
-      </div>
-    </header>
   );
 }
 </file>
@@ -7761,113 +7933,21 @@ export function useInventory() {
 }
 </file>
 
-<file path="src/features/workers/hooks/useWorkers.ts">
-"use client";
+<file path="next.config.ts">
+import type { NextConfig } from "next";
 
-import { useState, useEffect, useCallback } from "react";
-import { toast } from "react-hot-toast";
-import { registerWorker, getWorkersWithBalance, addWorkerTransaction, deleteWorker } from "@/src/server/actions/workers.actions";
-import { TypesWorkerTransaction } from "@prisma/client";
-import { AddWorkerValues, WorkerTxValues } from "../validations/validations";
-
-export function useWorkers() {
-  const [workers, setWorkers] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  
-  // حالات النوافذ المنبثقة
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [txModal, setTxModal] = useState<{ isOpen: boolean; userId: string; type: TypesWorkerTransaction | null }>({ 
-    isOpen: false, userId: "", type: null 
-  });
-
-  const loadWorkers = useCallback(async () => {
-    setIsLoading(true);
-    const data = await getWorkersWithBalance();
-    setWorkers(data || []);
-    setIsLoading(false);
-  }, []);
-
-  useEffect(() => { loadWorkers(); }, [loadWorkers]);
-
-  const handleAddWorker = async (data: AddWorkerValues) => {
-    const res = await registerWorker({ ...data, baseSalary: data.baseSalary?.toString() });
-    if (res.success) {
-      toast.success("تم تسجيل الفني بنجاح");
-      setIsAddModalOpen(false);
-      loadWorkers();
-      return true;
-    }
-    toast.error(res.error || "حدث خطأ");
-    return false;
-  };
-
-  const handleAddTx = async (data: WorkerTxValues, userId: string) => {
-    const typeLabel = data.type === 'STAKE' ? 'استحقاق/راتب' : data.type === 'ADVANCE' ? 'سلفة/سحب' : data.type === 'BONUS' ? 'مكافأة' : 'خصم';
-    const finalDesc = `${typeLabel}${data.notes ? ` - ${data.notes}` : ''}`;
-
-    const res = await addWorkerTransaction({
-      userId,
-      amount: data.amount,
-      type: data.type,
-      description: finalDesc
-    });
-
-    if (res.success) {
-      toast.success("تم تسجيل العملية بنجاح");
-      setTxModal({ isOpen: false, userId: "", type: null }); // إغلاق النافذة
-      loadWorkers();
-      return true;
-    } 
-    toast.error(res.error || "فشل تسجيل العملية");
-    return false;
-  };
-
-  const handleDelete = async (userId: string, name: string) => {
-    if (!confirm(`هل أنت متأكد من حذف الفني (${name}) نهائياً؟`)) return;
-    const res = await deleteWorker(userId);
-    if (res.success) { 
-      toast.success("تم الحذف"); 
-      loadWorkers(); 
-    } else { 
-      toast.error(res.error || "لا يمكن الحذف لوجود حركات مالية"); 
-    }
-  };
-
-  return { 
-    workers, isLoading, 
-    isAddModalOpen, setIsAddModalOpen, 
-    txModal, setTxModal, 
-    actions: { handleAddWorker, handleAddTx, handleDelete } 
-  };
-}
-</file>
-
-<file path="src/middleware.ts">
-import { withAuth } from "next-auth/middleware";
-import { NextResponse } from "next/server";
-import { ROUTES } from "./constants/paths";
-
-export default withAuth(
-  function middleware(req) {
-    //  فحص إذا كان المستخدم بحاول يدخل صفحة العمال وهو مش مدير
-    const isWorkerPage = req.nextUrl.pathname.startsWith("/workers");
-    const isExpensePage = req.nextUrl.pathname.startsWith("/expenses");
-    
-    if ((isWorkerPage || isExpensePage) && req.nextauth.token?.role !== "ADMIN") {
-      // اطرده للصفحة الرئيسية فوراً
-      return NextResponse.redirect(new URL(`${ROUTES.HOME}`, req.url));
-    }
+const nextConfig: NextConfig = {
+  images: {
+    remotePatterns: [
+      { protocol: "https", hostname: "utfs.io" },
+      { protocol: "https", hostname: "uploadthing.com" },
+      { protocol: "https", hostname: "uufs.io" }
+    ],
   },
-  {
-    pages: {
-      signIn: `${ROUTES.LOGIN}`,
-    },
-  }
-);
-
-export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|login).*)"],
+  // No custom Turbopack configuration needed for Next 15.
 };
+
+export default nextConfig;
 </file>
 
 <file path="src/app/(dashboard)/compressors/page.tsx">
@@ -7985,6 +8065,54 @@ export default function DashboardPage() {
 }
 </file>
 
+<file path="src/app/(dashboard)/workers/page.tsx">
+"use client";
+
+import { Loader2 } from "lucide-react";
+import { useWorkers } from "@/src/features/workers/hooks/useWorkers";
+import { AddWorkerForm } from "@/src/features/workers/components/AddWorkerForm";
+import { WorkersTable } from "@/src/features/workers/components/WorkersTable";
+import { WorkerTxModal } from "@/src/features/workers/components/WorkerTxModal"; // 👈 استيراد المودال النظيف
+
+export default function WorkersPage() {
+  // 👈 استخدام الـ Hook الجديد بدون state أو dispatch
+  const { workers, isLoading, txModal, setTxModal, actions } = useWorkers();
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center min-h-[50vh]">
+        <Loader2 className="w-10 h-10 animate-spin text-indigo-600" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-6 space-y-8 max-w-6xl mx-auto animate-in fade-in duration-500">
+      
+      {/* 1. نموذج إضافة فني جديد */}
+      <AddWorkerForm onAdd={actions.handleAddWorker} />      
+      
+      {/* 2. جدول الفنيين وأرصدتهم */}
+      <WorkersTable 
+        workers={workers} 
+        onOpenTxModal={(userId, type) => setTxModal({ isOpen: true, userId, type })} 
+        onDelete={actions.handleDelete} 
+      />
+      
+      {/* 3. النافذة المنبثقة الذكية Zod */}
+      <WorkerTxModal 
+        isOpen={txModal.isOpen} 
+        onClose={() => setTxModal({ isOpen: false, userId: "", type: null })}
+        workerId={txModal.userId}
+        initialType={txModal.type}
+        onSave={actions.handleAddTx}
+      />
+
+    </div>
+  );
+}
+</file>
+
 <file path="src/features/expenses/hooks/useExpenses.ts">
 "use client";
 
@@ -8038,22 +8166,23 @@ export function useExpenses() {
 
 import { useState, useEffect, useCallback } from "react";
 import { toast } from "react-hot-toast";
-import { 
-  getTicketById, updateTicket, addPartToTicket, 
-  removePartFromTicket, addPaymentToTicket, updateTicketInvoiceImage 
+import {
+  getTicketById, updateTicket, addPartToTicket,
+  removePartFromTicket, addPaymentToTicket, updateTicketInvoiceImage
 } from "@/src/server/actions/tickets.actions";
 import { TicketWithDetails } from "@/src/types";
 import { SparePart, TicketStatus } from "@prisma/client";
 import { getAllSparePartsForDropdown } from "@/src/server/actions/inventory.actions";
+import { deleteFilesFromUploadThing } from "@/src/server/actions/uploadthing.actions";
 
 export function useTicketDetails(ticketId: string) {
   const [ticketData, setTicketData] = useState<TicketWithDetails | null>(null);
   const [inventory, setInventory] = useState<SparePart[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
-  
+
   const [status, setStatus] = useState<TicketStatus>("OPEN");
   const [laborCost, setLaborCost] = useState(0);
-  const [discountPercentage, setDiscountPercentage] = useState(0); 
+  const [discountPercentage, setDiscountPercentage] = useState(0);
   const [isSaving, setIsSaving] = useState(false);
   const [isUpdatingPart, setIsUpdatingPart] = useState(false);
 
@@ -8123,13 +8252,33 @@ export function useTicketDetails(ticketId: string) {
     fetchData();
   };
 
-  const handleRemoveImage = async (urlToRemove: string) => {
-    const currentUrls = ticketData?.invoiceImageUrl || "";
-    const newUrls = currentUrls.split(',').filter(u => u !== urlToRemove).join(',');
-    await updateTicketInvoiceImage(ticketId, newUrls);
-    fetchData();
-  };
 
+  const handleRemoveImage = async (urlToRemove: string) => {
+    setIsUpdatingPart(true); 
+    try {
+      const currentUrls = ticketData?.invoiceImageUrl || "";
+      const newUrls = currentUrls.split(',').filter(u => u !== urlToRemove).join(',');
+
+      // 1. تحديث قاعدة البيانات (PostgreSQL)
+      await updateTicketInvoiceImage(ticketId, newUrls);
+
+      // 2. الحذف الفيزيائي من السحابة (UploadThing)
+      const deleteRes = await deleteFilesFromUploadThing(urlToRemove);
+
+      if (deleteRes.success) {
+        toast.success("تم مسح الصورة من النظام والسحابة بنجاح");
+      } else {
+        // في حال فشل الحذف من السحابة، نظهر تحذير ولكن تستمر العملية
+        toast.error("تم إزالة الصورة من التذكرة، ولكن حدث خطأ في السحابة");
+      }
+      
+      fetchData();
+    } catch (error) {
+      toast.error("حدث خطأ غير متوقع أثناء مسح الصورة");
+    } finally {
+      setIsUpdatingPart(false);
+    }
+  };
   return {
     ticketData, inventory, isLoadingData, isSaving, isUpdatingPart,
     status, setStatus, laborCost, setLaborCost, discountPercentage, setDiscountPercentage,
@@ -8157,11 +8306,11 @@ export function useTicketDetails(ticketId: string) {
     "@uploadthing/react": "^7.3.3",
     "bcrypt": "^6.0.0",
     "lucide-react": "^1.7.0",
-    "next": "15.5.3",
+    "next": "^16.2.2",
     "next-auth": "^4.24.13",
     "pg": "^8.20.0",
-    "react": "19.1.0",
-    "react-dom": "19.1.0",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
     "react-hook-form": "^7.72.0",
     "react-hot-toast": "^2.6.0",
     "react-select": "^5.10.2",
@@ -8187,54 +8336,6 @@ export function useTicketDetails(ticketId: string) {
     "tsx": "^4.21.0",
     "typescript": "^5"
   }
-}
-</file>
-
-<file path="src/app/(dashboard)/workers/page.tsx">
-"use client";
-
-import { Loader2 } from "lucide-react";
-import { useWorkers } from "@/src/features/workers/hooks/useWorkers";
-import { AddWorkerForm } from "@/src/features/workers/components/AddWorkerForm";
-import { WorkersTable } from "@/src/features/workers/components/WorkersTable";
-import { WorkerTxModal } from "@/src/features/workers/components/WorkerTxModal"; // 👈 استيراد المودال النظيف
-
-export default function WorkersPage() {
-  // 👈 استخدام الـ Hook الجديد بدون state أو dispatch
-  const { workers, isLoading, txModal, setTxModal, actions } = useWorkers();
-
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center min-h-[50vh]">
-        <Loader2 className="w-10 h-10 animate-spin text-indigo-600" />
-      </div>
-    );
-  }
-
-  return (
-    <div className="p-6 space-y-8 max-w-6xl mx-auto animate-in fade-in duration-500">
-      
-      {/* 1. نموذج إضافة فني جديد */}
-      <AddWorkerForm onAdd={actions.handleAddWorker} />      
-      
-      {/* 2. جدول الفنيين وأرصدتهم */}
-      <WorkersTable 
-        workers={workers} 
-        onOpenTxModal={(userId, type) => setTxModal({ isOpen: true, userId, type })} 
-        onDelete={actions.handleDelete} 
-      />
-      
-      {/* 3. النافذة المنبثقة الذكية Zod */}
-      <WorkerTxModal 
-        isOpen={txModal.isOpen} 
-        onClose={() => setTxModal({ isOpen: false, userId: "", type: null })}
-        workerId={txModal.userId}
-        initialType={txModal.type}
-        onSave={actions.handleAddTx}
-      />
-
-    </div>
-  );
 }
 </file>
 
@@ -8460,6 +8561,38 @@ model Expense {
 
   ticketId String?
   ticket   Ticket?         @relation(fields: [ticketId], references: [id])
+}
+</file>
+
+<file path="src/app/layout.tsx">
+import type { Metadata } from "next";
+import { Inter } from "next/font/google";
+import "./globals.css";
+import Providers from "../providers/Providers";
+import { Toaster } from "react-hot-toast"; 
+const inter = Inter({ subsets: ["latin"] });
+
+export const metadata: Metadata = {
+  title: "نظام إدارة ورشة الكمبريسور",
+  description: "نظام إداري مخصص لورش صيانة وتجميع الكمبريسورات",
+};
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <html lang="ar" dir="rtl">
+      <body className={inter.className}>
+        {/* تغليف التطبيق بمزود المصادقة */}
+        <Providers>
+          <Toaster position="top-center" />
+          {children}
+        </Providers>
+      </body>
+    </html>
+  );
 }
 </file>
 
