@@ -22,7 +22,7 @@ export async function getCompressors() {
 export async function addCompressor(data: {
   serialNumber?: string;
   modelName: string; 
-  productionCost: number; // أجرة اليد والتكاليف الأخرى
+  productionCost: number; 
   sellingPrice: number;
   description?: string;
   imageUrl?: string;
@@ -38,7 +38,7 @@ export async function addCompressor(data: {
         data: {
           modelName: data.modelName,
           serialNumber: data.serialNumber,
-          productionCost: data.productionCost + partsTotalCost, // التكلفة الكلية
+          productionCost: data.productionCost + partsTotalCost,
           sellingPrice: data.sellingPrice,
           description: data.description,
           imageUrl: data.imageUrl,
@@ -53,8 +53,20 @@ export async function addCompressor(data: {
         }
       });
 
-      // 3. خصم القطع من المخزن
+      // 3. خصم القطع من المخزن مع حماية ضد المخزون السالب (Optimistic Locking)
       for (const part of data.parts) {
+        // جلب القطعة لمعرفة رصيدها الحالي
+        const currentPart = await tx.sparePart.findUnique({
+          where: { id: part.sparePartId },
+          select: { name: true, quantity: true } // نجلب الاسم والكمية فقط للأداء
+        });
+
+        // إذا القطعة غير موجودة أو كميتها لا تكفي
+        if (!currentPart || currentPart.quantity < part.quantity) {
+          throw new Error(`الكمية المتاحة من (${currentPart?.name || 'قطعة مجهولة'}) لا تكفي. المتاح فقط: ${currentPart?.quantity || 0}`);
+        }
+
+        // الخصم الآمن
         await tx.sparePart.update({
           where: { id: part.sparePartId },
           data: { quantity: { decrement: part.quantity } }
@@ -65,12 +77,11 @@ export async function addCompressor(data: {
     revalidatePath(ROUTES.COMPRESSORS);
     revalidatePath(ROUTES.INVENTORY);
     return { success: true };
-  } catch (error) {
-    console.error("🔥 Prisma Add Compressor Error:", error); 
-    return { error: "فشل إضافة الكمبريسور وخصم القطع" };
+  } catch (error: any) {
+    // إرجاع رسالة الخطأ المخصصة التي رميناها (throw new Error) للمستخدم
+    return { error: error.message || "فشل إضافة الكمبريسور وخصم القطع" };
   }
 }
-
 // 3. التحديث
 export async function updateCompressorStatus(id: string, status: string) {
   try {

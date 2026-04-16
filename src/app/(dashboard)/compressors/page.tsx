@@ -6,15 +6,28 @@ import { ExportButton } from "@/src/components/shared/ExportButton";
 import { CompressorModal } from "@/src/features/compressors/components/CompressorModal";
 import { CompressorTable } from "@/src/features/compressors/components/CompressorTable";
 import { Compressor } from "@prisma/client";
+import { useState } from "react";
 
 export default function CompressorsPage() {
   const { 
     compressors, isLoading, isModalOpen, setIsModalOpen, 
-     fetchData, actions  ,inventory
+    fetchData, actions, inventory
   } = useCompressors();
 
-  // --- تجهيز البيانات للتصدير ---
-  const excelData = compressors.map((c: Compressor) => ({
+  // 1. حالة البحث
+  const [searchQuery, setSearchQuery] = useState("");
+
+  // 2. فلترة البيانات بناءً على البحث
+  const filteredCompressors = compressors.filter((c: Compressor) => {
+    const query = searchQuery.toLowerCase();
+    return (
+      c.modelName.toLowerCase().includes(query) || 
+      (c.serialNumber && c.serialNumber.toLowerCase().includes(query))
+    );
+  });
+  
+  // 3. تجهيز البيانات للتصدير (تم التعديل لتصدير البيانات المفلترة فقط)
+  const excelData = filteredCompressors.map((c: Compressor) => ({
     "الموديل/الوصف": c.modelName,
     "الرقم التسلسلي": c.serialNumber || "لا يوجد",
     "تكلفة الإنتاج (₪)": c.productionCost,
@@ -57,7 +70,13 @@ export default function CompressorsPage() {
       <div className="flex flex-col sm:flex-row gap-4 items-center">
         <div className="relative flex-1 w-full">
           <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
-          <input type="text" placeholder="بحث بالموديل أو الرقم التسلسلي..." className="w-full pr-12 pl-4 py-4 bg-white border border-gray-100 rounded-2xl focus:ring-2 focus:ring-indigo-500/20 outline-none font-bold text-sm transition-all shadow-sm" />
+          <input 
+            type="text" 
+            value={searchQuery} 
+            onChange={(e) => setSearchQuery(e.target.value)} // 👈 تم الربط هنا
+            placeholder="بحث بالموديل أو الرقم التسلسلي..." 
+            className="w-full pr-12 pl-4 py-4 bg-white border border-gray-100 rounded-2xl focus:ring-2 focus:ring-indigo-500/20 outline-none font-bold text-sm transition-all shadow-sm" 
+          />
         </div>
         <button className="flex items-center gap-2 px-6 py-4 bg-white border border-gray-100 rounded-2xl text-gray-500 font-bold text-sm hover:bg-gray-50 transition-all shadow-sm">
           <Filter className="w-4 h-4" /> تصفية
@@ -71,7 +90,11 @@ export default function CompressorsPage() {
           <p className="text-gray-400 font-bold animate-pulse">جاري جلب بيانات المخزن...</p>
         </div>
       ) : (
-        <CompressorTable compressors={compressors} onStatusChange={actions.handleStatusChange} onDelete={actions.handleDelete} />
+        <CompressorTable 
+          compressors={filteredCompressors} 
+          onStatusChange={actions.handleStatusChange} 
+          onDelete={actions.handleDelete} 
+        />
       )}
 
       {/* النافذة المنبثقة للإضافة */}

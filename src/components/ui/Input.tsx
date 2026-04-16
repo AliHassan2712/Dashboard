@@ -5,10 +5,11 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label?: string;
   error?: string;
   icon?: React.ReactNode;
+  leftIcon?: React.ReactNode; 
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ label, error, icon, className = "", ...props }, ref) => {
+  ({ label, error, icon, leftIcon, className = "", ...props }, ref) => {
     return (
       <div className="w-full flex flex-col gap-1.5">
         {/* 1. تحسين لون الـ Label ليكون غامقاً وواضحاً */}
@@ -32,6 +33,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
               text-sm font-bold text-slate-900 
               border-2 /* زيادة سمك الإطار */
               ${icon ? "pr-10" : ""}
+              ${leftIcon ? "pl-10" : ""}
               ${
                 error 
                   ? "border-rose-500 focus:ring-4 focus:ring-rose-500/20 bg-rose-50/50" 
