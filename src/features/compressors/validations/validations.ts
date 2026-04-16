@@ -9,7 +9,7 @@ export const compressorSchema = z.object({
   imageUrl: z.string().optional(),
   parts: z.array(z.object({
     sparePartId: z.string().min(1, "اختر قطعة"),
-    quantity: z.number().min(1, "الكمية 1 على الأقل"),
+    quantity: z.number().int("يجب أن يكون رقماً صحيحاً").min(1, "الكمية 1 على الأقل"),
     unitCost: z.number().min(0, "التكلفة مطلوبة")
   }))
 });
