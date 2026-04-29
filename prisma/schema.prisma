@@ -133,6 +133,11 @@ model Ticket {
   payments         Payment[]    
   trialItems       TrialItem[]
   expenses         Expense[]
+
+  @@index([customerPhone])
+  @@index([customerName])
+  @@index([status])
+  @@index([createdAt])
 }
 
 // ================= الدفعات والمعاملات =================

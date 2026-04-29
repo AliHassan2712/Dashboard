@@ -1,3 +1,4 @@
+import { memo } from "react";
 import Link from "next/link";
 import { Ticket as TicketIcon, Edit, Trash2 } from "lucide-react";
 import { ROUTES } from "@/src/constants/paths";
@@ -9,7 +10,7 @@ interface TicketsTableProps {
   onDelete: (id: string, name: string) => void;
 }
 
-export const TicketsTable = ({ tickets, onEdit, onDelete }: TicketsTableProps) => {
+export const TicketsTable = memo(({ tickets, onEdit, onDelete }: TicketsTableProps) => {
     if (tickets.length === 0) {
         return (
             <div className="text-center py-12 text-gray-500 bg-white rounded-xl shadow-sm border border-gray-100">
@@ -74,4 +75,6 @@ export const TicketsTable = ({ tickets, onEdit, onDelete }: TicketsTableProps) =
             </div>
         </div>
     );
-};
+});
+
+TicketsTable.displayName = "TicketsTable";

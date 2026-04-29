@@ -213,3 +213,47 @@ export async function deleteTicket(ticketId: string) {
     return { error: "لا يمكن حذف التذكرة لاحتوائها على حركات مالية أو قطع مستهلكة. يرجى تصفيتها أولاً." };
   }
 }
+
+
+
+export async function getPaginatedTickets(params: {
+  page: number;
+  limit: number;
+  search?: string;
+  status?: string;
+}) {
+  try {
+    const { page, limit, search, status } = params;
+    const skip = (page - 1) * limit;
+
+    // بناء فلتر البحث
+    const whereClause: any = {};
+    if (status && status !== "ALL") whereClause.status = status;
+    if (search) {
+      whereClause.OR = [
+        { customerName: { contains: search, mode: "insensitive" } },
+        { customerPhone: { contains: search } }
+      ];
+    }
+
+    // جلب العدد الكلي + بيانات الصفحة الحالية في نفس الوقت
+    const [totalItems, tickets] = await prisma.$transaction([
+      prisma.ticket.count({ where: whereClause }),
+      prisma.ticket.findMany({
+        where: whereClause,
+        skip,
+        take: limit, 
+        orderBy: { createdAt: 'desc' },
+        include: { worker: { select: { name: true } }, partsUsed: true } // جلب العلاقات
+      })
+    ]);
+
+    return { 
+      success: true, 
+      data: tickets, 
+      metadata: { totalItems, totalPages: Math.ceil(totalItems / limit), currentPage: page }
+    };
+  } catch (error) {
+    return { error: "فشل جلب بيانات التذاكر" };
+  }
+}
