@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { Edit, Trash2, AlertTriangle, BadgeDollarSign } from "lucide-react";
 import { SparePart } from "@prisma/client";
 
@@ -8,7 +9,7 @@ interface InventoryTableProps {
   onOpenSellModal: (part: SparePart) => void;
 }
 
-export const InventoryTable = ({ parts, onOpenEditModal, onDelete, onOpenSellModal }: InventoryTableProps) => (
+export const InventoryTable = memo(({ parts, onOpenEditModal, onDelete, onOpenSellModal }: InventoryTableProps) => (
   <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
     <div className="overflow-x-auto">
       <table className="w-full text-right text-sm">
@@ -67,4 +68,6 @@ export const InventoryTable = ({ parts, onOpenEditModal, onDelete, onOpenSellMod
       </table>
     </div>
   </div>
-);
+));
+
+InventoryTable.displayName = "InventoryTable";

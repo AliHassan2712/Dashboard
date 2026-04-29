@@ -84,6 +84,7 @@ src/app/not-found.tsx
 src/components/shared/DashboardLayoutClient.tsx
 src/components/shared/ExportButton.tsx
 src/components/shared/Navbar.tsx
+src/components/shared/Pagination.tsx
 src/components/shared/Sidebar.tsx
 src/components/ui/Input.tsx
 src/components/ui/Modal.tsx
@@ -123,6 +124,7 @@ src/features/expenses/validations/validations.ts
 src/features/inventory/components/InventoryModal.tsx
 src/features/inventory/components/InventoryTable.tsx
 src/features/inventory/components/InventoryToolbar.tsx
+src/features/inventory/components/SellPartModal.tsx
 src/features/inventory/hooks/useInventory.ts
 src/features/inventory/validations/validations.ts
 src/features/quotations/components/QuotationForm.tsx
@@ -181,7 +183,6 @@ src/server/actions/transactions.actions.ts
 src/server/actions/trials.actions.ts
 src/server/actions/uploadthing.actions.ts
 src/server/actions/workers.actions.ts
-src/types/compressor.types.ts
 src/types/dashboard.types.ts
 src/types/expense.types.ts
 src/types/index.ts
@@ -616,50 +617,45 @@ export default function DashboardLayoutClient({ children }: { children: React.Re
 }
 </file>
 
-<file path="src/components/ui/Input.tsx">
-import { forwardRef, InputHTMLAttributes, ReactNode } from "react";
+<file path="src/components/shared/Pagination.tsx">
+import { memo } from "react";
+import { ChevronRight, ChevronLeft } from "lucide-react";
 
-interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
-  label?: string;
-  error?: string;
-  wrapperClassName?: string;
-  rightIcon?: ReactNode; // أيقونة في البداية (يمين)
-  leftIcon?: ReactNode;  // أيقونة في النهاية (يسار)
+interface PaginationProps {
+  currentPage: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
 }
 
-export const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ label, error, wrapperClassName = "w-full", rightIcon, leftIcon, className = "", ...props }, ref) => {
-    return (
-      <div className={wrapperClassName}>
-        {label && (
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            {label}
-          </label>
-        )}
-        <div className="relative">
-          {rightIcon && <div className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">{rightIcon}</div>}
-          <input
-            ref={ref}
-            className={`
-              w-full border rounded-lg outline-none transition
-              ${error ? "border-red-300 focus:ring-2 focus:ring-red-100" : "border-gray-300 focus:ring-2 focus:ring-indigo-100"}
-              disabled:bg-gray-50 disabled:text-gray-500
-              ${rightIcon ? "pr-10" : "pr-4"}
-              ${leftIcon ? "pl-10" : "pl-4"}
-              ${className.includes('py-') || className.includes('p-') ? '' : 'py-2.5'}
-              ${className}
-            `}
-            {...props}
-          />
-          {leftIcon && <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-bold">{leftIcon}</div>}
-        </div>
-        {error && <p className="mt-1.5 text-xs text-red-600 font-medium">{error}</p>}
-      </div>
-    );
-  }
-);
+export const Pagination = memo(({ currentPage, totalPages, onPageChange }: PaginationProps) => {
+  if (totalPages <= 1) return null;
 
-Input.displayName = "Input";
+  return (
+    <div className="flex items-center justify-center gap-4 mt-8 bg-white p-4 rounded-2xl border border-gray-100 shadow-sm w-fit mx-auto print:hidden">
+      <button 
+        disabled={currentPage === 1}
+        onClick={() => onPageChange(currentPage - 1)}
+        className="p-2 rounded-lg bg-gray-50 text-gray-600 hover:bg-indigo-50 hover:text-indigo-600 disabled:opacity-50 transition-all"
+      >
+        <ChevronRight className="w-5 h-5" /> 
+      </button>
+      
+      <span className="text-sm font-bold text-gray-600">
+        صفحة <span className="text-indigo-600 font-black">{currentPage}</span> من {totalPages}
+      </span>
+
+      <button 
+        disabled={currentPage === totalPages}
+        onClick={() => onPageChange(currentPage + 1)}
+        className="p-2 rounded-lg bg-gray-50 text-gray-600 hover:bg-indigo-50 hover:text-indigo-600 disabled:opacity-50 transition-all"
+      >
+        <ChevronLeft className="w-5 h-5" />
+      </button>
+    </div>
+  );
+});
+
+Pagination.displayName = "Pagination";
 </file>
 
 <file path="src/components/ui/Textarea.tsx">
@@ -812,26 +808,6 @@ export const CompressorCard = ({ comp, onStatusChange, onDelete }: CompressorCar
     </div>
   );
 };
-</file>
-
-<file path="src/features/compressors/validations/validations.ts">
-import * as z from "zod";
-
-export const compressorSchema = z.object({
-  modelName: z.string().min(2, "الموديل / الوصف مطلوب"),
-  serialNumber: z.string().optional(),
-  productionCost: z.coerce.number().min(0, "التكلفة يجب أن تكون صفر أو أكثر"),
-  sellingPrice: z.coerce.number().min(0, "السعر يجب أن يكون صفر أو أكثر"),
-  description: z.string().optional(),
-  imageUrl: z.string().optional(),
-  parts: z.array(z.object({
-    sparePartId: z.string().min(1, "اختر قطعة"),
-    quantity: z.coerce.number().min(1, "الكمية 1 على الأقل"),
-    unitCost: z.coerce.number().min(0, "التكلفة مطلوبة")
-  })).optional().default([])
-});
-
-export type CompressorFormValues = z.infer<typeof compressorSchema>;
 </file>
 
 <file path="src/features/dashboard/components/WorkerDashboard.tsx">
@@ -1367,6 +1343,82 @@ export type InvoiceFormInput = z.input<typeof invoiceSchema>;   // نوع الإ
 export type InvoiceFormValues = z.output<typeof invoiceSchema>; // نوع المخرج النظيف (للسيرفر)
 </file>
 
+<file path="src/features/inventory/components/SellPartModal.tsx">
+import { useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { BadgeDollarSign, Loader2 } from "lucide-react";
+import { Modal } from "@/src/components/ui/Modal";
+import { Input } from "@/src/components/ui/Input";
+import { SparePart } from "@prisma/client";
+
+interface Props {
+  isOpen: boolean;
+  onClose: () => void;
+  part: SparePart | null;
+  onSave: (sparePartId: string, quantity: number, price: number) => Promise<boolean>;
+}
+
+export const SellPartModal = ({ isOpen, onClose, part, onSave }: Props) => {
+  const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm({
+    defaultValues: { quantity: 1, price: 0 }
+  });
+
+  // تعبئة السعر الافتراضي للقطعة عند فتح النافذة
+  useEffect(() => {
+    if (isOpen && part) {
+      reset({ quantity: 1, price: part.sellingPrice });
+    }
+  }, [isOpen, part, reset]);
+
+  const onSubmit = async (data: any) => {
+    if (!part) return;
+    const success = await onSave(part.id, data.quantity, data.price);
+    if (success) onClose();
+  };
+
+  if (!part) return null;
+
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} title={<><BadgeDollarSign className="w-5 h-5 text-emerald-600" /> بيع مباشر من المخزن</>}>
+      <div className="mb-4 p-4 bg-gray-50 border border-gray-100 rounded-xl flex justify-between items-center">
+        <div>
+            <p className="font-bold text-gray-800">{part.name}</p>
+            <p className="text-xs text-gray-500 mt-1">متوفر في المخزن: <span className="font-black text-indigo-600">{part.quantity} حبة</span></p>
+        </div>
+      </div>
+
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <Input
+          label="الكمية المباعة"
+          type="number"
+          error={errors.quantity?.message as string}
+          {...register("quantity", {
+            valueAsNumber: true,
+            min: { value: 1, message: "أقل كمية هي 1" },
+            max: { value: part.quantity, message: "الكمية المطلوبة غير متوفرة في المخزن" }
+          })}
+        />
+        
+        <Input
+          label="سعر البيع للقطعة الواحدة (₪)"
+          type="number"
+          step="0.01"
+          error={errors.price?.message as string}
+          {...register("price", {
+            valueAsNumber: true,
+            min: { value: 0, message: "السعر غير صالح" }
+          })}
+        />
+        
+        <button disabled={isSubmitting} type="submit" className="w-full bg-emerald-600 text-white py-3.5 rounded-xl font-bold flex justify-center items-center hover:bg-emerald-700 transition mt-2 shadow-md">
+          {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : "تأكيد البيع وخصم القطع"}
+        </button>
+      </form>
+    </Modal>
+  );
+};
+</file>
+
 <file path="src/features/inventory/validations/validations.ts">
 import * as z from "zod";
 
@@ -1766,17 +1818,6 @@ export async function deleteFilesFromUploadThing(fileUrls: string | string[]) {
     console.error("🔴 [UploadThing Delete Error]:", error);
     return { success: false, error: "فشل حذف الملف من خوادم التخزين" };
   }
-}
-</file>
-
-<file path="src/types/compressor.types.ts">
-export interface CompressorFormData {
-  serialNumber: string;
-  model: string;
-  buildCost: string;
-  sellingPrice: string;
-  description: string;
-  imageUrl: string;
 }
 </file>
 
@@ -3040,151 +3081,6 @@ export const TicketsManager = ({ initialTickets }: { initialTickets: TicketListI
 };
 </file>
 
-<file path="src/features/tickets/components/TicketsTable.tsx">
-import Link from "next/link";
-import { Ticket as TicketIcon, Edit, Trash2 } from "lucide-react";
-import { ROUTES } from "@/src/constants/paths";
-import { TicketListItem } from "@/src/types";
-
-interface TicketsTableProps {
-  tickets: TicketListItem[];
-  onEdit: (ticket: TicketListItem) => void;
-  onDelete: (id: string, name: string) => void;
-}
-
-export const TicketsTable = ({ tickets, onEdit, onDelete }: TicketsTableProps) => {
-    if (tickets.length === 0) {
-        return (
-            <div className="text-center py-12 text-gray-500 bg-white rounded-xl shadow-sm border border-gray-100">
-                <TicketIcon className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                <p>لا توجد أي تذاكر مطابقة لعملية البحث.</p>
-            </div>
-        );
-    }
-
-    return (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-            <div className="overflow-x-auto">
-                <table className="w-full text-sm text-right">
-                    <thead className="bg-gray-50 text-gray-600 border-b border-gray-100">
-                        <tr>
-                            <th className="px-4 py-3 font-medium">رقم التذكرة</th>
-                            <th className="px-4 py-3 font-medium">الزبون</th>
-                            <th className="px-4 py-3 font-medium">تاريخ الدخول</th>
-                            <th className="px-4 py-3 font-medium">الحالة</th>
-                            <th className="px-4 py-3 font-medium text-center">إجراءات</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100">
-                        {tickets.map((ticket) => (
-                            <tr key={ticket.id} className="hover:bg-gray-50/50 transition">
-                                <td className="px-4 py-3 font-bold text-gray-400 font-mono text-xs">
-                                    #{ticket.id.slice(-6).toUpperCase()}
-                                </td>
-                                <td className="px-4 py-3">
-                                    <div className="font-bold text-gray-900">{ticket.customerName}</div>
-                                    <div className="text-xs text-gray-500 mt-1">{ticket.customerPhone}</div>
-                                </td>
-                                <td className="px-4 py-3 text-gray-600 font-medium">
-                                    {new Date(ticket.createdAt).toLocaleDateString('ar-EG')}
-                                </td>
-                                <td className="px-4 py-3">
-                                    <span className={`px-3 py-1 rounded-lg text-[10px] font-black ${ticket.status === 'OPEN' ? 'bg-amber-50 text-amber-600' :
-                                            ticket.status === 'IN_PROGRESS' ? 'bg-blue-50 text-blue-600' :
-                                                ticket.status === 'WAITING_FOR_PARTS' ? 'bg-orange-50 text-orange-600' :
-                                                    'bg-emerald-50 text-emerald-600'
-                                        }`}>
-                                        {ticket.status === 'OPEN' ? 'مفتوحة' :
-                                            ticket.status === 'IN_PROGRESS' ? 'قيد الصيانة' :
-                                                ticket.status === 'WAITING_FOR_PARTS' ? 'بانتظار قطع' : 'مكتملة'}
-                                    </span>
-                                </td>
-                                <td className="px-4 py-3 text-center flex items-center justify-center gap-2">
-                                    <Link href={ROUTES.TICKET_DETAILS(ticket.id)} className="text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-lg text-xs font-bold transition">
-                                        التفاصيل
-                                    </Link>
-                                    <button onClick={() => onEdit(ticket)} className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition">
-                                        <Edit className="w-4 h-4"/>
-                                    </button>
-                                    <button onClick={() => onDelete(ticket.id, ticket.customerName)} className="p-1.5 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition">
-                                        <Trash2 className="w-4 h-4"/>
-                                    </button>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    );
-};
-</file>
-
-<file path="src/features/tickets/hooks/useTicketsManager.ts">
-import { useState, useMemo } from "react";
-import { toast } from "react-hot-toast";
-import { deleteTicket, updateTicket } from "@/src/server/actions/tickets.actions";
-import { TicketListItem } from "@/src/types";
-import { UpdateTicketFormValues } from "../validations/validations";
-
-export function useTicketsManager(initialTickets: TicketListItem[]) {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [editingTicket, setEditingTicket] = useState<TicketListItem | null>(null);
-
-  // 1. نظام البحث (يحدث تلقائياً عند الكتابة)
-  const filteredTickets = useMemo(() => {
-    if (!searchQuery.trim()) return initialTickets;
-    const query = searchQuery.toLowerCase();
-    return initialTickets.filter(t =>
-      t.customerName.toLowerCase().includes(query) ||
-      t.customerPhone.includes(query) ||
-      t.id.toLowerCase().includes(query) ||
-      (t.compressorModel && t.compressorModel.toLowerCase().includes(query))
-    );
-  }, [initialTickets, searchQuery]);
-
-  // 2. الحذف
-  const handleDelete = async (id: string, name: string) => {
-    if (confirm(`هل أنت متأكد من حذف تذكرة الزبون (${name}) نهائياً؟`)) {
-      const res = await deleteTicket(id);
-      if (res.success) {
-        toast.success("تم حذف التذكرة بنجاح");
-      } else {
-        toast.error(res.error || "خطأ في الحذف");
-      }
-    }
-  };
-
-  const openEditModal = (ticket: TicketListItem) => {
-    setEditingTicket(ticket);
-    setIsEditModalOpen(true);
-  };
-
-  // الدالة أصبحت تقبل بيانات Zod النظيفة، وترجع Promise<boolean>
-  const handleEditSubmit = async (data: UpdateTicketFormValues) => {
-    if (!editingTicket) return false;
-
-    const res = await updateTicket(editingTicket.id, data);
-
-    if (res.success) {
-      toast.success("تم تعديل بيانات التذكرة بنجاح");
-      setIsEditModalOpen(false);
-      setEditingTicket(null);
-      return true;
-    }
-    toast.error(res.error || "خطأ في التعديل");
-    return false;
-  };
-
-  return {
-    searchQuery, setSearchQuery, filteredTickets, handleDelete,
-    isEditModalOpen, setIsEditModalOpen, editingTicket, openEditModal,
-    handleEditSubmit
-  };
-}
-</file>
-
 <file path="src/features/tickets/validations/validations.ts">
 import * as z from "zod";
 
@@ -3454,121 +3350,6 @@ export default prisma
 if (process.env.NODE_ENV !== 'production') globalThis.prismaGlobal = prisma
 </file>
 
-<file path="src/server/actions/compressors.actions.ts">
-"use server";
-
-import prisma from "@/src/lib/prisma";
-import { revalidatePath } from "next/cache";
-import { ROUTES } from "@/src/constants/paths";
-import { deleteFilesFromUploadThing } from "./uploadthing.actions";
-
-// 1. جلب البيانات
-export async function getCompressors() {
-  try {
-    const compressors = await prisma.compressor.findMany({
-      orderBy: { createdAt: 'desc' }
-    });
-    return { success: true, data: compressors };
-  } catch (error) {
-    console.error("Fetch Error:", error);
-    return { error: "فشل جلب قائمة الكمبريسورات" };
-  }
-}
-
-// 2. الإضافة
-export async function addCompressor(data: {
-  serialNumber?: string;
-  modelName: string; 
-  productionCost: number; // أجرة اليد والتكاليف الأخرى
-  sellingPrice: number;
-  description?: string;
-  imageUrl?: string;
-  parts: { sparePartId: string; quantity: number; unitCost: number }[]; 
-}) {
-  try {
-    await prisma.$transaction(async (tx) => {
-      // 1. حساب إجمالي تكلفة القطع
-      const partsTotalCost = data.parts.reduce((sum, p) => sum + (p.quantity * p.unitCost), 0);
-      
-      // 2. إنشاء الكمبريسور
-      const compressor = await tx.compressor.create({
-        data: {
-          modelName: data.modelName,
-          serialNumber: data.serialNumber,
-          productionCost: data.productionCost + partsTotalCost, // التكلفة الكلية
-          sellingPrice: data.sellingPrice,
-          description: data.description,
-          imageUrl: data.imageUrl,
-          status: "AVAILABLE",
-          partsUsed: {
-            create: data.parts.map(p => ({
-              sparePartId: p.sparePartId,
-              quantity: p.quantity,
-              unitCost: p.unitCost
-            }))
-          }
-        }
-      });
-
-      // 3. خصم القطع من المخزن
-      for (const part of data.parts) {
-        await tx.sparePart.update({
-          where: { id: part.sparePartId },
-          data: { quantity: { decrement: part.quantity } }
-        });
-      }
-    });
-
-    revalidatePath(ROUTES.COMPRESSORS);
-    revalidatePath(ROUTES.INVENTORY);
-    return { success: true };
-  } catch (error) {
-    return { error: "فشل إضافة الكمبريسور وخصم القطع" };
-  }
-}
-// 3. التحديث
-export async function updateCompressorStatus(id: string, status: string) {
-  try {
-    await prisma.compressor.update({
-      where: { id },
-      data: { status }
-    });
-    revalidatePath(ROUTES.COMPRESSORS); 
-    return { success: true };
-  } catch (error) { 
-    console.error("Update Error:", error);
-    return { error: "فشل التحديث" }; 
-  }
-}
-
-// 4. الحذف
-export async function deleteCompressor(id: string) {
-  try {
-    // 1. جلب الكمبريسور لمعرفة رابط الصورة قبل الحذف
-    const compressor = await prisma.compressor.findUnique({
-      where: { id },
-      select: { imageUrl: true }
-    });
-
-    // 2. الحذف من قاعدة البيانات
-    await prisma.compressor.delete({ where: { id } });
-
-    // 3. تنظيف السحابة: الحذف الفيزيائي من UploadThing
-    if (compressor?.imageUrl) {
-      deleteFilesFromUploadThing(compressor.imageUrl).catch(err => 
-        console.error("Failed to delete compressor image in background:", err)
-      );
-    }
-
-    revalidatePath(ROUTES.COMPRESSORS); 
-    return { success: true };
-  } catch (error) { 
-    console.error("Delete Error:", error);
-    return { error: "فشل الحذف" }; 
-  }
-}
-</file>
-
 <file path="src/server/actions/dashboard.actions.ts">
 "use server";
 
@@ -3711,161 +3492,6 @@ export async function getWorkerDashboardStats(workerId: string) {
     return { success: true, data: { openTicketsCount, balance, activeTrials } };
   } catch (_error) {
     return { error: "فشل جلب بيانات الفني" };
-  }
-}
-</file>
-
-<file path="src/server/actions/inventory.actions.ts">
-"use server"; 
-
-import prisma from "@/src/lib/prisma";
-import { revalidatePath } from "next/cache";
-import { sparePartSchema, type SparePartFormValues } from "@/src/features/inventory/validations/validations";
-import { ROUTES } from "@/src/constants/paths"; 
-import { deleteFilesFromUploadThing } from "./uploadthing.actions";
-
-// 1. دالة إضافة قطعة غيار جديدة
-export async function addSparePart(data: SparePartFormValues) {
-  try {
-    const parsedData = sparePartSchema.safeParse(data);
-    
-    if (!parsedData.success) {
-      return { error: "بيانات غير صالحة تم إرسالها للسيرفر" };
-    }
-
-    const newPart = await prisma.sparePart.create({
-      data: parsedData.data,
-    });
-
-    revalidatePath(ROUTES.INVENTORY); 
-
-    return { success: true, data: newPart };
-  } catch (error) {
-    console.error("Error creating spare part:", error);
-    return { error: "حدث خطأ في قاعدة البيانات أثناء إضافة القطعة" };
-  }
-}
-
-// 2. دالة جلب كل قطع الغيار
-export async function getInventory() {
-  try {
-    const parts = await prisma.sparePart.findMany({
-      orderBy: { name: 'asc' }, 
-    });
-    
-    return { success: true, data: parts };
-  } catch (error) {
-    console.error("Error fetching spare parts:", error);
-    return { error: "حدث خطأ أثناء جلب المخزون" };
-  }
-}
-
-// 3. دالة تعديل قطعة غيار
-export async function updateSparePart(id: string, data: Partial<SparePartFormValues> & { imageUrl?: string }) {
-  try {
-    const updatedPart = await prisma.sparePart.update({
-      where: { id },
-      data: data,
-    });
-
-    revalidatePath(ROUTES.INVENTORY); 
-    return { success: true, data: updatedPart };
-  } catch (error) {
-    console.error("Error updating spare part:", error);
-    return { error: "حدث خطأ أثناء تعديل القطعة" };
-  }
-}
-
-// 4. دالة حذف قطعة غيار
-
-export async function deleteSparePart(id: string) {
-  try {
-    // 1. جلب القطعة لمعرفة رابط الصورة (إن وُجدت)
-    const part = await prisma.sparePart.findUnique({
-      where: { id },
-      select: { imageUrl: true }
-    });
-
-    // 2. الحذف من قاعدة البيانات
-    await prisma.sparePart.delete({
-      where: { id },
-    });
-
-    // 3. تنظيف السحابة: الحذف الفيزيائي
-    if (part?.imageUrl) {
-      deleteFilesFromUploadThing(part.imageUrl).catch(err => 
-        console.error("Failed to delete spare part image in background:", err)
-      );
-    }
-
-    revalidatePath(ROUTES.INVENTORY); 
-    return { success: true };
-  } catch (error) {
-    console.error("Error deleting spare part:", error);
-    return { error: "لا يمكن حذف القطعة لأنها قد تكون مرتبطة بتذاكر أو فواتير سابقة." };
-  }
-}
-
-// 5. دالة بيع قطعة غيار مباشرة (تسجيلها كتذكرة مكتملة بدون عميل محدد)
-export async function sellPartDirectly(sparePartId: string, quantity: number, price: number) {
-  try {
-    const part = await prisma.sparePart.findUnique({ where: { id: sparePartId } });
-    if (!part || part.quantity < quantity) return { error: "الكمية غير متوفرة في المخزن!" };
-
-    await prisma.$transaction(async (tx) => {
-      // 1. إنشاء تذكرة "مكتملة" باسم مبيعات نقدية
-      const ticket = await tx.ticket.create({
-        data: {
-          customerName: "مبيعات نقدية (قطعة غيار)",
-          customerPhone: "000000000",
-          status: "COMPLETED",
-          totalCost: price * quantity,
-          advancePayment: price * quantity // مدفوعة بالكامل
-        }
-      });
-
-      // 2. تسجيل القطعة المباعة
-      await tx.ticketPart.create({
-        data: {
-          ticketId: ticket.id,
-          sparePartId: sparePartId,
-          quantity: quantity,
-          priceAtTime: price
-        }
-      });
-
-      // 3. خصم من المخزن
-      await tx.sparePart.update({
-        where: { id: sparePartId },
-        data: { quantity: { decrement: quantity } }
-      });
-    });
-
-    revalidatePath(ROUTES.INVENTORY);
-    revalidatePath(ROUTES.TRANSACTIONS); // لتحديث السجل المالي
-    return { success: true };
-  } catch (error) {
-    return { error: "حدث خطأ أثناء إتمام عملية البيع." };
-  }
-}
-
-
-// دالة جلب كل قطع الغيار (للقائمة المنسدلة)
-export async function getAllSparePartsForDropdown() {
-  try {
-    const parts = await prisma.sparePart.findMany({
-      select: {
-        id: true,
-        name: true,
-        sellingPrice: true,
-        quantity: true, 
-      },
-      orderBy: { name: 'asc' } 
-    });
-    return { success: true, data: parts };
-  } catch (error) {
-    console.error("خطأ في جلب قطع الغيار:", error);
-    return { error: "تعذر جلب قائمة قطع الغيار من المستودع." };
   }
 }
 </file>
@@ -4394,6 +4020,26 @@ export type Action =
   | { type: "OPEN_TX_MODAL"; payload: { userId: string; type: string; name: string } }
   | { type: "CLOSE_TX_MODAL" }
   | { type: "UPDATE_TX_DATA"; field: keyof WorkersState["txData"]; value: string }
+</file>
+
+<file path="src/features/compressors/validations/validations.ts">
+import * as z from "zod";
+
+export const compressorSchema = z.object({
+  modelName: z.string().min(2, "الموديل / الوصف مطلوب"),
+  serialNumber: z.string().optional(),
+  productionCost: z.number().min(0, "التكلفة يجب أن تكون صفر أو أكثر"),
+  sellingPrice: z.number().min(0, "السعر يجب أن يكون صفر أو أكثر"),
+  description: z.string().optional(),
+  imageUrl: z.string().optional(),
+  parts: z.array(z.object({
+    sparePartId: z.string().min(1, "اختر قطعة"),
+    quantity: z.number().int("يجب أن يكون رقماً صحيحاً").min(1, "الكمية 1 على الأقل"),
+    unitCost: z.number().min(0, "التكلفة مطلوبة")
+  }))
+});
+
+export type CompressorFormValues = z.infer<typeof compressorSchema>;
 </file>
 
 <file path="src/features/dashboard/components/DashboardCharts.tsx">
@@ -5176,6 +4822,158 @@ export const PartsTable = ({ parts, inventory, isUpdating, onAdd, onRemove }: Pa
 };
 </file>
 
+<file path="src/features/tickets/components/TicketsTable.tsx">
+import { memo } from "react";
+import Link from "next/link";
+import { Ticket as TicketIcon, Edit, Trash2 } from "lucide-react";
+import { ROUTES } from "@/src/constants/paths";
+import { TicketListItem } from "@/src/types";
+
+interface TicketsTableProps {
+  tickets: TicketListItem[];
+  onEdit: (ticket: TicketListItem) => void;
+  onDelete: (id: string, name: string) => void;
+}
+
+export const TicketsTable = memo(({ tickets, onEdit, onDelete }: TicketsTableProps) => {
+    if (tickets.length === 0) {
+        return (
+            <div className="text-center py-12 text-gray-500 bg-white rounded-xl shadow-sm border border-gray-100">
+                <TicketIcon className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                <p>لا توجد أي تذاكر مطابقة لعملية البحث.</p>
+            </div>
+        );
+    }
+
+    return (
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="overflow-x-auto">
+                <table className="w-full text-sm text-right">
+                    <thead className="bg-gray-50 text-gray-600 border-b border-gray-100">
+                        <tr>
+                            <th className="px-4 py-3 font-medium">رقم التذكرة</th>
+                            <th className="px-4 py-3 font-medium">الزبون</th>
+                            <th className="px-4 py-3 font-medium">تاريخ الدخول</th>
+                            <th className="px-4 py-3 font-medium">الحالة</th>
+                            <th className="px-4 py-3 font-medium text-center">إجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                        {tickets.map((ticket) => (
+                            <tr key={ticket.id} className="hover:bg-gray-50/50 transition">
+                                <td className="px-4 py-3 font-bold text-gray-400 font-mono text-xs">
+                                    #{ticket.id.slice(-6).toUpperCase()}
+                                </td>
+                                <td className="px-4 py-3">
+                                    <div className="font-bold text-gray-900">{ticket.customerName}</div>
+                                    <div className="text-xs text-gray-500 mt-1">{ticket.customerPhone}</div>
+                                </td>
+                                <td className="px-4 py-3 text-gray-600 font-medium">
+                                    {new Date(ticket.createdAt).toLocaleDateString('ar-EG')}
+                                </td>
+                                <td className="px-4 py-3">
+                                    <span className={`px-3 py-1 rounded-lg text-[10px] font-black ${ticket.status === 'OPEN' ? 'bg-amber-50 text-amber-600' :
+                                            ticket.status === 'IN_PROGRESS' ? 'bg-blue-50 text-blue-600' :
+                                                ticket.status === 'WAITING_FOR_PARTS' ? 'bg-orange-50 text-orange-600' :
+                                                    'bg-emerald-50 text-emerald-600'
+                                        }`}>
+                                        {ticket.status === 'OPEN' ? 'مفتوحة' :
+                                            ticket.status === 'IN_PROGRESS' ? 'قيد الصيانة' :
+                                                ticket.status === 'WAITING_FOR_PARTS' ? 'بانتظار قطع' : 'مكتملة'}
+                                    </span>
+                                </td>
+                                <td className="px-4 py-3 text-center flex items-center justify-center gap-2">
+                                    <Link href={ROUTES.TICKET_DETAILS(ticket.id)} className="text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-lg text-xs font-bold transition">
+                                        التفاصيل
+                                    </Link>
+                                    <button onClick={() => onEdit(ticket)} className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition">
+                                        <Edit className="w-4 h-4"/>
+                                    </button>
+                                    <button onClick={() => onDelete(ticket.id, ticket.customerName)} className="p-1.5 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition">
+                                        <Trash2 className="w-4 h-4"/>
+                                    </button>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    );
+});
+
+TicketsTable.displayName = "TicketsTable";
+</file>
+
+<file path="src/features/tickets/hooks/useTicketsManager.ts">
+"use client";
+
+import { useState, useCallback } from "react";
+import useSWR from "swr";
+import { toast } from "react-hot-toast";
+import { getPaginatedTickets, updateTicket, deleteTicket } from "@/src/server/actions/tickets.actions";
+import { TicketListItem } from "@/src/types";
+import { UpdateTicketFormValues } from "../validations/validations";
+
+// دالة الجلب التي تعتمد عليها SWR
+const fetcher = async ([_, page, search, status]: [string, number, string, string]) => {
+  const res = await getPaginatedTickets({ page, limit: 10, search, status });
+  if (res.error) throw new Error(res.error);
+  return res;
+};
+
+export function useTicketsManager(currentPage: number, searchQuery: string, statusFilter: string) {
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingTicket, setEditingTicket] = useState<TicketListItem | null>(null);
+
+  //  SWR تجلب البيانات، تكيسها، وتعيد التحميل صامتاً في الخلفية
+  const { data, isLoading, mutate } = useSWR(
+    ["tickets-data", currentPage, searchQuery, statusFilter], 
+    fetcher, 
+    { keepPreviousData: true, revalidateOnFocus: false }
+  );
+
+  // استخدمنا useCallback لمنع React من إعادة إنشاء الدالة في كل مرة مما يسرع الأداء
+  const handleDelete = useCallback(async (id: string, name: string) => {
+    if (confirm(`هل أنت متأكد من حذف تذكرة الزبون (${name}) نهائياً؟`)) {
+      const res = await deleteTicket(id);
+      if (res.success) {
+        toast.success("تم حذف التذكرة بنجاح");
+        mutate(); // تحديث الجدول فوراً بدون Refresh للصفحة
+      } else {
+        toast.error(res.error || "خطأ في الحذف");
+      }
+    }
+  }, [mutate]);
+
+  const openEditModal = useCallback((ticket: TicketListItem) => {
+    setEditingTicket(ticket);
+    setIsEditModalOpen(true);
+  }, []);
+
+  const handleEditSubmit = useCallback(async (formData: UpdateTicketFormValues) => {
+    if (!editingTicket) return false;
+    const res = await updateTicket(editingTicket.id, formData);
+    if (res.success) {
+      toast.success("تم التعديل بنجاح");
+      setIsEditModalOpen(false);
+      setEditingTicket(null);
+      mutate();
+      return true;
+    }
+    toast.error(res.error || "خطأ في التعديل");
+    return false;
+  }, [editingTicket, mutate]);
+
+  return {
+    tickets: data?.data || [],
+    metadata: data?.metadata || { totalPages: 1, currentPage: 1, totalItems: 0 },
+    isLoading,
+    isEditModalOpen, setIsEditModalOpen, editingTicket, openEditModal, handleEditSubmit, handleDelete
+  };
+}
+</file>
+
 <file path="src/features/trials/components/TrialModal.tsx">
 import { useEffect } from "react";
 import { useForm, type Resolver } from "react-hook-form";
@@ -5632,6 +5430,198 @@ export async function getSupplierStatement(supplierId: string) {
 }
 </file>
 
+<file path="src/server/actions/inventory.actions.ts">
+"use server"; 
+
+import prisma from "@/src/lib/prisma";
+import { revalidatePath } from "next/cache";
+import { sparePartSchema, type SparePartFormValues } from "@/src/features/inventory/validations/validations";
+import { ROUTES } from "@/src/constants/paths"; 
+import { deleteFilesFromUploadThing } from "./uploadthing.actions";
+
+// 1. دالة إضافة قطعة غيار جديدة
+export async function addSparePart(data: SparePartFormValues) {
+  try {
+    const parsedData = sparePartSchema.safeParse(data);
+    
+    if (!parsedData.success) {
+      return { error: "بيانات غير صالحة تم إرسالها للسيرفر" };
+    }
+
+    const newPart = await prisma.sparePart.create({
+      data: parsedData.data,
+    });
+
+    revalidatePath(ROUTES.INVENTORY); 
+
+    return { success: true, data: newPart };
+  } catch (error) {
+    console.error("Error creating spare part:", error);
+    return { error: "حدث خطأ في قاعدة البيانات أثناء إضافة القطعة" };
+  }
+}
+
+// 2. دالة جلب كل قطع الغيار
+export async function getInventory() {
+  try {
+    const parts = await prisma.sparePart.findMany({
+      orderBy: { name: 'asc' }, 
+    });
+    
+    return { success: true, data: parts };
+  } catch (error) {
+    console.error("Error fetching spare parts:", error);
+    return { error: "حدث خطأ أثناء جلب المخزون" };
+  }
+}
+
+// 3. دالة تعديل قطعة غيار
+export async function updateSparePart(id: string, data: Partial<SparePartFormValues> & { imageUrl?: string }) {
+  try {
+    const updatedPart = await prisma.sparePart.update({
+      where: { id },
+      data: data,
+    });
+
+    revalidatePath(ROUTES.INVENTORY); 
+    return { success: true, data: updatedPart };
+  } catch (error) {
+    console.error("Error updating spare part:", error);
+    return { error: "حدث خطأ أثناء تعديل القطعة" };
+  }
+}
+
+// 4. دالة حذف قطعة غيار
+
+export async function deleteSparePart(id: string) {
+  try {
+    // 1. جلب القطعة لمعرفة رابط الصورة (إن وُجدت)
+    const part = await prisma.sparePart.findUnique({
+      where: { id },
+      select: { imageUrl: true }
+    });
+
+    // 2. الحذف من قاعدة البيانات
+    await prisma.sparePart.delete({
+      where: { id },
+    });
+
+    // 3. تنظيف السحابة: الحذف الفيزيائي
+    if (part?.imageUrl) {
+      deleteFilesFromUploadThing(part.imageUrl).catch(err => 
+        console.error("Failed to delete spare part image in background:", err)
+      );
+    }
+
+    revalidatePath(ROUTES.INVENTORY); 
+    return { success: true };
+  } catch (error) {
+    console.error("Error deleting spare part:", error);
+    return { error: "لا يمكن حذف القطعة لأنها قد تكون مرتبطة بتذاكر أو فواتير سابقة." };
+  }
+}
+
+// 5. دالة بيع قطعة غيار مباشرة (تسجيلها كتذكرة مكتملة بدون عميل محدد)
+export async function sellPartDirectly(sparePartId: string, quantity: number, price: number) {
+  try {
+    const part = await prisma.sparePart.findUnique({ where: { id: sparePartId } });
+    if (!part || part.quantity < quantity) return { error: "الكمية غير متوفرة في المخزن!" };
+
+    await prisma.$transaction(async (tx) => {
+      // 1. إنشاء تذكرة "مكتملة" باسم مبيعات نقدية
+      const ticket = await tx.ticket.create({
+        data: {
+          customerName: "مبيعات نقدية (قطعة غيار)",
+          customerPhone: "000000000",
+          status: "COMPLETED",
+          totalCost: price * quantity,
+          advancePayment: price * quantity // مدفوعة بالكامل
+        }
+      });
+
+      // 2. تسجيل القطعة المباعة
+      await tx.ticketPart.create({
+        data: {
+          ticketId: ticket.id,
+          sparePartId: sparePartId,
+          quantity: quantity,
+          priceAtTime: price
+        }
+      });
+
+      // 3. خصم من المخزن
+      await tx.sparePart.update({
+        where: { id: sparePartId },
+        data: { quantity: { decrement: quantity } }
+      });
+    });
+
+    revalidatePath(ROUTES.INVENTORY);
+    revalidatePath(ROUTES.TRANSACTIONS); // لتحديث السجل المالي
+    return { success: true };
+  } catch (error) {
+    return { error: "حدث خطأ أثناء إتمام عملية البيع." };
+  }
+}
+
+
+// دالة جلب كل قطع الغيار (للقائمة المنسدلة)
+export async function getAllSparePartsForDropdown() {
+  try {
+    const parts = await prisma.sparePart.findMany({
+      select: {
+        id: true,
+        name: true,
+        sellingPrice: true,
+        quantity: true, 
+      },
+      orderBy: { name: 'asc' } 
+    });
+    return { success: true, data: parts };
+  } catch (error) {
+    console.error("خطأ في جلب قطع الغيار:", error);
+    return { error: "تعذر جلب قائمة قطع الغيار من المستودع." };
+  }
+}
+
+
+export async function getPaginatedParts(params: {
+  page: number;
+  limit: number;
+  search?: string;
+  category?: string;
+}) {
+  try {
+    const { page, limit, search, category } = params;
+    const skip = (page - 1) * limit;
+
+    const whereClause: any = {};
+    if (category && category !== "ALL") whereClause.category = category;
+    if (search) {
+      whereClause.name = { contains: search, mode: "insensitive" };
+    }
+
+    const [totalItems, parts] = await prisma.$transaction([
+      prisma.sparePart.count({ where: whereClause }),
+      prisma.sparePart.findMany({
+        where: whereClause,
+        skip,
+        take: limit,
+        orderBy: { name: 'asc' }, // الترتيب الأبجدي للقطع
+      })
+    ]);
+
+    return { 
+      success: true, 
+      data: parts, 
+      metadata: { totalItems, totalPages: Math.ceil(totalItems / limit), currentPage: page }
+    };
+  } catch (error) {
+    return { error: "فشل جلب بيانات المخزون" };
+  }
+}
+</file>
+
 <file path="src/server/actions/trials.actions.ts">
 "use server";
 
@@ -6076,6 +6066,77 @@ export default async function WorkerStatementPage({ params }: { params: Promise<
 }
 </file>
 
+<file path="src/components/ui/Input.tsx">
+import { InputHTMLAttributes, forwardRef } from "react";
+import { AlertCircle } from "lucide-react";
+
+interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
+  label?: string;
+  error?: string;
+  icon?: React.ReactNode;
+  leftIcon?: React.ReactNode;
+  wrapperClassName?: string; 
+}
+
+export const Input = forwardRef<HTMLInputElement, InputProps>(
+  ({ label, error, icon, leftIcon, wrapperClassName = "", className = "", ...props }, ref) => {
+    return (
+      <div className={`w-full flex flex-col gap-1.5 ${wrapperClassName}`}>
+        {label && (
+          <label className="text-sm font-bold text-slate-800">
+            {label}
+          </label>
+        )}
+        
+        <div className="relative">
+          {/* أيقونة اليمين (الافتراضية) */}
+          {icon && (
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500">
+              {icon}
+            </div>
+          )}
+
+          {/* أيقونة اليسار (مثل رمز الشيكل ₪) */}
+          {leftIcon && (
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 font-black">
+              {leftIcon}
+            </div>
+          )}
+          
+          <input
+            ref={ref}
+            className={`
+              w-full bg-white px-4 py-3 rounded-xl outline-none transition-all
+              text-sm font-bold text-slate-900 
+              border-2 
+              ${icon ? "pr-10" : ""}
+              ${leftIcon ? "pl-10" : ""} 
+              ${
+                error 
+                  ? "border-rose-500 focus:ring-4 focus:ring-rose-500/20 bg-rose-50/50" 
+                  : "border-slate-200 focus:border-indigo-600 focus:ring-4 focus:ring-indigo-600/20 hover:border-slate-300"
+              }
+              placeholder:text-slate-400 placeholder:opacity-100
+              ${className}
+            `}
+            {...props}
+          />
+        </div>
+
+        {error && (
+          <span className="text-xs font-bold text-rose-500 flex items-center gap-1 mt-0.5">
+            <AlertCircle className="w-3.5 h-3.5" />
+            {error}
+          </span>
+        )}
+      </div>
+    );
+  }
+);
+
+Input.displayName = "Input";
+</file>
+
 <file path="src/constants/expenses.ts">
 import { ExpensesState } from "@/src/types";
 
@@ -6176,178 +6237,6 @@ export function LoginForm() {
     </form>
   );
 }
-</file>
-
-<file path="src/features/compressors/components/CompressorModal.tsx">
-import { useEffect } from "react";
-import { useForm, useFieldArray } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Package, Camera, X, Loader2, Plus, Trash2 } from "lucide-react";
-import { Modal } from "@/src/components/ui/Modal";
-import { Input } from "@/src/components/ui/Input";
-import { Textarea } from "@/src/components/ui/Textarea";
-import { UploadButton } from "@/src/lib/uploadthing";
-import { compressorSchema, type CompressorFormValues } from "../validations/validations";
-import { deleteFilesFromUploadThing } from "@/src/server/actions/uploadthing.actions";
-
-interface Props {
-  isOpen: boolean;
-  onClose: () => void;
-  onSave: (data: CompressorFormValues) => Promise<boolean>;
-  inventory: any[];
-}
-
-export const CompressorModal = ({ isOpen, onClose, onSave, inventory }: Props) => {
-  // 1. استخراج control اللازم لعمل useFieldArray
-  const { register, control, handleSubmit, reset, setValue, watch, formState: { errors, isSubmitting } } = useForm<CompressorFormValues>({
-    resolver: zodResolver(compressorSchema),
-    defaultValues: {
-      modelName: "",
-      serialNumber: "",
-      productionCost: 0,
-      sellingPrice: 0,
-      description: "",
-      imageUrl: "",
-      parts: []
-    }
-  });
-
-  // 2. تفعيل useFieldArray لإدارة قائمة القطع المسحوبة
-  const { fields, append, remove } = useFieldArray({
-    control,
-    name: "parts"
-  });
-
-  const imageUrl = watch("imageUrl");
-
-  useEffect(() => {
-    if (isOpen) reset();
-  }, [isOpen, reset]);
-
-  const onSubmit = async (data: CompressorFormValues) => {
-    const success = await onSave(data);
-    if (success) onClose();
-  };
-
-  return (
-    <Modal isOpen={isOpen} onClose={onClose} title={<><Package className="w-5 h-5 text-indigo-600" /> إضافة كمبريسور للمخزون</>} maxWidth="lg">
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-
-        <div className="space-y-2">
-          <label className="text-sm font-bold text-gray-700 flex items-center gap-2">
-            <Camera className="w-4 h-4" /> صورة الجهاز
-          </label>
-
-          {imageUrl ? (
-            <div className="relative h-44 w-full rounded-2xl overflow-hidden border-2 border-indigo-100 group">
-              <img src={imageUrl} className="w-full h-full object-cover" alt="Preview" />
-              <button
-                type="button"
-                onClick={async () => {
-                  const url = watch("imageUrl");
-                  if (url) {
-                    setValue("imageUrl", ""); // إخفاء الصورة فوراً
-                    await deleteFilesFromUploadThing(url).catch(console.error); // الحذف الفعلي من السحابة
-                  }
-                }}
-                className="absolute top-2 right-2 bg-rose-500 text-white p-1.5 rounded-full shadow-lg hover:bg-rose-600 transition-all"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-          ) : (
-            <div className="border-2 border-dashed border-gray-200 rounded-2xl p-6 bg-gray-50 flex flex-col items-center justify-center gap-2">
-              <UploadButton
-                endpoint="imageUploader"
-                onClientUploadComplete={(res) => setValue("imageUrl", res[0].url)}
-                appearance={{ button: "bg-indigo-600 text-white px-6 py-2 rounded-xl font-bold text-sm" }}
-              />
-            </div>
-          )}
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Input label="الموديل / الوصف" error={errors.modelName?.message} {...register("modelName")} />
-          <Input label="الرقم التسلسلي (اختياري)" error={errors.serialNumber?.message} {...register("serialNumber")} />
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <Input label="تكلفة التجهيز (₪)" type="number" step="0.01" error={errors.productionCost?.message} {...register("productionCost", { valueAsNumber: true })} />
-          <Input label="سعر البيع (₪)" type="number" step="0.01" error={errors.sellingPrice?.message} {...register("sellingPrice", { valueAsNumber: true })} />
-        </div>
-
-        <Textarea label="تفاصيل ومواصفات إضافية" rows={3} error={errors.description?.message} {...register("description")} />
-
-        <div className="border-t border-gray-100 pt-4 space-y-3">
-          <div className="flex justify-between items-center">
-            <label className="text-sm font-bold text-gray-700">قطع تم سحبها للكمبريسور</label>
-            <button
-              type="button"
-              onClick={() => append({ sparePartId: "", quantity: 1, unitCost: 0 })}
-              className="text-xs bg-indigo-50 text-indigo-600 px-3 py-1.5 rounded-lg font-bold flex items-center gap-1 hover:bg-indigo-100 transition"
-            >
-              <Plus className="w-4 h-4" /> إضافة قطعة
-            </button>
-          </div>
-
-          <div className="space-y-2 max-h-40 overflow-y-auto pr-1 custom-scrollbar">
-            {fields.length === 0 && (
-              <div className="text-center text-xs text-gray-400 py-2">لم يتم إضافة أي قطع. (اختياري)</div>
-            )}
-
-            {fields.map((field, index) => (
-              <div key={field.id} className="flex gap-2 items-start bg-gray-50 p-2 rounded-xl border border-gray-200">
-                <div className="flex-1">
-                  <select
-                    {...register(`parts.${index}.sparePartId`)}
-                    className="w-full text-xs p-2 border border-gray-300 rounded-lg outline-none"
-                  >
-                    <option value="">-- اختر القطعة --</option>
-                    {inventory?.map((p: any) => (
-                      <option key={p.id} value={p.id} disabled={p.quantity <= 0}>
-                        {p.name} (متوفر: {p.quantity})
-                      </option>
-                    ))}
-                  </select>
-                  {errors.parts?.[index]?.sparePartId && (
-                    <span className="text-[10px] text-red-500">{errors.parts[index]?.sparePartId?.message}</span>
-                  )}
-                </div>
-                <div className="w-20">
-                  <Input
-                    type="number"
-                    placeholder="الكمية"
-                    className="!py-1.5 text-xs"
-                    {...register(`parts.${index}.quantity`, { valueAsNumber: true })}
-                  />
-                </div>
-                <div className="w-24">
-                  <Input
-                    type="number"
-                    placeholder="التكلفة (₪)"
-                    className="!py-1.5 text-xs"
-                    {...register(`parts.${index}.unitCost`, { valueAsNumber: true })}
-                  />
-                </div>
-                <button
-                  type="button"
-                  onClick={() => remove(index)}
-                  className="mt-1 p-1.5 text-red-500 hover:bg-red-100 rounded-lg transition"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <button disabled={isSubmitting} type="submit" className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black transition-all flex justify-center items-center gap-2 shadow-lg hover:bg-indigo-700 hover:shadow-indigo-200">
-          {isSubmitting ? <><Loader2 className="w-5 h-5 animate-spin" /><span>جاري الحفظ والخصم من المخزن...</span></> : "اعتماد وحفظ في المخزن"}
-        </button>
-      </form>
-    </Modal>
-  );
-};
 </file>
 
 <file path="src/features/quotations/components/QuotationForm.tsx">
@@ -6807,6 +6696,593 @@ export const authOptions: NextAuthOptions = {
 };
 </file>
 
+<file path="src/server/actions/compressors.actions.ts">
+"use server";
+
+import prisma from "@/src/lib/prisma";
+import { revalidatePath } from "next/cache";
+import { ROUTES } from "@/src/constants/paths";
+import { deleteFilesFromUploadThing } from "./uploadthing.actions";
+
+// 1. جلب البيانات
+export async function getCompressors() {
+  try {
+    const compressors = await prisma.compressor.findMany({
+      orderBy: { createdAt: 'desc' }
+    });
+    return { success: true, data: compressors };
+  } catch (error) {
+    console.error("Fetch Error:", error);
+    return { error: "فشل جلب قائمة الكمبريسورات" };
+  }
+}
+
+// 2. الإضافة
+export async function addCompressor(data: {
+  serialNumber?: string;
+  modelName: string; 
+  productionCost: number; 
+  sellingPrice: number;
+  description?: string;
+  imageUrl?: string;
+  parts: { sparePartId: string; quantity: number; unitCost: number }[]; 
+}) {
+  try {
+    await prisma.$transaction(async (tx) => {
+      // 1. حساب إجمالي تكلفة القطع
+      const partsTotalCost = data.parts.reduce((sum, p) => sum + (p.quantity * p.unitCost), 0);
+      
+      // 2. إنشاء الكمبريسور
+      const compressor = await tx.compressor.create({
+        data: {
+          modelName: data.modelName,
+          serialNumber: data.serialNumber,
+          productionCost: data.productionCost + partsTotalCost,
+          sellingPrice: data.sellingPrice,
+          description: data.description,
+          imageUrl: data.imageUrl,
+          status: "AVAILABLE",
+          partsUsed: {
+            create: data.parts.map(p => ({
+              sparePartId: p.sparePartId,
+              quantity: p.quantity,
+              unitCost: p.unitCost
+            }))
+          }
+        }
+      });
+
+      // 3. خصم القطع من المخزن مع حماية ضد المخزون السالب (Optimistic Locking)
+      for (const part of data.parts) {
+        // جلب القطعة لمعرفة رصيدها الحالي
+        const currentPart = await tx.sparePart.findUnique({
+          where: { id: part.sparePartId },
+          select: { name: true, quantity: true } // نجلب الاسم والكمية فقط للأداء
+        });
+
+        // إذا القطعة غير موجودة أو كميتها لا تكفي
+        if (!currentPart || currentPart.quantity < part.quantity) {
+          throw new Error(`الكمية المتاحة من (${currentPart?.name || 'قطعة مجهولة'}) لا تكفي. المتاح فقط: ${currentPart?.quantity || 0}`);
+        }
+
+        // الخصم الآمن
+        await tx.sparePart.update({
+          where: { id: part.sparePartId },
+          data: { quantity: { decrement: part.quantity } }
+        });
+      }
+    });
+
+    revalidatePath(ROUTES.COMPRESSORS);
+    revalidatePath(ROUTES.INVENTORY);
+    return { success: true };
+  } catch (error: any) {
+    // إرجاع رسالة الخطأ المخصصة التي رميناها (throw new Error) للمستخدم
+    return { error: error.message || "فشل إضافة الكمبريسور وخصم القطع" };
+  }
+}
+// 3. التحديث
+export async function updateCompressorStatus(id: string, status: string) {
+  try {
+    await prisma.compressor.update({
+      where: { id },
+      data: { status }
+    });
+    revalidatePath(ROUTES.COMPRESSORS); 
+    return { success: true };
+  } catch (error) { 
+    console.error("Update Error:", error);
+    return { error: "فشل التحديث" }; 
+  }
+}
+
+// 4. الحذف واسترجاع القطع للمخزن
+export async function deleteCompressor(id: string) {
+  try {
+    // 1. جلب الكمبريسور مع القطع المرتبطة به لمعرفة الكميات المسحوبة
+    const compressor = await prisma.compressor.findUnique({
+      where: { id },
+      include: { partsUsed: true } 
+    });
+
+    if (!compressor) return { error: "الكمبريسور غير موجود" };
+
+    // 2. استخدام Transaction لضمان تزامن العمليات (إرجاع القطع ثم الحذف)
+    await prisma.$transaction(async (tx) => {
+      
+      // أ. إرجاع القطع إلى المخزن (Increment)
+      for (const part of compressor.partsUsed) {
+        await tx.sparePart.update({
+          where: { id: part.sparePartId },
+          data: { quantity: { increment: part.quantity } }
+        });
+      }
+
+      // ب. حذف القطع المرتبطة من الجدول الوسيط (CompressorPart)
+      await tx.compressorPart.deleteMany({
+        where: { compressorId: id }
+      });
+
+      // ج. حذف الكمبريسور نفسه
+      await tx.compressor.delete({ 
+        where: { id } 
+      });
+    });
+
+    // 3. تنظيف السحابة: الحذف الفيزيائي للصورة
+    if (compressor.imageUrl) {
+      deleteFilesFromUploadThing(compressor.imageUrl).catch(err => 
+        console.error("Failed to delete compressor image in background:", err)
+      );
+    }
+
+    // 4. تحديث صفحة الكمبريسورات وصفحة المخزون لظهور القطع المسترجعة!
+    revalidatePath(ROUTES.COMPRESSORS); 
+    revalidatePath(ROUTES.INVENTORY); 
+    return { success: true };
+
+  } catch (error) { 
+    console.error("Delete Error:", error);
+    return { error: "حدث خطأ أثناء محاولة حذف الكمبريسور واسترجاع القطع." }; 
+  }
+}
+</file>
+
+<file path="src/app/(auth)/login/page.tsx">
+import { LoginForm } from "@/src/features/auth/login/components/LoginForm";
+import { getServerSession } from "next-auth"; 
+import { authOptions } from "@/src/lib/auth";
+import { redirect } from "next/navigation"; 
+import { ROUTES } from "@/src/constants/paths";
+
+export default async function LoginPage() {
+  // 1. فحص هل المستخدم مسجل دخول أصلاً؟
+  const session = await getServerSession(authOptions);
+
+  // 2. إذا كان مسجلاً، اطرده فوراً إلى لوحة التحكم (الرئيسية)
+  if (session) {
+    redirect(`${ROUTES.HOME}`); 
+  }
+
+  // 3. إذا لم يكن مسجلاً، اعرض له صفحة تسجيل الدخول
+  return (
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4" dir="rtl">
+      <div className="max-w-md w-full bg-white rounded-2xl shadow-lg p-8">
+        <div className="text-center mb-8">
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">ورشة الكمبريسور</h1>
+          <p className="text-gray-500 text-sm">تسجيل الدخول للنظام</p>
+        </div>
+
+        <LoginForm />
+        
+      </div>
+    </div>
+  );
+}
+</file>
+
+<file path="src/app/(dashboard)/reports/page.tsx">
+"use client";
+
+import { useState } from "react";
+import { Printer, Loader2, PieChart, Filter, X } from "lucide-react"; 
+import { useReports } from "@/src/features/reports/hooks/useReports";
+import { Input } from "@/src/components/ui/Input";
+import { ExportButton } from "@/src/components/shared/ExportButton"; 
+import { PrintReportTemplate } from "@/src/features/reports/components/PrintReportTemplate";
+
+export default function ReportsPage() {
+  const { reportData, isLoading, setFilters } = useReports();
+  
+  const [localStart, setLocalStart] = useState("");
+  const [localEnd, setLocalEnd] = useState("");
+
+  const handleApplyFilter = () => {
+    setFilters({ startDate: localStart, endDate: localEnd });
+  };
+
+  const handleResetFilter = () => {
+    setLocalStart("");
+    setLocalEnd("");
+    setFilters({});
+  };
+
+  const prepareExcelData = () => {
+    if (!reportData) return [];
+    
+    return [{
+      "الفترة من": localStart || "البداية",
+      "الفترة إلى": localEnd || "اليوم",
+      "إجمالي الإيرادات (₪)": reportData.period.revenue,
+      "إجمالي التكاليف (₪)": reportData.period.expenses + reportData.period.workerPayments + reportData.period.purchasesPaid,
+      "صافي الربح (₪)": reportData.period.netCash,
+      "إيراد الصيانة والمبيعات": reportData.period.revenue,
+      "مصاريف تشغيلية": reportData.period.expenses,
+      "رواتب وسلف": reportData.period.workerPayments,
+      "تكاليف ومدفوعات للتجار": reportData.period.purchasesPaid,
+      "صافي الأصول الكلي للورشة": reportData.totalAssets
+    }];
+  };
+
+  if (isLoading || !reportData) {
+    return (
+      <div className="flex justify-center items-center min-h-[60vh]">
+        <Loader2 className="w-12 h-12 animate-spin text-indigo-600" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-5xl mx-auto pb-20 print:p-0 print:m-0 animate-in fade-in duration-500">
+      
+      <style dangerouslySetInnerHTML={{__html: `
+        @media print {
+          @page { size: A4; margin: 0 !important; }
+          html, body { margin: 0 !important; padding: 0 !important; background-color: white !important; }
+          #printable-report {
+            position: absolute !important; top: 0 !important; left: 0 !important; margin: 0 !important;
+            width: 210mm !important; height: 297mm !important; background: white !important;
+            box-shadow: none !important; border: none !important; z-index: 99999 !important;
+          }
+        }
+      `}} />
+
+      {/* لوحة التحكم العلوية والفلتر */}
+      <div className="flex flex-col mb-8 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm print:hidden">
+        
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center w-full gap-4">
+          <div className="flex items-center gap-3">
+            <div className="p-3 bg-indigo-50 text-indigo-600 rounded-xl">
+              <PieChart className="w-6 h-6" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">التقارير والميزانية العمومية</h1>
+              <p className="text-gray-500 text-sm mt-1 font-medium">نظرة شاملة على رأس المال، والتدفقات النقدية لفترة محددة</p>
+            </div>
+          </div>
+          
+          <div className="flex gap-2 w-full sm:w-auto">
+            <ExportButton 
+              data={prepareExcelData()} 
+              fileName={`الميزانية_${localStart || 'شامل'}`} 
+              sheetName="الملخص المالي"
+            />
+
+            <button onClick={() => window.print()} className="flex items-center gap-2 px-8 py-3 bg-slate-900 text-white hover:bg-black rounded-xl font-bold transition shadow-xl w-full sm:w-auto justify-center">
+              <Printer className="w-5 h-5" /> طباعة
+            </button>
+          </div>
+        </div>
+
+        {/* شريط فلترة التواريخ */}
+        <div className="mt-6 pt-6 border-t border-gray-100 flex flex-col md:flex-row items-end gap-4 bg-gray-50 p-4 rounded-xl">
+          <div className="flex-1 w-full">
+            <Input type="date" label="من تاريخ" value={localStart} onChange={(e) => setLocalStart(e.target.value)} className="bg-white" />
+          </div>
+          <div className="flex-1 w-full">
+            <Input type="date" label="إلى تاريخ" value={localEnd} onChange={(e) => setLocalEnd(e.target.value)} className="bg-white" />
+          </div>
+          
+          <div className="flex gap-2 w-full md:w-auto">
+            <button onClick={handleApplyFilter} className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-indigo-600 text-white px-6 h-[46px] rounded-xl font-bold hover:bg-indigo-700 transition">
+              <Filter className="w-4 h-4" /> تصفية
+            </button>
+            {(localStart || localEnd) && (
+              <button onClick={handleResetFilter} className="flex items-center justify-center gap-2 bg-red-50 text-red-600 px-4 h-[46px] rounded-xl font-bold hover:bg-red-100 transition" title="إلغاء التصفية">
+                <X className="w-5 h-5" />
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* قالب العرض والطباعة */}
+      <PrintReportTemplate data={reportData} />
+
+    </div>
+  );
+}
+</file>
+
+<file path="src/app/(dashboard)/workers/[id]/page.tsx">
+import { getWorkerDetails } from "@/src/server/actions/workers.actions";
+import { WorkerTransaction } from "@prisma/client";
+import { 
+  ArrowRight, 
+  Calendar, 
+  ArrowUpCircle, 
+  ArrowDownCircle, 
+  User, 
+  Phone,
+  Wallet
+} from "lucide-react";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+
+// 1.  params إلى Promise
+export default async function WorkerProfilePage({ params }: { params: Promise<{ id: string }> }) {
+  
+  // 2. فك الـ Promise للحصول على الـ id
+  const { id } = await params;
+
+  // 3. تمرير الـ id لدالة جلب البيانات
+  const result = await getWorkerDetails(id);
+
+  if (result.error || !result.data) {
+    return notFound();
+  }
+
+  const worker = result.data;
+
+  return (
+    <div className="p-6 max-w-5xl mx-auto space-y-6 animate-in fade-in duration-500">
+      
+      {/* الترويسة وزر العودة */}
+      <div className="flex items-center justify-between">
+        <Link href="/workers" className="flex items-center gap-2 text-gray-500 hover:text-indigo-600 transition">
+          <ArrowRight className="w-5 h-5" /> رجوع لقائمة العمال
+        </Link>
+      </div>
+
+      {/* بطاقة تعريف العامل */}
+      <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+        <div className="flex items-center gap-5">
+          <div className="w-16 h-16 bg-indigo-100 text-indigo-600 rounded-2xl flex items-center justify-center font-black text-2xl">
+            {worker.name[0]}
+          </div>
+          <div>
+            <h1 className="text-2xl font-black text-gray-900">{worker.name}</h1>
+            <div className="flex gap-4 mt-1 text-sm text-gray-500">
+              <span className="flex items-center gap-1"><Phone className="w-3.5 h-3.5" /> {worker.phone}</span>
+              <span className="flex items-center gap-1"><User className="w-3.5 h-3.5" /> {worker.role}</span>
+            </div>
+          </div>
+        </div>
+        
+        <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 text-left min-w-[200px]">
+          <p className="text-xs font-bold text-gray-400 uppercase mb-1 text-right">الرصيد المستحق الحالي</p>
+          <div className={`text-3xl font-black flex items-center justify-end gap-2 ${worker.currentBalance >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+            {worker.currentBalance.toFixed(2)} ₪ //console.log()
+            <Wallet className="w-6 h-6" />
+          </div>
+        </div>
+      </div>
+
+      {/* سجل المعاملات المالية */}
+      <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+        <div className="p-6 border-b bg-gray-50/50 flex items-center gap-2 font-bold text-gray-700">
+          <Calendar className="w-5 h-5 text-indigo-500" /> كشف حساب الحركات المالية
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-right text-sm">
+            <thead className="bg-gray-50 text-gray-400 text-xs uppercase">
+              <tr>
+                <th className="p-4 font-medium">التاريخ</th>
+                <th className="p-4 font-medium">النوع</th>
+                <th className="p-4 font-medium">التفاصيل / ملاحظات</th>
+                <th className="p-4 font-medium">المبلغ</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {worker.transactions.length === 0 ? (
+                <tr>
+                  <td colSpan={4} className="p-10 text-center text-gray-400 font-medium">لا توجد حركات مالية مسجلة بعد لهذا العامل.</td>
+                </tr>
+              ) : (
+                worker.transactions.map((tx: WorkerTransaction) => (
+                  <tr key={tx.id} className="hover:bg-gray-50/30 transition">
+                    <td className="p-4 text-gray-500 font-mono text-xs">
+                      {new Date(tx.date).toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' })}
+                    </td>
+                    <td className="p-4">
+                      {tx.type === "STAKE" || tx.type === "BONUS" ? (
+                        <span className="inline-flex items-center gap-1 text-emerald-600 font-bold">
+                          <ArrowUpCircle className="w-4 h-4" /> استحقاق/مكافأة
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 text-rose-600 font-bold">
+                          <ArrowDownCircle className="w-4 h-4" /> سحبيات/دفعات
+                        </span>
+                      )}
+                    </td>
+                    <td className="p-4 text-gray-600 font-medium">
+                      {tx.description || "---"}
+                    </td>
+                    <td className={`p-4 font-black text-lg ${tx.type === "STAKE" || tx.type === "BONUS" ? 'text-emerald-600' : 'text-rose-600'}`}>
+                      {tx.type === "STAKE" || tx.type === "BONUS" ? "+" : "-"}
+                      {tx.amount.toFixed(2)} ₪
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  );
+}
+</file>
+
+<file path="src/components/shared/Navbar.tsx">
+"use client";
+
+import { signOut, useSession } from "next-auth/react";
+import { LogOut, User, Menu } from "lucide-react";
+import { ROUTES } from "@/src/constants/paths"; 
+
+export default function Navbar({ onOpenSidebar }: { onOpenSidebar?: () => void }) {
+  const { data: session } = useSession();
+
+  return (
+    <header className="print:hidden bg-white border-b border-gray-200 h-16 flex items-center justify-between px-4 sm:px-6 sticky top-0 z-10 shadow-sm">      
+      <div className="flex items-center gap-4">
+        {onOpenSidebar && (
+          <button onClick={onOpenSidebar} className="lg:hidden p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition">
+            <Menu className="w-6 h-6" />
+          </button>
+        )}
+        <h2 className="text-xl font-semibold text-gray-800 hidden sm:block">نظام الإدارة</h2>
+      </div>
+
+      <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-100">
+          <User className="w-5 h-5 text-gray-500" />
+          <div className="flex flex-col">
+            <span className="text-sm font-medium text-gray-700">
+              {session?.user?.name || "مستخدم"}
+            </span>
+            <span className="text-xs text-gray-500">
+              {session?.user?.role === "ADMIN" ? "مدير نظام" : "فني / عامل"}
+            </span>
+          </div>
+        </div>
+
+        <button
+          onClick={() => signOut({ callbackUrl: ROUTES.LOGIN })}
+          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition flex items-center gap-2"
+          title="تسجيل الخروج"
+        >
+          <LogOut className="w-5 h-5" />
+          <span className="text-sm font-medium hidden sm:block">خروج</span>
+        </button>
+      </div>
+    </header>
+  );
+}
+</file>
+
+<file path="src/features/workers/hooks/useWorkers.ts">
+"use client";
+
+import { useState, useEffect, useCallback } from "react";
+import { toast } from "react-hot-toast";
+import { registerWorker, getWorkersWithBalance, addWorkerTransaction, deleteWorker } from "@/src/server/actions/workers.actions";
+import { TypesWorkerTransaction } from "@prisma/client";
+import { AddWorkerValues, WorkerTxValues } from "../validations/validations";
+
+export function useWorkers() {
+  const [workers, setWorkers] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  
+  // حالات النوافذ المنبثقة
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [txModal, setTxModal] = useState<{ isOpen: boolean; userId: string; type: TypesWorkerTransaction | null }>({ 
+    isOpen: false, userId: "", type: null 
+  });
+
+  const loadWorkers = useCallback(async () => {
+    setIsLoading(true);
+    const data = await getWorkersWithBalance();
+    setWorkers(data || []);
+    setIsLoading(false);
+  }, []);
+
+  useEffect(() => { loadWorkers(); }, [loadWorkers]);
+
+  const handleAddWorker = async (data: AddWorkerValues) => {
+    const res = await registerWorker({ ...data, baseSalary: data.baseSalary?.toString() });
+    if (res.success) {
+      toast.success("تم تسجيل الفني بنجاح");
+      setIsAddModalOpen(false);
+      loadWorkers();
+      return true;
+    }
+    toast.error(res.error || "حدث خطأ");
+    return false;
+  };
+
+  const handleAddTx = async (data: WorkerTxValues, userId: string) => {
+    const typeLabel = data.type === 'STAKE' ? 'استحقاق/راتب' : data.type === 'ADVANCE' ? 'سلفة/سحب' : data.type === 'BONUS' ? 'مكافأة' : 'خصم';
+    const finalDesc = `${typeLabel}${data.notes ? ` - ${data.notes}` : ''}`;
+
+    const res = await addWorkerTransaction({
+      userId,
+      amount: data.amount,
+      type: data.type,
+      description: finalDesc
+    });
+
+    if (res.success) {
+      toast.success("تم تسجيل العملية بنجاح");
+      setTxModal({ isOpen: false, userId: "", type: null }); // إغلاق النافذة
+      loadWorkers();
+      return true;
+    } 
+    toast.error(res.error || "فشل تسجيل العملية");
+    return false;
+  };
+
+  const handleDelete = async (userId: string, name: string) => {
+    if (!confirm(`هل أنت متأكد من حذف الفني (${name}) نهائياً؟`)) return;
+    const res = await deleteWorker(userId);
+    if (res.success) { 
+      toast.success("تم الحذف"); 
+      loadWorkers(); 
+    } else { 
+      toast.error(res.error || "لا يمكن الحذف لوجود حركات مالية"); 
+    }
+  };
+
+  return { 
+    workers, isLoading, 
+    isAddModalOpen, setIsAddModalOpen, 
+    txModal, setTxModal, 
+    actions: { handleAddWorker, handleAddTx, handleDelete } 
+  };
+}
+</file>
+
+<file path="src/middleware.ts">
+import { withAuth } from "next-auth/middleware";
+import { NextResponse } from "next/server";
+import { ROUTES } from "./constants/paths";
+
+export default withAuth(
+  function middleware(req) {
+    //  فحص إذا كان المستخدم بحاول يدخل صفحة العمال وهو مش مدير
+    const isWorkerPage = req.nextUrl.pathname.startsWith("/workers");
+    const isExpensePage = req.nextUrl.pathname.startsWith("/expenses");
+    
+    if ((isWorkerPage || isExpensePage) && req.nextauth.token?.role !== "ADMIN") {
+      // اطرده للصفحة الرئيسية فوراً
+      return NextResponse.redirect(new URL(`${ROUTES.HOME}`, req.url));
+    }
+  },
+  {
+    pages: {
+      signIn: `${ROUTES.LOGIN}`,
+    },
+  }
+);
+
+export const config = {
+  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|login).*)"],
+};
+</file>
+
 <file path="src/server/actions/tickets.actions.ts">
 "use server"; 
 
@@ -7023,610 +7499,50 @@ export async function deleteTicket(ticketId: string) {
     return { error: "لا يمكن حذف التذكرة لاحتوائها على حركات مالية أو قطع مستهلكة. يرجى تصفيتها أولاً." };
   }
 }
-</file>
 
-<file path="src/app/(auth)/login/page.tsx">
-import { LoginForm } from "@/src/features/auth/login/components/LoginForm";
-import { getServerSession } from "next-auth"; 
-import { authOptions } from "@/src/lib/auth";
-import { redirect } from "next/navigation"; 
-import { ROUTES } from "@/src/constants/paths";
 
-export default async function LoginPage() {
-  // 1. فحص هل المستخدم مسجل دخول أصلاً؟
-  const session = await getServerSession(authOptions);
 
-  // 2. إذا كان مسجلاً، اطرده فوراً إلى لوحة التحكم (الرئيسية)
-  if (session) {
-    redirect(`${ROUTES.HOME}`); 
-  }
+export async function getPaginatedTickets(params: {
+  page: number;
+  limit: number;
+  search?: string;
+  status?: string;
+}) {
+  try {
+    const { page, limit, search, status } = params;
+    const skip = (page - 1) * limit;
 
-  // 3. إذا لم يكن مسجلاً، اعرض له صفحة تسجيل الدخول
-  return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4" dir="rtl">
-      <div className="max-w-md w-full bg-white rounded-2xl shadow-lg p-8">
-        <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">ورشة الكمبريسور</h1>
-          <p className="text-gray-500 text-sm">تسجيل الدخول للنظام</p>
-        </div>
-
-        <LoginForm />
-        
-      </div>
-    </div>
-  );
-}
-</file>
-
-<file path="src/app/(dashboard)/inventory/page.tsx">
-"use client";
-
-import { Loader2 } from "lucide-react";
-import { useInventory } from "@/src/features/inventory/hooks/useInventory";
-import { InventoryToolbar } from "@/src/features/inventory/components/InventoryToolbar";
-import { InventoryTable } from "@/src/features/inventory/components/InventoryTable";
-import { InventoryModal } from "@/src/features/inventory/components/InventoryModal";
-
-export default function InventoryPage() {
-  const { 
-    filteredParts, searchQuery, setSearchQuery, isLoading, 
-    isModalOpen, setIsModalOpen, editingPart, actions  
-  } = useInventory();
-
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center min-h-[50vh]">
-        <Loader2 className="w-10 h-10 animate-spin text-indigo-600" />
-      </div>
-    );
-  }
-
-  return (
-    <div className="max-w-7xl mx-auto space-y-6 animate-in fade-in duration-500 pb-10">
-      
-      {/* الترويسة وشريط البحث */}
-      <InventoryToolbar 
-        searchQuery={searchQuery} 
-        setSearchQuery={setSearchQuery} 
-        onOpenAddModal={actions.openAddModal} 
-      />
-
-      {/* جدول المخزون المفلتر */}
-      <InventoryTable 
-        parts={filteredParts} 
-        onOpenEditModal={actions.openEditModal} 
-        onDelete={actions.handleDelete} 
-        onOpenSellModal={actions.handleSellPart}
-      />
-
-      {/* نافذة الإضافة/التعديل */}
-      <InventoryModal 
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        editData={editingPart}
-        onSave={actions.handleSavePart} 
-      />
-    </div>
-  );
-}
-</file>
-
-<file path="src/app/(dashboard)/reports/page.tsx">
-"use client";
-
-import { useState } from "react";
-import { Printer, Loader2, PieChart, Filter, X } from "lucide-react"; 
-import { useReports } from "@/src/features/reports/hooks/useReports";
-import { Input } from "@/src/components/ui/Input";
-import { ExportButton } from "@/src/components/shared/ExportButton"; 
-import { PrintReportTemplate } from "@/src/features/reports/components/PrintReportTemplate";
-
-export default function ReportsPage() {
-  const { reportData, isLoading, setFilters } = useReports();
-  
-  const [localStart, setLocalStart] = useState("");
-  const [localEnd, setLocalEnd] = useState("");
-
-  const handleApplyFilter = () => {
-    setFilters({ startDate: localStart, endDate: localEnd });
-  };
-
-  const handleResetFilter = () => {
-    setLocalStart("");
-    setLocalEnd("");
-    setFilters({});
-  };
-
-  const prepareExcelData = () => {
-    if (!reportData) return [];
-    
-    return [{
-      "الفترة من": localStart || "البداية",
-      "الفترة إلى": localEnd || "اليوم",
-      "إجمالي الإيرادات (₪)": reportData.period.revenue,
-      "إجمالي التكاليف (₪)": reportData.period.expenses + reportData.period.workerPayments + reportData.period.purchasesPaid,
-      "صافي الربح (₪)": reportData.period.netCash,
-      "إيراد الصيانة والمبيعات": reportData.period.revenue,
-      "مصاريف تشغيلية": reportData.period.expenses,
-      "رواتب وسلف": reportData.period.workerPayments,
-      "تكاليف ومدفوعات للتجار": reportData.period.purchasesPaid,
-      "صافي الأصول الكلي للورشة": reportData.totalAssets
-    }];
-  };
-
-  if (isLoading || !reportData) {
-    return (
-      <div className="flex justify-center items-center min-h-[60vh]">
-        <Loader2 className="w-12 h-12 animate-spin text-indigo-600" />
-      </div>
-    );
-  }
-
-  return (
-    <div className="max-w-5xl mx-auto pb-20 print:p-0 print:m-0 animate-in fade-in duration-500">
-      
-      <style dangerouslySetInnerHTML={{__html: `
-        @media print {
-          @page { size: A4; margin: 0 !important; }
-          html, body { margin: 0 !important; padding: 0 !important; background-color: white !important; }
-          #printable-report {
-            position: absolute !important; top: 0 !important; left: 0 !important; margin: 0 !important;
-            width: 210mm !important; height: 297mm !important; background: white !important;
-            box-shadow: none !important; border: none !important; z-index: 99999 !important;
-          }
-        }
-      `}} />
-
-      {/* لوحة التحكم العلوية والفلتر */}
-      <div className="flex flex-col mb-8 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm print:hidden">
-        
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center w-full gap-4">
-          <div className="flex items-center gap-3">
-            <div className="p-3 bg-indigo-50 text-indigo-600 rounded-xl">
-              <PieChart className="w-6 h-6" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">التقارير والميزانية العمومية</h1>
-              <p className="text-gray-500 text-sm mt-1 font-medium">نظرة شاملة على رأس المال، والتدفقات النقدية لفترة محددة</p>
-            </div>
-          </div>
-          
-          <div className="flex gap-2 w-full sm:w-auto">
-            <ExportButton 
-              data={prepareExcelData()} 
-              fileName={`الميزانية_${localStart || 'شامل'}`} 
-              sheetName="الملخص المالي"
-            />
-
-            <button onClick={() => window.print()} className="flex items-center gap-2 px-8 py-3 bg-slate-900 text-white hover:bg-black rounded-xl font-bold transition shadow-xl w-full sm:w-auto justify-center">
-              <Printer className="w-5 h-5" /> طباعة
-            </button>
-          </div>
-        </div>
-
-        {/* شريط فلترة التواريخ */}
-        <div className="mt-6 pt-6 border-t border-gray-100 flex flex-col md:flex-row items-end gap-4 bg-gray-50 p-4 rounded-xl">
-          <div className="flex-1 w-full">
-            <Input type="date" label="من تاريخ" value={localStart} onChange={(e) => setLocalStart(e.target.value)} className="bg-white" />
-          </div>
-          <div className="flex-1 w-full">
-            <Input type="date" label="إلى تاريخ" value={localEnd} onChange={(e) => setLocalEnd(e.target.value)} className="bg-white" />
-          </div>
-          
-          <div className="flex gap-2 w-full md:w-auto">
-            <button onClick={handleApplyFilter} className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-indigo-600 text-white px-6 h-[46px] rounded-xl font-bold hover:bg-indigo-700 transition">
-              <Filter className="w-4 h-4" /> تصفية
-            </button>
-            {(localStart || localEnd) && (
-              <button onClick={handleResetFilter} className="flex items-center justify-center gap-2 bg-red-50 text-red-600 px-4 h-[46px] rounded-xl font-bold hover:bg-red-100 transition" title="إلغاء التصفية">
-                <X className="w-5 h-5" />
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* قالب العرض والطباعة */}
-      <PrintReportTemplate data={reportData} />
-
-    </div>
-  );
-}
-</file>
-
-<file path="src/app/(dashboard)/tickets/page.tsx">
-import { AlertCircle } from "lucide-react";
-import { getAllTickets } from "@/src/server/actions/tickets.actions";
-import { TicketsManager } from "@/src/features/tickets/components/TicketsManager";
-import { TicketListItem } from "@/src/types";
-
-export default async function TicketsPage() {
-  const result = await getAllTickets();
-
-  if (result.error) {
-    return (
-      <div className="space-y-6">
-        <div className="bg-red-50 border border-red-200 text-red-700 p-6 rounded-2xl flex flex-col items-center text-center space-y-3">
-          <AlertCircle className="w-10 h-10 text-red-500" />
-          <h2 className="text-lg font-bold">تعذر عرض التذاكر</h2>
-          <p className="text-sm font-medium">{result.error}</p>
-        </div>
-      </div>
-    );
-  }
-
-  // تسليم البيانات كـ Props للمكون الذي يدير البحث والتعديل
-  return (
-    <div className="animate-in fade-in duration-500 pb-10 max-w-7xl mx-auto">
-      <TicketsManager initialTickets={(result.data as TicketListItem[]) || []} />
-    </div>
-  );
-}
-</file>
-
-<file path="src/app/(dashboard)/workers/[id]/page.tsx">
-import { getWorkerDetails } from "@/src/server/actions/workers.actions";
-import { WorkerTransaction } from "@prisma/client";
-import { 
-  ArrowRight, 
-  Calendar, 
-  ArrowUpCircle, 
-  ArrowDownCircle, 
-  User, 
-  Phone,
-  Wallet
-} from "lucide-react";
-import Link from "next/link";
-import { notFound } from "next/navigation";
-
-// 1.  params إلى Promise
-export default async function WorkerProfilePage({ params }: { params: Promise<{ id: string }> }) {
-  
-  // 2. فك الـ Promise للحصول على الـ id
-  const { id } = await params;
-
-  // 3. تمرير الـ id لدالة جلب البيانات
-  const result = await getWorkerDetails(id);
-
-  if (result.error || !result.data) {
-    return notFound();
-  }
-
-  const worker = result.data;
-
-  return (
-    <div className="p-6 max-w-5xl mx-auto space-y-6 animate-in fade-in duration-500">
-      
-      {/* الترويسة وزر العودة */}
-      <div className="flex items-center justify-between">
-        <Link href="/workers" className="flex items-center gap-2 text-gray-500 hover:text-indigo-600 transition">
-          <ArrowRight className="w-5 h-5" /> رجوع لقائمة العمال
-        </Link>
-      </div>
-
-      {/* بطاقة تعريف العامل */}
-      <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-        <div className="flex items-center gap-5">
-          <div className="w-16 h-16 bg-indigo-100 text-indigo-600 rounded-2xl flex items-center justify-center font-black text-2xl">
-            {worker.name[0]}
-          </div>
-          <div>
-            <h1 className="text-2xl font-black text-gray-900">{worker.name}</h1>
-            <div className="flex gap-4 mt-1 text-sm text-gray-500">
-              <span className="flex items-center gap-1"><Phone className="w-3.5 h-3.5" /> {worker.phone}</span>
-              <span className="flex items-center gap-1"><User className="w-3.5 h-3.5" /> {worker.role}</span>
-            </div>
-          </div>
-        </div>
-        
-        <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 text-left min-w-[200px]">
-          <p className="text-xs font-bold text-gray-400 uppercase mb-1 text-right">الرصيد المستحق الحالي</p>
-          <div className={`text-3xl font-black flex items-center justify-end gap-2 ${worker.currentBalance >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
-            {worker.currentBalance.toFixed(2)} ₪ //console.log()
-            <Wallet className="w-6 h-6" />
-          </div>
-        </div>
-      </div>
-
-      {/* سجل المعاملات المالية */}
-      <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
-        <div className="p-6 border-b bg-gray-50/50 flex items-center gap-2 font-bold text-gray-700">
-          <Calendar className="w-5 h-5 text-indigo-500" /> كشف حساب الحركات المالية
-        </div>
-
-        <div className="overflow-x-auto">
-          <table className="w-full text-right text-sm">
-            <thead className="bg-gray-50 text-gray-400 text-xs uppercase">
-              <tr>
-                <th className="p-4 font-medium">التاريخ</th>
-                <th className="p-4 font-medium">النوع</th>
-                <th className="p-4 font-medium">التفاصيل / ملاحظات</th>
-                <th className="p-4 font-medium">المبلغ</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {worker.transactions.length === 0 ? (
-                <tr>
-                  <td colSpan={4} className="p-10 text-center text-gray-400 font-medium">لا توجد حركات مالية مسجلة بعد لهذا العامل.</td>
-                </tr>
-              ) : (
-                worker.transactions.map((tx: WorkerTransaction) => (
-                  <tr key={tx.id} className="hover:bg-gray-50/30 transition">
-                    <td className="p-4 text-gray-500 font-mono text-xs">
-                      {new Date(tx.date).toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' })}
-                    </td>
-                    <td className="p-4">
-                      {tx.type === "STAKE" || tx.type === "BONUS" ? (
-                        <span className="inline-flex items-center gap-1 text-emerald-600 font-bold">
-                          <ArrowUpCircle className="w-4 h-4" /> استحقاق/مكافأة
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 text-rose-600 font-bold">
-                          <ArrowDownCircle className="w-4 h-4" /> سحبيات/دفعات
-                        </span>
-                      )}
-                    </td>
-                    <td className="p-4 text-gray-600 font-medium">
-                      {tx.description || "---"}
-                    </td>
-                    <td className={`p-4 font-black text-lg ${tx.type === "STAKE" || tx.type === "BONUS" ? 'text-emerald-600' : 'text-rose-600'}`}>
-                      {tx.type === "STAKE" || tx.type === "BONUS" ? "+" : "-"}
-                      {tx.amount.toFixed(2)} ₪
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-    </div>
-  );
-}
-</file>
-
-<file path="src/components/shared/Navbar.tsx">
-"use client";
-
-import { signOut, useSession } from "next-auth/react";
-import { LogOut, User, Menu } from "lucide-react";
-import { ROUTES } from "@/src/constants/paths"; 
-
-export default function Navbar({ onOpenSidebar }: { onOpenSidebar?: () => void }) {
-  const { data: session } = useSession();
-
-  return (
-    <header className="print:hidden bg-white border-b border-gray-200 h-16 flex items-center justify-between px-4 sm:px-6 sticky top-0 z-10 shadow-sm">      
-      <div className="flex items-center gap-4">
-        {onOpenSidebar && (
-          <button onClick={onOpenSidebar} className="lg:hidden p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition">
-            <Menu className="w-6 h-6" />
-          </button>
-        )}
-        <h2 className="text-xl font-semibold text-gray-800 hidden sm:block">نظام الإدارة</h2>
-      </div>
-
-      <div className="flex items-center gap-4">
-        <div className="flex items-center gap-2 bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-100">
-          <User className="w-5 h-5 text-gray-500" />
-          <div className="flex flex-col">
-            <span className="text-sm font-medium text-gray-700">
-              {session?.user?.name || "مستخدم"}
-            </span>
-            <span className="text-xs text-gray-500">
-              {session?.user?.role === "ADMIN" ? "مدير نظام" : "فني / عامل"}
-            </span>
-          </div>
-        </div>
-
-        <button
-          onClick={() => signOut({ callbackUrl: ROUTES.LOGIN })}
-          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition flex items-center gap-2"
-          title="تسجيل الخروج"
-        >
-          <LogOut className="w-5 h-5" />
-          <span className="text-sm font-medium hidden sm:block">خروج</span>
-        </button>
-      </div>
-    </header>
-  );
-}
-</file>
-
-<file path="src/features/inventory/components/InventoryTable.tsx">
-import { Edit, Trash2, AlertTriangle, BadgeDollarSign } from "lucide-react";
-import { SparePart } from "@prisma/client";
-
-interface InventoryTableProps {
-  parts: SparePart[];
-  onOpenEditModal: (part: SparePart) => void;
-  onDelete: (id: string, name: string) => void;
-  onOpenSellModal: (part: SparePart) => void;
-}
-
-export const InventoryTable = ({ parts, onOpenEditModal, onDelete, onOpenSellModal }: InventoryTableProps) => (
-  <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-    <div className="overflow-x-auto">
-      <table className="w-full text-right text-sm">
-        <thead className="bg-gray-50 text-gray-400 font-bold border-b">
-          <tr>
-            <th className="p-4">اسم القطعة</th>
-            <th className="p-4 text-center">الكمية المتوفرة</th>
-            <th className="p-4">سعر التكلفة (₪)</th>
-            <th className="p-4">سعر البيع (₪)</th>
-            <th className="p-4 text-center">إجراءات</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-gray-100">
-          {parts.length === 0 ? (
-            <tr><td colSpan={5} className="text-center py-10 text-gray-400">لا توجد قطع مطابقة.</td></tr>
-          ) : (
-            parts.map(part => {
-              const isLowStock = part.quantity <= part.lowStockAlert;
-              return (
-                <tr key={part.id} className="hover:bg-gray-50 transition">
-                  <td className="p-4 font-bold text-gray-800">{part.name}</td>
-                  <td className="p-4 text-center">
-                    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full font-black text-xs ${isLowStock ? 'bg-rose-50 text-rose-600' : 'bg-emerald-50 text-emerald-600'}`}>
-                      {isLowStock && <AlertTriangle className="w-3 h-3" />}
-                      {part.quantity}
-                    </span>
-                  </td>
-                  <td className="p-4 font-bold text-gray-500">₪ {part.averageCost?.toFixed(2) || "0.00"}</td>
-                  <td className="p-4 font-black text-indigo-600">₪ {part.sellingPrice.toFixed(2)}</td>
-                  <td className="p-4 flex justify-center gap-2">
-                    <button
-                      onClick={() => onOpenSellModal(part)}
-                      className="p-2 text-emerald-500 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg transition"
-                      title="بيع مباشر"
-                    >
-                      <BadgeDollarSign className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => onOpenEditModal(part)}
-                      className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition"
-                    >
-                      <Edit className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => onDelete(part.id, part.name)}
-                      className="p-2 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </td>
-                </tr>
-              );
-            })
-          )}
-        </tbody>
-      </table>
-    </div>
-  </div>
-);
-</file>
-
-<file path="src/features/workers/hooks/useWorkers.ts">
-"use client";
-
-import { useState, useEffect, useCallback } from "react";
-import { toast } from "react-hot-toast";
-import { registerWorker, getWorkersWithBalance, addWorkerTransaction, deleteWorker } from "@/src/server/actions/workers.actions";
-import { TypesWorkerTransaction } from "@prisma/client";
-import { AddWorkerValues, WorkerTxValues } from "../validations/validations";
-
-export function useWorkers() {
-  const [workers, setWorkers] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  
-  // حالات النوافذ المنبثقة
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [txModal, setTxModal] = useState<{ isOpen: boolean; userId: string; type: TypesWorkerTransaction | null }>({ 
-    isOpen: false, userId: "", type: null 
-  });
-
-  const loadWorkers = useCallback(async () => {
-    setIsLoading(true);
-    const data = await getWorkersWithBalance();
-    setWorkers(data || []);
-    setIsLoading(false);
-  }, []);
-
-  useEffect(() => { loadWorkers(); }, [loadWorkers]);
-
-  const handleAddWorker = async (data: AddWorkerValues) => {
-    const res = await registerWorker({ ...data, baseSalary: data.baseSalary?.toString() });
-    if (res.success) {
-      toast.success("تم تسجيل الفني بنجاح");
-      setIsAddModalOpen(false);
-      loadWorkers();
-      return true;
+    // بناء فلتر البحث
+    const whereClause: any = {};
+    if (status && status !== "ALL") whereClause.status = status;
+    if (search) {
+      whereClause.OR = [
+        { customerName: { contains: search, mode: "insensitive" } },
+        { customerPhone: { contains: search } }
+      ];
     }
-    toast.error(res.error || "حدث خطأ");
-    return false;
-  };
 
-  const handleAddTx = async (data: WorkerTxValues, userId: string) => {
-    const typeLabel = data.type === 'STAKE' ? 'استحقاق/راتب' : data.type === 'ADVANCE' ? 'سلفة/سحب' : data.type === 'BONUS' ? 'مكافأة' : 'خصم';
-    const finalDesc = `${typeLabel}${data.notes ? ` - ${data.notes}` : ''}`;
+    // جلب العدد الكلي + بيانات الصفحة الحالية في نفس الوقت
+    const [totalItems, tickets] = await prisma.$transaction([
+      prisma.ticket.count({ where: whereClause }),
+      prisma.ticket.findMany({
+        where: whereClause,
+        skip,
+        take: limit, 
+        orderBy: { createdAt: 'desc' },
+        include: { worker: { select: { name: true } }, partsUsed: true } // جلب العلاقات
+      })
+    ]);
 
-    const res = await addWorkerTransaction({
-      userId,
-      amount: data.amount,
-      type: data.type,
-      description: finalDesc
-    });
-
-    if (res.success) {
-      toast.success("تم تسجيل العملية بنجاح");
-      setTxModal({ isOpen: false, userId: "", type: null }); // إغلاق النافذة
-      loadWorkers();
-      return true;
-    } 
-    toast.error(res.error || "فشل تسجيل العملية");
-    return false;
-  };
-
-  const handleDelete = async (userId: string, name: string) => {
-    if (!confirm(`هل أنت متأكد من حذف الفني (${name}) نهائياً؟`)) return;
-    const res = await deleteWorker(userId);
-    if (res.success) { 
-      toast.success("تم الحذف"); 
-      loadWorkers(); 
-    } else { 
-      toast.error(res.error || "لا يمكن الحذف لوجود حركات مالية"); 
-    }
-  };
-
-  return { 
-    workers, isLoading, 
-    isAddModalOpen, setIsAddModalOpen, 
-    txModal, setTxModal, 
-    actions: { handleAddWorker, handleAddTx, handleDelete } 
-  };
-}
-</file>
-
-<file path="src/middleware.ts">
-import { withAuth } from "next-auth/middleware";
-import { NextResponse } from "next/server";
-import { ROUTES } from "./constants/paths";
-
-export default withAuth(
-  function middleware(req) {
-    //  فحص إذا كان المستخدم بحاول يدخل صفحة العمال وهو مش مدير
-    const isWorkerPage = req.nextUrl.pathname.startsWith("/workers");
-    const isExpensePage = req.nextUrl.pathname.startsWith("/expenses");
-    
-    if ((isWorkerPage || isExpensePage) && req.nextauth.token?.role !== "ADMIN") {
-      // اطرده للصفحة الرئيسية فوراً
-      return NextResponse.redirect(new URL(`${ROUTES.HOME}`, req.url));
-    }
-  },
-  {
-    pages: {
-      signIn: `${ROUTES.LOGIN}`,
-    },
+    return { 
+      success: true, 
+      data: tickets, 
+      metadata: { totalItems, totalPages: Math.ceil(totalItems / limit), currentPage: page }
+    };
+  } catch (error) {
+    return { error: "فشل جلب بيانات التذاكر" };
   }
-);
-
-export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|login).*)"],
-};
-</file>
-
-<file path="src/types/index.ts">
-export * from "./ticket.types";
-export * from "./worker.types";
-export * from "./expense.types";
-export * from "./inventory.types";
-export * from "./dashboard.types";
-export * from "./compressor.types";
-export * from "./quotations.types";
-export * from "./report.types";
-export * from "./settings.types";
-export * from "./trial.types";
+}
 </file>
 
 <file path="tsconfig.json">
@@ -7795,6 +7711,65 @@ export default function ExpensesPage() {
 }
 </file>
 
+<file path="src/app/(dashboard)/inventory/page.tsx">
+"use client";
+
+import { Loader2 } from "lucide-react";
+import { useInventory } from "@/src/features/inventory/hooks/useInventory";
+import { InventoryToolbar } from "@/src/features/inventory/components/InventoryToolbar";
+import { InventoryTable } from "@/src/features/inventory/components/InventoryTable";
+import { InventoryModal } from "@/src/features/inventory/components/InventoryModal";
+import { SellPartModal } from "@/src/features/inventory/components/SellPartModal"; 
+
+export default function InventoryPage() {
+  const { 
+    filteredParts, searchQuery, setSearchQuery, isLoading, 
+    isModalOpen, setIsModalOpen, editingPart, 
+    sellModal, setSellModal, actions  
+  } = useInventory();
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center min-h-[50vh]">
+        <Loader2 className="w-10 h-10 animate-spin text-indigo-600" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-7xl mx-auto space-y-6 animate-in fade-in duration-500 pb-10">
+      
+      <InventoryToolbar 
+        searchQuery={searchQuery} 
+        setSearchQuery={setSearchQuery} 
+        onOpenAddModal={actions.openAddModal} 
+      />
+
+      <InventoryTable 
+        parts={filteredParts} 
+        onOpenEditModal={actions.openEditModal} 
+        onDelete={actions.handleDelete} 
+        onOpenSellModal={actions.openSellModal}
+      />
+
+      <InventoryModal 
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        editData={editingPart}
+        onSave={actions.handleSavePart} 
+      />
+
+      <SellPartModal 
+        isOpen={sellModal.isOpen}
+        onClose={() => setSellModal({ isOpen: false, part: null })}
+        part={sellModal.part}
+        onSave={actions.handleSellPart}
+      />
+    </div>
+  );
+}
+</file>
+
 <file path="src/app/(dashboard)/settings/page.tsx">
 "use client";
 
@@ -7845,203 +7820,373 @@ export default function SettingsPage() {
 }
 </file>
 
-<file path="src/features/compressors/hooks/useCompressors.ts">
-"use client";
-
-import { useState, useEffect, useCallback } from "react";
-import { toast } from "react-hot-toast";
-import { Compressor } from "@prisma/client";
-import { 
-  getCompressors, 
-  addCompressor, 
-  updateCompressorStatus, 
-  deleteCompressor 
-} from "@/src/server/actions/compressors.actions";
-import { getAllSparePartsForDropdown } from "@/src/server/actions/inventory.actions"; 
-import { CompressorFormValues } from "../validations/validations";
-
-export function useCompressors() {
-  const [compressors, setCompressors] = useState<Compressor[]>([]);
-  const [inventory, setInventory] = useState<any[]>([]); 
-  const [isLoading, setIsLoading] = useState(true);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
-  // 1. جلب البيانات (الكمبريسورات وقطع المخزون معاً)
-  const fetchData = useCallback(async () => {
-    setIsLoading(true);
-    const [compRes, invRes] = await Promise.all([
-      getCompressors(),
-      getAllSparePartsForDropdown()
-    ]);
-
-    if (compRes.success) {
-      setCompressors((compRes.data as Compressor[]) || []);
-    } else {
-      toast.error(compRes.error || "خطأ في الجلب");
-    }
-
-    if (invRes.success) {
-      setInventory(invRes.data || []);
-    }
-
-    setIsLoading(false);
-  }, []);
-
-  useEffect(() => { 
-    fetchData(); 
-  }, [fetchData]);
-
-  // 2. إضافة كمبريسور جديد (تستقبل البيانات النظيفة من Zod مباشرة)
-  const handleAdd = async (data: CompressorFormValues) => {
-    const res = await addCompressor({
-      modelName: data.modelName, 
-      serialNumber: data.serialNumber?.trim() || undefined,
-      productionCost: data.productionCost, 
-      sellingPrice: data.sellingPrice,
-      description: data.description,
-      imageUrl: data.imageUrl,
-      parts: data.parts || [] 
-    });
-
-    if (res.success) {
-      toast.success("تمت إضافة الكمبريسور للمخزون وخصم القطع بنجاح");
-      setIsModalOpen(false); // إغلاق النافذة
-      await fetchData();     // تحديث الجدول
-      return true;           // إرجاع true للنافذة لكي تقوم بتصفير الحقول (reset)
-    } else {
-      toast.error(res.error || "فشل الإضافة");
-      return false;
-    }
-  };
-
-  // 3. تحديث حالة الكمبريسور (متاح، مباع، صيانة)
-  const handleStatusChange = async (id: string, status: string) => {
-    const res = await updateCompressorStatus(id, status);
-    if (res.success) {
-      toast.success("تم تحديث الحالة");
-      await fetchData();
-    } else {
-      toast.error(res.error || "فشل التحديث");
-    }
-  };
-
-  // 4. حذف كمبريسور
-  const handleDelete = async (id: string) => {
-    if (!confirm("هل أنت متأكد من الحذف؟")) return;
-    const res = await deleteCompressor(id);
-    if (res.success) {
-      toast.success("تم الحذف");
-      await fetchData();
-    } else {
-      toast.error(res.error || "فشل الحذف");
-    }
-  };
-
-  return { 
-    compressors,
-    inventory, // 👈 إرجاع المخزون لكي نمرره للـ Modal 
-    isLoading, 
-    isModalOpen, 
-    setIsModalOpen, 
-    fetchData,
-    actions: { handleAdd, handleStatusChange, handleDelete } 
-  };
-}
-</file>
-
-<file path="src/features/inventory/hooks/useInventory.ts">
+<file path="src/app/(dashboard)/tickets/page.tsx">
 "use client";
 
 import { useState, useEffect } from "react";
-import { toast } from "react-hot-toast";
-import { SparePart } from "@prisma/client";
-import { getInventory, addSparePart, updateSparePart, deleteSparePart, sellPartDirectly } from "@/src/server/actions/inventory.actions";
-import { SparePartFormValues } from "../validations/validations";
+import Link from "next/link";
+import { Plus, Loader2, Search, ClipboardList } from "lucide-react";
+import { ROUTES } from "@/src/constants/paths";
+import { useTicketsManager } from "@/src/features/tickets/hooks/useTicketsManager";
+import { TicketsTable } from "@/src/features/tickets/components/TicketsTable";
+import { EditTicketModal } from "@/src/features/tickets/components/EditTicketModal";
+import { Pagination } from "@/src/components/shared/Pagination";
 
-export function useInventory() {
-  const [parts, setParts] = useState<SparePart[]>([]);
+export default function TicketsPage() {
+  const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
-  const [isLoading, setIsLoading] = useState(true);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingPart, setEditingPart] = useState<SparePart | null>(null);
-  const [sellModal, setSellModal] = useState<{ isOpen: boolean; part: any | null }>({ isOpen: false, part: null });
-  const fetchInventory = async () => {
-    setIsLoading(true);
-    const res = await getInventory();
-    if (res.success) setParts((res.data as SparePart[]) || []);
-    setIsLoading(false);
+  const [debouncedQuery, setDebouncedQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("ALL");
+
+  // تطبيق Debounce لمنع تعليق المتصفح أثناء الكتابة السريعة
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedQuery(searchQuery);
+      setCurrentPage(1); // إرجاع للصفحة الأولى عند كل بحث جديد
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  const { 
+    tickets, metadata, isLoading, 
+    isEditModalOpen, setIsEditModalOpen, editingTicket, 
+    openEditModal, handleEditSubmit, handleDelete 
+  } = useTicketsManager(currentPage, debouncedQuery, statusFilter);
+
+  return (
+    <div className="p-4 sm:p-8 max-w-7xl mx-auto space-y-6 animate-in fade-in duration-500 pb-10">
+      
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+        <div className="flex items-center gap-3">
+          <div className="p-3 bg-indigo-50 text-indigo-600 rounded-xl"><ClipboardList className="w-6 h-6" /></div>
+          <div>
+            <h1 className="text-2xl font-black text-gray-900">تذاكر الصيانة</h1>
+            <p className="text-sm text-gray-500 font-medium mt-1">إدارة ومتابعة طلبات صيانة الكمبريسورات</p>
+          </div>
+        </div>
+        <Link href={ROUTES.NEW_TICKET} className="flex items-center justify-center gap-2 bg-indigo-600 text-white px-5 py-2.5 rounded-xl hover:bg-indigo-700 transition font-bold shadow-md w-full sm:w-auto">
+          <Plus className="w-5 h-5" /> تذكرة جديدة
+        </Link>
+      </div>
+
+      <div className="flex flex-col sm:flex-row gap-4">
+        <div className="relative flex-1">
+          <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+          <input 
+            type="text" 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="بحث باسم الزبون أو رقم الجوال..." 
+            className="w-full pr-12 pl-4 py-4 bg-white border border-gray-100 rounded-2xl outline-none font-bold text-sm shadow-sm" 
+          />
+        </div>
+        <select 
+          value={statusFilter}
+          onChange={(e) => { setStatusFilter(e.target.value); setCurrentPage(1); }}
+          className="bg-white border border-gray-100 rounded-2xl px-6 py-4 outline-none font-bold text-sm text-gray-600 shadow-sm cursor-pointer"
+        >
+          <option value="ALL">جميع الحالات</option>
+          <option value="OPEN">مفتوحة (قيد الفحص)</option>
+          <option value="WAITING_FOR_PARTS">بانتظار القطع</option>
+          <option value="IN_PROGRESS">جاري الصيانة</option>
+          <option value="COMPLETED">مكتملة</option>
+        </select>
+      </div>
+
+      {isLoading && tickets.length === 0 ? (
+        <div className="flex justify-center py-32"><Loader2 className="w-12 h-12 animate-spin text-indigo-600" /></div>
+      ) : (
+        <>
+          <TicketsTable tickets={tickets} onEdit={openEditModal} onDelete={handleDelete} />
+          
+          <Pagination 
+            currentPage={metadata.currentPage} 
+            totalPages={metadata.totalPages} 
+            onPageChange={setCurrentPage} 
+          />
+        </>
+      )}
+
+      <EditTicketModal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} ticket={editingTicket} onSubmit={handleEditSubmit} />
+    </div>
+  );
+}
+</file>
+
+<file path="src/features/compressors/components/CompressorModal.tsx">
+import { useEffect } from "react";
+import { useForm, useFieldArray } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Package, Camera, X, Loader2, Plus, Trash2 } from "lucide-react";
+import Image from "next/image";
+import { Modal } from "@/src/components/ui/Modal";
+import { Input } from "@/src/components/ui/Input";
+import { Textarea } from "@/src/components/ui/Textarea";
+import { UploadButton } from "@/src/lib/uploadthing";
+import { compressorSchema, type CompressorFormValues } from "../validations/validations";
+import { deleteFilesFromUploadThing } from "@/src/server/actions/uploadthing.actions";
+import type { SparePart } from "@prisma/client";
+
+interface Props {
+  isOpen: boolean;
+  onClose: () => void;
+  onSave: (data: CompressorFormValues) => Promise<boolean>;
+  inventory: SparePart[];
+}
+
+export const CompressorModal = ({ isOpen, onClose, onSave, inventory }: Props) => {
+  // 1. استخراج control اللازم لعمل useFieldArray
+  const { register, control, handleSubmit, reset, setValue, watch, formState: { errors, isSubmitting } } = useForm<CompressorFormValues>({
+    resolver: zodResolver(compressorSchema),
+    defaultValues: {
+      modelName: "",
+      serialNumber: "",
+      productionCost: 0,
+      sellingPrice: 0,
+      description: "",
+      imageUrl: "",
+      parts: []
+    }
+  });
+
+  // 2. تفعيل useFieldArray لإدارة قائمة القطع المسحوبة
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: "parts"
+  });
+
+  const imageUrl = watch("imageUrl");
+
+  useEffect(() => {
+    if (isOpen) reset();
+  }, [isOpen, reset]);
+
+  const onSubmit = async (data: CompressorFormValues) => {
+    const success = await onSave(data);
+    if (success) onClose();
   };
 
-  useEffect(() => { fetchInventory(); }, []);
+  const handleSafeClose = async () => {
+    const currentImageUrl = watch("imageUrl");
 
-
-  const handleSellPart = async (sparePartId: string, quantity: number, price: number) => {
-  const res = await sellPartDirectly(sparePartId, quantity, price);
-  if (res.success) {
-    toast.success("تم البيع وخصم القطعة من المخزن بنجاح");
-    setSellModal({ isOpen: false, part: null });
-    fetchInventory(); // تحديث الجدول
-    return true;
-  } else {
-    toast.error(res?.error || "حدث خطأ أثناء البيع");
-    return false;
-  }
-};
-
-
-  const handleSavePart = async (data: SparePartFormValues) => {
-    let res;
-    if (editingPart) {
-      res = await updateSparePart(editingPart.id, data);
-    } else {
-      res = await addSparePart(data);
-    }
-
-    if (res.success) {
-      toast.success(editingPart ? "تم التعديل بنجاح" : "تمت الإضافة بنجاح");
-      setIsModalOpen(false);
-      setEditingPart(null);
-      fetchInventory();
-      return true;
-    } else {
-      toast.error(res.error || "حدث خطأ أثناء الحفظ");
-      return false;
-    }
-  };
-
-  const handleDelete = async (id: string, name: string) => {
-    if (confirm(`هل أنت متأكد من حذف القطعة (${name}) نهائياً؟`)) {
-      const res = await deleteSparePart(id);
-      if (res.success) {
-        toast.success("تم الحذف");
-        fetchInventory();
-      } else {
-        toast.error(res.error || "حدث خطأ أثناء الحذف");
+    // إذا كان هناك صورة مرفوعة، والنموذج ليس في حالة إرسال
+    if (currentImageUrl && !isSubmitting) {
+      try {
+        setValue("imageUrl", ""); // تفريغ الحقل فوراً كشكل مرئي
+        await deleteFilesFromUploadThing(currentImageUrl); // حذفها من السحابة
+      } catch (err) {
+        console.error("Failed to cleanup unused image:", err);
       }
     }
+
+    reset(); // تصفير الحقول
+    onClose(); // إغلاق النافذة الحقيقية
   };
 
-  // دوال مساعدة لفتح النوافذ
-  const openAddModal = () => {
-    setEditingPart(null);
-    setIsModalOpen(true);
-  };
 
-  const openEditModal = (part: SparePart) => {
-    setEditingPart(part);
-    setIsModalOpen(true);
-  };
+  return (
+    <Modal isOpen={isOpen} onClose={handleSafeClose} title={<><Package className="w-5 h-5 text-indigo-600" /> إضافة كمبريسور للمخزون</>} maxWidth="lg">      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
 
-  const filteredParts = parts.filter(part =>
-    part.name.toLowerCase().includes(searchQuery.toLowerCase())
+      <div className="space-y-2">
+        <label className="text-sm font-bold text-gray-700 flex items-center gap-2">
+          <Camera className="w-4 h-4" /> صورة الجهاز
+        </label>
+
+        {imageUrl ? (
+          <div className="relative h-44 w-full rounded-2xl overflow-hidden border-2 border-indigo-100 group">
+            <Image src={imageUrl} fill className="object-cover" alt="Preview" />
+            <button
+              type="button"
+              onClick={async () => {
+                const url = watch("imageUrl");
+                if (url) {
+                  setValue("imageUrl", ""); // إخفاء الصورة فوراً
+                  await deleteFilesFromUploadThing(url).catch(console.error); // الحذف الفعلي من السحابة
+                }
+              }}
+              className="absolute top-2 right-2 bg-rose-500 text-white p-1.5 rounded-full shadow-lg hover:bg-rose-600 transition-all"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        ) : (
+          <div className="border-2 border-dashed border-gray-200 rounded-2xl p-6 bg-gray-50 flex flex-col items-center justify-center gap-2">
+            <UploadButton
+              endpoint="imageUploader"
+              onClientUploadComplete={(res) => setValue("imageUrl", res[0].url)}
+              appearance={{ button: "bg-indigo-600 text-white px-6 py-2 rounded-xl font-bold text-sm" }}
+            />
+          </div>
+        )}
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Input label="الموديل / الوصف" error={errors.modelName?.message} {...register("modelName")} />
+        <Input label="الرقم التسلسلي (اختياري)" error={errors.serialNumber?.message} {...register("serialNumber")} />
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <Input label="تكلفة التجهيز (₪)" type="number" step="0.01" error={errors.productionCost?.message} {...register("productionCost", { valueAsNumber: true })} />
+        <Input label="سعر البيع (₪)" type="number" step="0.01" error={errors.sellingPrice?.message} {...register("sellingPrice", { valueAsNumber: true })} />
+      </div>
+
+      <Textarea label="تفاصيل ومواصفات إضافية" rows={3} error={errors.description?.message} {...register("description")} />
+
+      <div className="border-t border-gray-100 pt-4 space-y-3">
+        <div className="flex justify-between items-center">
+          <label className="text-sm font-bold text-gray-700">قطع تم سحبها للكمبريسور</label>
+          <button
+            type="button"
+            onClick={() => append({ sparePartId: "", quantity: 1, unitCost: 0 })}
+            className="text-xs bg-indigo-50 text-indigo-600 px-3 py-1.5 rounded-lg font-bold flex items-center gap-1 hover:bg-indigo-100 transition"
+          >
+            <Plus className="w-4 h-4" /> إضافة قطعة
+          </button>
+        </div>
+
+        <div className="space-y-2 max-h-40 overflow-y-auto pr-1 custom-scrollbar">
+          {fields.length === 0 && (
+            <div className="text-center text-xs text-gray-400 py-2">لم يتم إضافة أي قطع. (اختياري)</div>
+          )}
+
+          {fields.map((field, index) => (
+            <div key={field.id} className="flex gap-2 items-start bg-gray-50 p-2 rounded-xl border border-gray-200">
+              <div className="flex-1">
+                <select
+                  {...register(`parts.${index}.sparePartId`)}
+                  className="w-full text-xs p-2 border border-gray-300 rounded-lg outline-none"
+                >
+                  <option value="">-- اختر القطعة --</option>
+                  {inventory?.map((p) => (
+                    <option key={p.id} value={p.id} disabled={p.quantity <= 0}>
+                      {p.name} (متوفر: {p.quantity})
+                    </option>
+                  ))}
+                </select>
+                {errors.parts?.[index]?.sparePartId && (
+                  <span className="text-[10px] text-red-500">{errors.parts[index]?.sparePartId?.message}</span>
+                )}
+              </div>
+              <div className="w-20">
+                <Input
+                  type="number"
+                  placeholder="الكمية"
+                  className="!py-1.5 text-xs"
+                  {...register(`parts.${index}.quantity`, { valueAsNumber: true })}
+                />
+              </div>
+              <div className="w-24">
+                <Input
+                  type="number"
+                  placeholder="التكلفة (₪)"
+                  className="!py-1.5 text-xs"
+                  {...register(`parts.${index}.unitCost`, { valueAsNumber: true })}
+                />
+              </div>
+              <button
+                type="button"
+                onClick={() => remove(index)}
+                className="mt-1 p-1.5 text-red-500 hover:bg-red-100 rounded-lg transition"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <button disabled={isSubmitting} type="submit" className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black transition-all flex justify-center items-center gap-2 shadow-lg hover:bg-indigo-700 hover:shadow-indigo-200">
+        {isSubmitting ? <><Loader2 className="w-5 h-5 animate-spin" /><span>جاري الحفظ والخصم من المخزن...</span></> : "اعتماد وحفظ في المخزن"}
+      </button>
+    </form>
+    </Modal>
   );
+};
+</file>
 
-  return {
-    filteredParts, searchQuery, setSearchQuery, isLoading,
-    isModalOpen, setIsModalOpen, editingPart,
-    actions: { handleSavePart, handleDelete, openAddModal, openEditModal , handleSellPart}
-  };
+<file path="src/features/inventory/components/InventoryTable.tsx">
+import { Edit, Trash2, AlertTriangle, BadgeDollarSign } from "lucide-react";
+import { SparePart } from "@prisma/client";
+
+interface InventoryTableProps {
+  parts: SparePart[];
+  onOpenEditModal: (part: SparePart) => void;
+  onDelete: (id: string, name: string) => void;
+  onOpenSellModal: (part: SparePart) => void;
 }
+
+export const InventoryTable = ({ parts, onOpenEditModal, onDelete, onOpenSellModal }: InventoryTableProps) => (
+  <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+    <div className="overflow-x-auto">
+      <table className="w-full text-right text-sm">
+        <thead className="bg-gray-50 text-gray-400 font-bold border-b">
+          <tr>
+            <th className="p-4">اسم القطعة</th>
+            <th className="p-4 text-center">الكمية المتوفرة</th>
+            <th className="p-4">سعر التكلفة (₪)</th>
+            <th className="p-4">سعر البيع (₪)</th>
+            <th className="p-4 text-center">إجراءات</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-gray-100">
+          {parts.length === 0 ? (
+            <tr><td colSpan={5} className="text-center py-10 text-gray-400">لا توجد قطع مطابقة.</td></tr>
+          ) : (
+            parts.map(part => {
+              const isLowStock = part.quantity <= part.lowStockAlert;
+              return (
+                <tr key={part.id} className="hover:bg-gray-50 transition">
+                  <td className="p-4 font-bold text-gray-800">{part.name}</td>
+                  <td className="p-4 text-center">
+                    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full font-black text-xs ${isLowStock ? 'bg-rose-50 text-rose-600' : 'bg-emerald-50 text-emerald-600'}`}>
+                      {isLowStock && <AlertTriangle className="w-3 h-3" />}
+                      {part.quantity}
+                    </span>
+                  </td>
+                  <td className="p-4 font-bold text-gray-500">₪ {part.averageCost?.toFixed(2) || "0.00"}</td>
+                  <td className="p-4 font-black text-indigo-600">₪ {part.sellingPrice.toFixed(2)}</td>
+                  <td className="p-4 flex justify-center gap-2">
+                    <button
+                      onClick={() => onOpenSellModal(part)}
+                      className="p-2 text-emerald-500 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg transition"
+                      title="بيع مباشر"
+                    >
+                      <BadgeDollarSign className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => onOpenEditModal(part)}
+                      className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition"
+                    >
+                      <Edit className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => onDelete(part.id, part.name)}
+                      className="p-2 text-gray-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </td>
+                </tr>
+              );
+            })
+          )}
+        </tbody>
+      </table>
+    </div>
+  </div>
+);
+</file>
+
+<file path="src/types/index.ts">
+export * from "./ticket.types";
+export * from "./worker.types";
+export * from "./expense.types";
+export * from "./inventory.types";
+export * from "./dashboard.types";
+export * from "./quotations.types";
+export * from "./report.types";
+export * from "./settings.types";
+export * from "./trial.types";
 </file>
 
 <file path="next.config.ts">
@@ -8059,95 +8204,6 @@ const nextConfig: NextConfig = {
 };
 
 export default nextConfig;
-</file>
-
-<file path="src/app/(dashboard)/compressors/page.tsx">
-"use client";
-
-import { Plus, RefreshCw, Loader2, Package, Search, Filter } from "lucide-react";
-import { useCompressors } from "@/src/features/compressors/hooks/useCompressors";
-import { ExportButton } from "@/src/components/shared/ExportButton";
-import { CompressorModal } from "@/src/features/compressors/components/CompressorModal";
-import { CompressorTable } from "@/src/features/compressors/components/CompressorTable";
-import { Compressor } from "@prisma/client";
-
-export default function CompressorsPage() {
-  const { 
-    compressors, isLoading, isModalOpen, setIsModalOpen, 
-     fetchData, actions  ,inventory
-  } = useCompressors();
-
-  // --- تجهيز البيانات للتصدير ---
-  const excelData = compressors.map((c: Compressor) => ({
-    "الموديل/الوصف": c.modelName,
-    "الرقم التسلسلي": c.serialNumber || "لا يوجد",
-    "تكلفة الإنتاج (₪)": c.productionCost,
-    "سعر البيع (₪)": c.sellingPrice,
-    "الربح المتوقع (₪)": c.sellingPrice - c.productionCost,
-    "الحالة": c.status === 'AVAILABLE' || c.status === 'READY' ? 'جاهز للبيع' : c.status === 'SOLD' ? 'تم البيع' : 'صيانة',
-    "تاريخ الإضافة": new Date(c.createdAt).toLocaleDateString('ar-EG'),
-  }));
-
-  return (
-    <div className="p-4 sm:p-8 max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500 pb-10">
-      
-      {/* الترويسة (Header) */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white p-6 rounded-[2.5rem] border border-gray-100 shadow-sm">
-        <div className="flex items-center gap-4">
-          <div className="p-4 bg-indigo-600 text-white rounded-2xl shadow-lg shadow-indigo-100">
-            <Package className="w-8 h-8" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-black text-gray-900">مخزن الكمبريسورات الجاهزة</h1>
-            <p className="text-gray-500 font-medium text-sm">إدارة الأجهزة المعدة للبيع وتتبع أرباحها</p>
-          </div>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-3">
-          <ExportButton data={excelData} fileName="تقرير_مخزن_الكمبريسورات" sheetName="الأجهزة الجاهزة" />
-
-          <button onClick={fetchData} className="p-3 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all" title="تحديث البيانات">
-            <RefreshCw className={`w-5 h-5 ${isLoading ? 'animate-spin' : ''}`} />
-          </button>
-
-          <button onClick={() => setIsModalOpen(true)} className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-2xl font-black shadow-lg shadow-indigo-100 transition-all active:scale-95">
-            <Plus className="w-5 h-5" />
-            <span>إضافة جهاز جديد</span>
-          </button>
-        </div>
-      </div>
-
-      {/* شريط الأدوات السريع (البحث والفلترة) */}
-      <div className="flex flex-col sm:flex-row gap-4 items-center">
-        <div className="relative flex-1 w-full">
-          <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
-          <input type="text" placeholder="بحث بالموديل أو الرقم التسلسلي..." className="w-full pr-12 pl-4 py-4 bg-white border border-gray-100 rounded-2xl focus:ring-2 focus:ring-indigo-500/20 outline-none font-bold text-sm transition-all shadow-sm" />
-        </div>
-        <button className="flex items-center gap-2 px-6 py-4 bg-white border border-gray-100 rounded-2xl text-gray-500 font-bold text-sm hover:bg-gray-50 transition-all shadow-sm">
-          <Filter className="w-4 h-4" /> تصفية
-        </button>
-      </div>
-
-      {/* محتوى الصفحة الرئيسي */}
-      {isLoading ? (
-        <div className="flex flex-col items-center justify-center py-32 gap-4">
-          <Loader2 className="w-12 h-12 animate-spin text-indigo-600" />
-          <p className="text-gray-400 font-bold animate-pulse">جاري جلب بيانات المخزن...</p>
-        </div>
-      ) : (
-        <CompressorTable compressors={compressors} onStatusChange={actions.handleStatusChange} onDelete={actions.handleDelete} />
-      )}
-
-      {/* النافذة المنبثقة للإضافة */}
-      <CompressorModal
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
-        onSave={actions.handleAdd} 
-        inventory={inventory}
-      />
-    </div>
-  );
-}
 </file>
 
 <file path="src/app/(dashboard)/page.tsx">
@@ -8341,6 +8397,110 @@ export default function WorkersPage() {
 }
 </file>
 
+<file path="src/features/compressors/hooks/useCompressors.ts">
+"use client";
+
+import { useState, useEffect, useCallback } from "react";
+import { toast } from "react-hot-toast";
+import { Compressor } from "@prisma/client";
+import { 
+  getCompressors, 
+  addCompressor, 
+  updateCompressorStatus, 
+  deleteCompressor 
+} from "@/src/server/actions/compressors.actions";
+import { getAllSparePartsForDropdown } from "@/src/server/actions/inventory.actions"; 
+import { CompressorFormValues } from "../validations/validations";
+
+export function useCompressors() {
+  const [compressors, setCompressors] = useState<Compressor[]>([]);
+  const [inventory, setInventory] = useState<any[]>([]); 
+  const [isLoading, setIsLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // 1. جلب البيانات (الكمبريسورات وقطع المخزون معاً)
+  const fetchData = useCallback(async () => {
+    setIsLoading(true);
+    const [compRes, invRes] = await Promise.all([
+      getCompressors(),
+      getAllSparePartsForDropdown()
+    ]);
+
+    if (compRes.success) {
+      setCompressors((compRes.data as Compressor[]) || []);
+    } else {
+      toast.error(compRes.error || "خطأ في الجلب");
+    }
+
+    if (invRes.success) {
+      setInventory(invRes.data || []);
+    }
+
+    setIsLoading(false);
+  }, []);
+
+  useEffect(() => { 
+    fetchData(); 
+  }, [fetchData]);
+
+  // 2. إضافة كمبريسور جديد (تستقبل البيانات النظيفة من Zod مباشرة)
+  const handleAdd = async (data: CompressorFormValues) => {
+    const res = await addCompressor({
+      modelName: data.modelName, 
+      serialNumber: data.serialNumber?.trim() || undefined,
+      productionCost: data.productionCost, 
+      sellingPrice: data.sellingPrice,
+      description: data.description,
+      imageUrl: data.imageUrl,
+      parts: data.parts || [] 
+    });
+
+    if (res.success) {
+      toast.success("تمت إضافة الكمبريسور للمخزون وخصم القطع بنجاح");
+      setIsModalOpen(false); // إغلاق النافذة
+      await fetchData();     // تحديث الجدول
+      return true;           // إرجاع true للنافذة لكي تقوم بتصفير الحقول (reset)
+    } else {
+      toast.error(res.error || "فشل الإضافة");
+      return false;
+    }
+  };
+
+  // 3. تحديث حالة الكمبريسور (متاح، مباع، صيانة)
+  const handleStatusChange = async (id: string, status: string) => {
+    const res = await updateCompressorStatus(id, status);
+    if (res.success) {
+      toast.success("تم تحديث الحالة");
+      await fetchData();
+    } else {
+      toast.error(res.error || "فشل التحديث");
+    }
+  };
+
+  // 4. حذف كمبريسور
+  const handleDelete = async (id: string) => {
+    if (!confirm("هل أنت متأكد من الحذف؟")) return;
+    const res = await deleteCompressor(id);
+    if (res.success) {
+      toast.success("تم الحذف");
+      await fetchData();
+    } else {
+      toast.error(res.error || "فشل الحذف");
+    }
+  };
+
+  return { 
+    compressors,
+    inventory, // 👈 إرجاع المخزون لكي نمرره للـ Modal 
+    isLoading, 
+    isModalOpen, 
+    setIsModalOpen, 
+    fetchData,
+    actions: { handleAdd, handleStatusChange, handleDelete } 
+  };
+}
+</file>
+
 <file path="src/features/expenses/hooks/useExpenses.ts">
 "use client";
 
@@ -8389,293 +8549,96 @@ export function useExpenses() {
 }
 </file>
 
-<file path="package.json">
-{
-  "name": "my-next-app",
-  "version": "0.1.0",
-  "private": true,
-  "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "eslint"
-  },
-  "dependencies": {
-    "@hookform/resolvers": "^5.2.2",
-    "@prisma/adapter-pg": "^7.6.0",
-    "@prisma/client": "^7.6.0",
-    "@uploadthing/react": "^7.3.3",
-    "bcrypt": "^6.0.0",
-    "lucide-react": "^1.7.0",
-    "next": "^16.2.2",
-    "next-auth": "^4.24.13",
-    "pg": "^8.20.0",
-    "react": "^19.2.4",
-    "react-dom": "^19.2.4",
-    "react-hook-form": "^7.72.0",
-    "react-hot-toast": "^2.6.0",
-    "react-select": "^5.10.2",
-    "recharts": "^3.8.1",
-    "uploadthing": "^7.7.4",
-    "xlsx": "^0.18.5",
-    "zod": "^4.3.6"
-  },
-  "devDependencies": {
-    "@eslint/eslintrc": "^3",
-    "@tailwindcss/postcss": "^4",
-    "@types/bcrypt": "^6.0.0",
-    "@types/node": "^20",
-    "@types/pg": "^8.20.0",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
-    "dotenv": "^17.3.1",
-    "eslint": "^9",
-    "eslint-config-next": "15.5.3",
-    "prisma": "^7.6.0",
-    "raw-loader": "^4.0.2",
-    "tailwindcss": "^4",
-    "tsx": "^4.21.0",
-    "typescript": "^5"
-  }
-}
-</file>
+<file path="src/features/inventory/hooks/useInventory.ts">
+"use client";
 
-<file path="prisma/schema.prisma">
-generator client {
-  provider = "prisma-client-js"
-}
+import { useState, useEffect } from "react";
+import { toast } from "react-hot-toast";
+import { SparePart } from "@prisma/client";
+import { getInventory, addSparePart, updateSparePart, deleteSparePart, sellPartDirectly } from "@/src/server/actions/inventory.actions";
+import { SparePartFormValues } from "../validations/validations";
 
-datasource db {
-  provider = "postgresql"
-}
-
-enum Role {
-  ADMIN
-  WORKER
-}
-
-// ================= الأدوار والمستخدمين =================
-model User {
-  id            String              @id @default(cuid())
-  name          String
-  phone         String              @unique
-  password      String
-  role          Role                @default(WORKER) // ADMIN أو WORKER
-  baseSalary    Float               @default(0)        
-  createdAt     DateTime            @default(now())
-
-  //  (Relation Names)
-  tickets       Ticket[]            @relation("WorkerTickets")
-  trialItems    TrialItem[]         @relation("WorkerTrials")
-  transactions  WorkerTransaction[]
-}
-
-// ================= المخزون والقطع =================
-model SparePart {
-  id            String         @id @default(cuid())
-  name          String
-  quantity      Int            @default(0)
-  averageCost   Float          @default(0.0)
-  sellingPrice  Float          @default(0.0)
-  lowStockAlert Int            @default(5)
-  imageUrl      String?
-
-  //  (Relation Names)
-  ticketParts   TicketPart[]
-  trialItems    TrialItem[]
-  purchaseItems PurchaseItem[]
-  compressorParts CompressorPart[]
-}
-
-model Compressor {
-  id             String      @id @default(cuid())
-  serialNumber   String?     
-  modelName      String
-  productionCost Float       @default(0.0)
-  sellingPrice   Float       @default(0.0)
-  status         String      @default("READY")
-  imageUrl       String?     
-  createdAt      DateTime    @default(now()) 
-  trialItems     TrialItem[]
-  partsUsed    CompressorPart[]
-}
-
-model CompressorPart {
-  id           String     @id @default(cuid())
-  quantity     Int
-  unitCost     Float
+export function useInventory() {
+  const [parts, setParts] = useState<SparePart[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
   
-  compressorId String
-  compressor   Compressor @relation(fields: [compressorId], references: [id], onDelete: Cascade)
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingPart, setEditingPart] = useState<SparePart | null>(null);
   
-  sparePartId  String
-  sparePart    SparePart  @relation(fields: [sparePartId], references: [id])
-}
+  // حالة نافذة البيع
+  const [sellModal, setSellModal] = useState<{ isOpen: boolean; part: SparePart | null }>({ isOpen: false, part: null });
 
-// ================= القطع التجريبية =================
-enum TrialStatus {
-  ACTIVE
-  RETURNED
-  EXPIRED
-}
+  const fetchInventory = async () => {
+    setIsLoading(true);
+    const res = await getInventory();
+    if (res.success) setParts((res.data as SparePart[]) || []);
+    setIsLoading(false);
+  };
 
-model TrialItem {
-  id             String      @id @default(cuid())
-  notes          String?
-  status         TrialStatus @default(ACTIVE)
-  givenAt        DateTime    @default(now())
-  expectedReturn DateTime?
-  returnedAt     DateTime?
+  useEffect(() => { fetchInventory(); }, []);
 
-  sparePartId    String?
-  sparePart      SparePart?  @relation(fields: [sparePartId], references: [id])
-  qty            Int         @default(1)
+  const handleSellPart = async (sparePartId: string, quantity: number, price: number) => {
+    const res = await sellPartDirectly(sparePartId, quantity, price);
+    if (res.success) {
+      toast.success("تم البيع وخصم القطعة من المخزن بنجاح");
+      setSellModal({ isOpen: false, part: null });
+      fetchInventory(); 
+      return true;
+    } else {
+      toast.error(res?.error || "حدث خطأ أثناء البيع");
+      return false;
+    }
+  };
 
-  compressorId   String?
-  compressor     Compressor? @relation(fields: [compressorId], references: [id])
+  const handleSavePart = async (data: SparePartFormValues) => {
+    let res;
+    if (editingPart) {
+      res = await updateSparePart(editingPart.id, data);
+    } else {
+      res = await addSparePart(data);
+    }
 
-  // "WorkerTrials"
-  workerId       String?
-  worker         User?       @relation("WorkerTrials", fields: [workerId], references: [id])
+    if (res.success) {
+      toast.success(editingPart ? "تم التعديل بنجاح" : "تمت الإضافة بنجاح");
+      setIsModalOpen(false);
+      setEditingPart(null);
+      fetchInventory();
+      return true;
+    } else {
+      toast.error(res.error || "حدث خطأ أثناء الحفظ");
+      return false;
+    }
+  };
+
+  const handleDelete = async (id: string, name: string) => {
+    if (confirm(`هل أنت متأكد من حذف القطعة (${name}) نهائياً؟`)) {
+      const res = await deleteSparePart(id);
+      if (res.success) {
+        toast.success("تم الحذف");
+        fetchInventory();
+      } else {
+        toast.error(res.error || "حدث خطأ أثناء الحذف");
+      }
+    }
+  };
+
+  const openAddModal = () => { setEditingPart(null); setIsModalOpen(true); };
+  const openEditModal = (part: SparePart) => { setEditingPart(part); setIsModalOpen(true); };
   
-  ticketId       String?
-  ticket         Ticket?     @relation(fields: [ticketId], references: [id])
-}
+  // دالة فتح نافذة البيع
+  const openSellModal = (part: SparePart) => { setSellModal({ isOpen: true, part }); };
 
-// ================= نظام التذاكر =================
-enum TicketStatus {
-  OPEN
-  WAITING_FOR_PARTS
-  IN_PROGRESS
-  COMPLETED
-  CANCELED
-}
+  const filteredParts = parts.filter(part =>
+    part.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
-model Ticket {
-  id               String       @id @default(cuid())
-  customerName     String
-  customerPhone    String
-  compressorModel  String?
-  issueDescription String?
-  invoiceImageUrl  String?      
-  advancePayment   Float        @default(0.0)
-  discount         Float        @default(0.0)
-  status           TicketStatus @default(OPEN)
-  laborCost        Float        @default(0.0)
-  commission       Float        @default(0.0)
-  totalCost        Float        @default(0.0)
-  createdAt        DateTime     @default(now())
-  updatedAt        DateTime     @updatedAt
-
-  // "WorkerTickets"
-  workerId         String?
-  worker           User?        @relation("WorkerTickets", fields: [workerId], references: [id])
-  
-  partsUsed        TicketPart[]
-  payments         Payment[]    
-  trialItems       TrialItem[]
-  expenses         Expense[]
-}
-
-// ================= الدفعات والمعاملات =================
-model Payment {
-  id        String   @id @default(cuid())
-  amount    Float
-  notes     String?
-  createdAt DateTime @default(now())
-
-  ticketId  String
-  ticket    Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
-}
-
-model TicketPart {
-  id          String    @id @default(cuid())
-  ticketId    String
-  ticket      Ticket    @relation(fields: [ticketId], references: [id], onDelete: Cascade)
-  sparePartId String
-  sparePart   SparePart @relation(fields: [sparePartId], references: [id])
-  quantity    Int
-  priceAtTime Float
-}
-
-
-enum TypesWorkerTransaction {
-  ADVANCE
-  STAKE
-  BONUS
-  PAYOUT
-}
-model WorkerTransaction {
-  id          String   @id @default(cuid())
-  userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  amount      Float    
-  type        TypesWorkerTransaction   
-  description String?  
-  date        DateTime @default(now())
-}
-
-// ================= المشتريات والموردين =================
-model Supplier {
-  id        String            @id @default(cuid())
-  name      String
-  phone     String?
-  totalDebt Float             @default(0.0)
-  invoices  PurchaseInvoice[]
-
-  payments    SupplierPayment[] 
-}
-
-model SupplierPayment {
-  id         String   @id @default(cuid())
-  amount     Float
-  date       DateTime @default(now())
-  notes      String?
-  
-  supplierId String
-  supplier   Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
-}
-
-
-
-model PurchaseInvoice {
-  id          String         @id @default(cuid())
-  supplierId  String
-  supplier    Supplier       @relation(fields: [supplierId], references: [id])
-  totalAmount Float
-  paidAmount  Float          @default(0.0)
-  date        DateTime       @default(now())
-  notes       String?
-  items       PurchaseItem[]
-}
-
-model PurchaseItem {
-  id          String          @id @default(cuid())
-  invoiceId   String
-  invoice     PurchaseInvoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
-  sparePartId String
-  sparePart   SparePart       @relation(fields: [sparePartId], references: [id])
-  quantity    Int
-  unitCost    Float
-  notes       String?
-}
-
-// ================= المصاريف التشغيلية =================
-enum ExpenseCategory {
-  STANDARD
-  EXTRA
-}
-
-model Expense {
-  id       String          @id @default(cuid())
-  title    String
-  amount   Float
-  category ExpenseCategory @default(STANDARD)
-  date     DateTime        @default(now())
-  notes    String?
-
-  ticketId String?
-  ticket   Ticket?         @relation(fields: [ticketId], references: [id])
+  return {
+    filteredParts, searchQuery, setSearchQuery, isLoading,
+    isModalOpen, setIsModalOpen, editingPart,
+    sellModal, setSellModal, 
+    actions: { handleSavePart, handleDelete, openAddModal, openEditModal, handleSellPart, openSellModal } // 👈 تم تصدير الدالة
+  };
 }
 </file>
 
@@ -8821,6 +8784,173 @@ const handleDeletePayment = async (paymentId: string) => {
 }
 </file>
 
+<file path="package.json">
+{
+  "name": "my-next-app",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint"
+  },
+  "dependencies": {
+    "@hookform/resolvers": "^5.2.2",
+    "@prisma/adapter-pg": "^7.6.0",
+    "@prisma/client": "^7.6.0",
+    "@uploadthing/react": "^7.3.3",
+    "bcrypt": "^6.0.0",
+    "lucide-react": "^1.7.0",
+    "next": "15.5.15",
+    "next-auth": "^4.24.13",
+    "pg": "^8.20.0",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "react-hook-form": "^7.72.0",
+    "react-hot-toast": "^2.6.0",
+    "react-select": "^5.10.2",
+    "recharts": "^3.8.1",
+    "swr": "^2.4.1",
+    "uploadthing": "^7.7.4",
+    "xlsx": "^0.18.5",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3",
+    "@tailwindcss/postcss": "^4",
+    "@types/bcrypt": "^6.0.0",
+    "@types/node": "^20",
+    "@types/pg": "^8.20.0",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "dotenv": "^17.3.1",
+    "eslint": "^9",
+    "eslint-config-next": "15.5.15",
+    "prisma": "^7.6.0",
+    "raw-loader": "^4.0.2",
+    "tailwindcss": "^4",
+    "tsx": "^4.21.0",
+    "typescript": "^5"
+  },
+  "optionalDependencies": {
+    "@next/swc-win32-x64-msvc": "15.5.15"
+  }
+}
+</file>
+
+<file path="src/app/(dashboard)/compressors/page.tsx">
+"use client";
+
+import { Plus, RefreshCw, Loader2, Package, Search, Filter } from "lucide-react";
+import { useCompressors } from "@/src/features/compressors/hooks/useCompressors";
+import { ExportButton } from "@/src/components/shared/ExportButton";
+import { CompressorModal } from "@/src/features/compressors/components/CompressorModal";
+import { CompressorTable } from "@/src/features/compressors/components/CompressorTable";
+import { Compressor } from "@prisma/client";
+import { useState } from "react";
+
+export default function CompressorsPage() {
+  const { 
+    compressors, isLoading, isModalOpen, setIsModalOpen, 
+    fetchData, actions, inventory
+  } = useCompressors();
+
+  // 1. حالة البحث
+  const [searchQuery, setSearchQuery] = useState("");
+
+  // 2. فلترة البيانات بناءً على البحث
+  const filteredCompressors = compressors.filter((c: Compressor) => {
+    const query = searchQuery.toLowerCase();
+    return (
+      c.modelName.toLowerCase().includes(query) || 
+      (c.serialNumber && c.serialNumber.toLowerCase().includes(query))
+    );
+  });
+  
+  // 3. تجهيز البيانات للتصدير (تم التعديل لتصدير البيانات المفلترة فقط)
+  const excelData = filteredCompressors.map((c: Compressor) => ({
+    "الموديل/الوصف": c.modelName,
+    "الرقم التسلسلي": c.serialNumber || "لا يوجد",
+    "تكلفة الإنتاج (₪)": c.productionCost,
+    "سعر البيع (₪)": c.sellingPrice,
+    "الربح المتوقع (₪)": c.sellingPrice - c.productionCost,
+    "الحالة": c.status === 'AVAILABLE' || c.status === 'READY' ? 'جاهز للبيع' : c.status === 'SOLD' ? 'تم البيع' : 'صيانة',
+    "تاريخ الإضافة": new Date(c.createdAt).toLocaleDateString('ar-EG'),
+  }));
+
+  return (
+    <div className="p-4 sm:p-8 max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500 pb-10">
+      
+      {/* الترويسة (Header) */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white p-6 rounded-[2.5rem] border border-gray-100 shadow-sm">
+        <div className="flex items-center gap-4">
+          <div className="p-4 bg-indigo-600 text-white rounded-2xl shadow-lg shadow-indigo-100">
+            <Package className="w-8 h-8" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-black text-gray-900">مخزن الكمبريسورات الجاهزة</h1>
+            <p className="text-gray-500 font-medium text-sm">إدارة الأجهزة المعدة للبيع وتتبع أرباحها</p>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-3">
+          <ExportButton data={excelData} fileName="تقرير_مخزن_الكمبريسورات" sheetName="الأجهزة الجاهزة" />
+
+          <button onClick={fetchData} className="p-3 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all" title="تحديث البيانات">
+            <RefreshCw className={`w-5 h-5 ${isLoading ? 'animate-spin' : ''}`} />
+          </button>
+
+          <button onClick={() => setIsModalOpen(true)} className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-2xl font-black shadow-lg shadow-indigo-100 transition-all active:scale-95">
+            <Plus className="w-5 h-5" />
+            <span>إضافة جهاز جديد</span>
+          </button>
+        </div>
+      </div>
+
+      {/* شريط الأدوات السريع (البحث والفلترة) */}
+      <div className="flex flex-col sm:flex-row gap-4 items-center">
+        <div className="relative flex-1 w-full">
+          <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+          <input 
+            type="text" 
+            value={searchQuery} 
+            onChange={(e) => setSearchQuery(e.target.value)} // 👈 تم الربط هنا
+            placeholder="بحث بالموديل أو الرقم التسلسلي..." 
+            className="w-full pr-12 pl-4 py-4 bg-white border border-gray-100 rounded-2xl focus:ring-2 focus:ring-indigo-500/20 outline-none font-bold text-sm transition-all shadow-sm" 
+          />
+        </div>
+        <button className="flex items-center gap-2 px-6 py-4 bg-white border border-gray-100 rounded-2xl text-gray-500 font-bold text-sm hover:bg-gray-50 transition-all shadow-sm">
+          <Filter className="w-4 h-4" /> تصفية
+        </button>
+      </div>
+
+      {/* محتوى الصفحة الرئيسي */}
+      {isLoading ? (
+        <div className="flex flex-col items-center justify-center py-32 gap-4">
+          <Loader2 className="w-12 h-12 animate-spin text-indigo-600" />
+          <p className="text-gray-400 font-bold animate-pulse">جاري جلب بيانات المخزن...</p>
+        </div>
+      ) : (
+        <CompressorTable 
+          compressors={filteredCompressors} 
+          onStatusChange={actions.handleStatusChange} 
+          onDelete={actions.handleDelete} 
+        />
+      )}
+
+      {/* النافذة المنبثقة للإضافة */}
+      <CompressorModal
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        onSave={actions.handleAdd} 
+        inventory={inventory}
+      />
+    </div>
+  );
+}
+</file>
+
 <file path="src/app/layout.tsx">
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
@@ -8926,6 +9056,251 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
       </aside>
     </>
   );
+}
+</file>
+
+<file path="prisma/schema.prisma">
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  ADMIN
+  WORKER
+}
+
+// ================= الأدوار والمستخدمين =================
+model User {
+  id            String              @id @default(cuid())
+  name          String
+  phone         String              @unique
+  password      String
+  role          Role                @default(WORKER) // ADMIN أو WORKER
+  baseSalary    Float               @default(0)        
+  createdAt     DateTime            @default(now())
+
+  //  (Relation Names)
+  tickets       Ticket[]            @relation("WorkerTickets")
+  trialItems    TrialItem[]         @relation("WorkerTrials")
+  transactions  WorkerTransaction[]
+}
+
+// ================= المخزون والقطع =================
+model SparePart {
+  id            String         @id @default(cuid())
+  name          String
+  quantity      Int            @default(0)
+  averageCost   Float          @default(0.0)
+  sellingPrice  Float          @default(0.0)
+  lowStockAlert Int            @default(5)
+  imageUrl      String?
+
+  //  (Relation Names)
+  ticketParts   TicketPart[]
+  trialItems    TrialItem[]
+  purchaseItems PurchaseItem[]
+  compressorParts CompressorPart[]
+}
+
+model Compressor {
+  id             String      @id @default(cuid())
+  serialNumber   String?     
+  modelName      String
+  productionCost Float       @default(0.0)
+  sellingPrice   Float       @default(0.0)
+  status         String      @default("READY")
+  description    String?
+  imageUrl       String?     
+  createdAt      DateTime    @default(now()) 
+  trialItems     TrialItem[]
+  partsUsed      CompressorPart[]
+}
+
+model CompressorPart {
+  id           String     @id @default(cuid())
+  quantity     Int
+  unitCost     Float
+  
+  compressorId String
+  compressor   Compressor @relation(fields: [compressorId], references: [id], onDelete: Cascade)
+  
+  sparePartId  String
+  sparePart    SparePart  @relation(fields: [sparePartId], references: [id])
+}
+
+// ================= القطع التجريبية =================
+enum TrialStatus {
+  ACTIVE
+  RETURNED
+  EXPIRED
+}
+
+model TrialItem {
+  id             String      @id @default(cuid())
+  notes          String?
+  status         TrialStatus @default(ACTIVE)
+  givenAt        DateTime    @default(now())
+  expectedReturn DateTime?
+  returnedAt     DateTime?
+
+  sparePartId    String?
+  sparePart      SparePart?  @relation(fields: [sparePartId], references: [id])
+  qty            Int         @default(1)
+
+  compressorId   String?
+  compressor     Compressor? @relation(fields: [compressorId], references: [id])
+
+  // "WorkerTrials"
+  workerId       String?
+  worker         User?       @relation("WorkerTrials", fields: [workerId], references: [id])
+  
+  ticketId       String?
+  ticket         Ticket?     @relation(fields: [ticketId], references: [id])
+}
+
+// ================= نظام التذاكر =================
+enum TicketStatus {
+  OPEN
+  WAITING_FOR_PARTS
+  IN_PROGRESS
+  COMPLETED
+  CANCELED
+}
+
+model Ticket {
+  id               String       @id @default(cuid())
+  customerName     String
+  customerPhone    String
+  compressorModel  String?
+  issueDescription String?
+  invoiceImageUrl  String?      
+  advancePayment   Float        @default(0.0)
+  discount         Float        @default(0.0)
+  status           TicketStatus @default(OPEN)
+  laborCost        Float        @default(0.0)
+  commission       Float        @default(0.0)
+  totalCost        Float        @default(0.0)
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  // "WorkerTickets"
+  workerId         String?
+  worker           User?        @relation("WorkerTickets", fields: [workerId], references: [id])
+  
+  partsUsed        TicketPart[]
+  payments         Payment[]    
+  trialItems       TrialItem[]
+  expenses         Expense[]
+
+  @@index([customerPhone])
+  @@index([customerName])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// ================= الدفعات والمعاملات =================
+model Payment {
+  id        String   @id @default(cuid())
+  amount    Float
+  notes     String?
+  createdAt DateTime @default(now())
+
+  ticketId  String
+  ticket    Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+}
+
+model TicketPart {
+  id          String    @id @default(cuid())
+  ticketId    String
+  ticket      Ticket    @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  sparePartId String
+  sparePart   SparePart @relation(fields: [sparePartId], references: [id])
+  quantity    Int
+  priceAtTime Float
+}
+
+
+enum TypesWorkerTransaction {
+  ADVANCE
+  STAKE
+  BONUS
+  PAYOUT
+}
+model WorkerTransaction {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amount      Float    
+  type        TypesWorkerTransaction   
+  description String?  
+  date        DateTime @default(now())
+}
+
+// ================= المشتريات والموردين =================
+model Supplier {
+  id        String            @id @default(cuid())
+  name      String
+  phone     String?
+  totalDebt Float             @default(0.0)
+  invoices  PurchaseInvoice[]
+
+  payments    SupplierPayment[] 
+}
+
+model SupplierPayment {
+  id         String   @id @default(cuid())
+  amount     Float
+  date       DateTime @default(now())
+  notes      String?
+  
+  supplierId String
+  supplier   Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+}
+
+
+
+model PurchaseInvoice {
+  id          String         @id @default(cuid())
+  supplierId  String
+  supplier    Supplier       @relation(fields: [supplierId], references: [id])
+  totalAmount Float
+  paidAmount  Float          @default(0.0)
+  date        DateTime       @default(now())
+  notes       String?
+  items       PurchaseItem[]
+}
+
+model PurchaseItem {
+  id          String          @id @default(cuid())
+  invoiceId   String
+  invoice     PurchaseInvoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  sparePartId String
+  sparePart   SparePart       @relation(fields: [sparePartId], references: [id])
+  quantity    Int
+  unitCost    Float
+  notes       String?
+}
+
+// ================= المصاريف التشغيلية =================
+enum ExpenseCategory {
+  STANDARD
+  EXTRA
+}
+
+model Expense {
+  id       String          @id @default(cuid())
+  title    String
+  amount   Float
+  category ExpenseCategory @default(STANDARD)
+  date     DateTime        @default(now())
+  notes    String?
+
+  ticketId String?
+  ticket   Ticket?         @relation(fields: [ticketId], references: [id])
 }
 </file>
 

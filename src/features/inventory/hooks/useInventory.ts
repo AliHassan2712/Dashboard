@@ -1,45 +1,46 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useCallback } from "react";
+import useSWR from "swr";
 import { toast } from "react-hot-toast";
 import { SparePart } from "@prisma/client";
-import { getInventory, addSparePart, updateSparePart, deleteSparePart, sellPartDirectly } from "@/src/server/actions/inventory.actions";
+import { getPaginatedParts, addSparePart, updateSparePart, deleteSparePart, sellPartDirectly } from "@/src/server/actions/inventory.actions";
 import { SparePartFormValues } from "../validations/validations";
 
-export function useInventory() {
-  const [parts, setParts] = useState<SparePart[]>([]);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [isLoading, setIsLoading] = useState(true);
-  
+// دالة جلب البيانات مع التقسيم (SWR Fetcher)
+const fetcher = async ([_, page, search]: [string, number, string]) => {
+  const res = await getPaginatedParts({ page, limit: 12, search, category: "ALL" });
+  if (res.error) throw new Error(res.error);
+  return res;
+};
+
+export function useInventory(currentPage: number, searchQuery: string) {
+  // حالات النوافذ (حافظنا عليها كما هي في كودك الأصلي)
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingPart, setEditingPart] = useState<SparePart | null>(null);
-  
-  // حالة نافذة البيع
   const [sellModal, setSellModal] = useState<{ isOpen: boolean; part: SparePart | null }>({ isOpen: false, part: null });
 
-  const fetchInventory = async () => {
-    setIsLoading(true);
-    const res = await getInventory();
-    if (res.success) setParts((res.data as SparePart[]) || []);
-    setIsLoading(false);
-  };
+  // السحر هنا: SWR تجلب البيانات وتضعها في الكاش
+  const { data, isLoading, mutate } = useSWR(
+    ["inventory-data", currentPage, searchQuery], 
+    fetcher, 
+    { keepPreviousData: true, revalidateOnFocus: false }
+  );
 
-  useEffect(() => { fetchInventory(); }, []);
-
-  const handleSellPart = async (sparePartId: string, quantity: number, price: number) => {
+  const handleSellPart = useCallback(async (sparePartId: string, quantity: number, price: number) => {
     const res = await sellPartDirectly(sparePartId, quantity, price);
     if (res.success) {
       toast.success("تم البيع وخصم القطعة من المخزن بنجاح");
       setSellModal({ isOpen: false, part: null });
-      fetchInventory(); 
+      mutate(); // تحديث صامت
       return true;
     } else {
       toast.error(res?.error || "حدث خطأ أثناء البيع");
       return false;
     }
-  };
+  }, [mutate]);
 
-  const handleSavePart = async (data: SparePartFormValues) => {
+  const handleSavePart = useCallback(async (data: SparePartFormValues) => {
     let res;
     if (editingPart) {
       res = await updateSparePart(editingPart.id, data);
@@ -51,40 +52,36 @@ export function useInventory() {
       toast.success(editingPart ? "تم التعديل بنجاح" : "تمت الإضافة بنجاح");
       setIsModalOpen(false);
       setEditingPart(null);
-      fetchInventory();
+      mutate();
       return true;
     } else {
       toast.error(res.error || "حدث خطأ أثناء الحفظ");
       return false;
     }
-  };
+  }, [editingPart, mutate]);
 
-  const handleDelete = async (id: string, name: string) => {
+  const handleDelete = useCallback(async (id: string, name: string) => {
     if (confirm(`هل أنت متأكد من حذف القطعة (${name}) نهائياً؟`)) {
       const res = await deleteSparePart(id);
       if (res.success) {
         toast.success("تم الحذف");
-        fetchInventory();
+        mutate();
       } else {
         toast.error(res.error || "حدث خطأ أثناء الحذف");
       }
     }
-  };
+  }, [mutate]);
 
-  const openAddModal = () => { setEditingPart(null); setIsModalOpen(true); };
-  const openEditModal = (part: SparePart) => { setEditingPart(part); setIsModalOpen(true); };
-  
-  // دالة فتح نافذة البيع
-  const openSellModal = (part: SparePart) => { setSellModal({ isOpen: true, part }); };
-
-  const filteredParts = parts.filter(part =>
-    part.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const openAddModal = useCallback(() => { setEditingPart(null); setIsModalOpen(true); }, []);
+  const openEditModal = useCallback((part: SparePart) => { setEditingPart(part); setIsModalOpen(true); }, []);
+  const openSellModal = useCallback((part: SparePart) => { setSellModal({ isOpen: true, part }); }, []);
 
   return {
-    filteredParts, searchQuery, setSearchQuery, isLoading,
+    parts: data?.data || [],
+    metadata: data?.metadata || { totalPages: 1, currentPage: 1, totalItems: 0 },
+    isLoading,
     isModalOpen, setIsModalOpen, editingPart,
     sellModal, setSellModal, 
-    actions: { handleSavePart, handleDelete, openAddModal, openEditModal, handleSellPart, openSellModal } // 👈 تم تصدير الدالة
+    actions: { handleSavePart, handleDelete, openAddModal, openEditModal, handleSellPart, openSellModal }
   };
 }

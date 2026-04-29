@@ -150,3 +150,40 @@ export async function getAllSparePartsForDropdown() {
     return { error: "تعذر جلب قائمة قطع الغيار من المستودع." };
   }
 }
+
+
+export async function getPaginatedParts(params: {
+  page: number;
+  limit: number;
+  search?: string;
+  category?: string;
+}) {
+  try {
+    const { page, limit, search, category } = params;
+    const skip = (page - 1) * limit;
+
+    const whereClause: any = {};
+    if (category && category !== "ALL") whereClause.category = category;
+    if (search) {
+      whereClause.name = { contains: search, mode: "insensitive" };
+    }
+
+    const [totalItems, parts] = await prisma.$transaction([
+      prisma.sparePart.count({ where: whereClause }),
+      prisma.sparePart.findMany({
+        where: whereClause,
+        skip,
+        take: limit,
+        orderBy: { name: 'asc' }, // الترتيب الأبجدي للقطع
+      })
+    ]);
+
+    return { 
+      success: true, 
+      data: parts, 
+      metadata: { totalItems, totalPages: Math.ceil(totalItems / limit), currentPage: page }
+    };
+  } catch (error) {
+    return { error: "فشل جلب بيانات المخزون" };
+  }
+}
