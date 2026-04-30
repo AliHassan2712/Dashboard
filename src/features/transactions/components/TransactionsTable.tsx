@@ -1,6 +1,7 @@
-import { TransactionRecord } from "../hooks/useTransactions";
+import { memo } from "react";
+import { TransactionRecord } from "@/src/types";
 
-export const TransactionsTable = ({ transactions }: { transactions: TransactionRecord[] }) => (
+export const TransactionsTable = memo(({ transactions }: { transactions: TransactionRecord[] }) => (
   <div className="overflow-x-auto">
     <table className="w-full text-right text-sm">
       <thead className="bg-gray-50 text-gray-500 font-bold border-b border-gray-100">
@@ -37,4 +38,5 @@ export const TransactionsTable = ({ transactions }: { transactions: TransactionR
       </tbody>
     </table>
   </div>
-);
+));
+TransactionsTable.displayName = "TransactionsTable";

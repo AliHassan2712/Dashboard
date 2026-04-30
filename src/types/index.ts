@@ -7,3 +7,6 @@ export * from "./quotations.types";
 export * from "./report.types";
 export * from "./settings.types";
 export * from "./trial.types";
+export * from "./transactions.types"
+
+
