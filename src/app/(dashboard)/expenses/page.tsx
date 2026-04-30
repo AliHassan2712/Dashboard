@@ -16,16 +16,24 @@ import { SupplierLedgerModal } from "@/src/features/expenses/components/modals/S
 import { ExpensesTable } from "@/src/features/expenses/components/tables/ExpensesTable";
 import { PaymentsTable } from "@/src/features/expenses/components/tables/PaymentsTable";
 import { PurchasesTable } from "@/src/features/expenses/components/tables/PurchasesTable";
+import { Pagination } from "@/src/components/shared/Pagination";
 
 export default function ExpensesPage() {
   const [activeTab, setActiveTab] = useState<"expenses" | "purchases" | "payments">("expenses");
+  const [currentPage, setCurrentPage] = useState(1);
 
-  const exp = useExpenses();
-  const pur = usePurchases();
-  const sup = useSuppliers();
+  const exp = useExpenses(activeTab === "expenses" ? currentPage : 1);
+  const pur = usePurchases(activeTab === "purchases" ? currentPage : 1);
+  const sup = useSuppliers(activeTab === "payments" ? currentPage : 1);
 
-  // مدمج حالات التحميل
   const isAnyLoading = exp.isLoading || pur.isLoading || sup.isLoading;
+  const currentMetadata = activeTab === "expenses" ? exp.metadata : activeTab === "purchases" ? pur.metadata : sup.metadata;
+  const isCurrentListEmpty = activeTab === "expenses" ? exp.expenses.length === 0 : activeTab === "purchases" ? pur.purchases.length === 0 : sup.payments.length === 0;
+
+  const handleTabChange = (tab: "expenses" | "purchases" | "payments") => {
+    setActiveTab(tab);
+    setCurrentPage(1); 
+  };
 
   return (
     <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500 pb-10">
@@ -50,25 +58,28 @@ export default function ExpensesPage() {
 
       <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
         <div className="flex border-b border-gray-100 bg-gray-50/50 p-2 gap-2 overflow-x-auto">
-          <button onClick={() => setActiveTab("expenses")} className={`whitespace-nowrap flex-1 py-3 px-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${activeTab === "expenses" ? "bg-white text-rose-600 shadow-sm border border-gray-200" : "text-gray-500 hover:bg-gray-100"}`}><Receipt className="w-5 h-5" /> المصاريف التشغيلية</button>
-          <button onClick={() => setActiveTab("purchases")} className={`whitespace-nowrap flex-1 py-3 px-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${activeTab === "purchases" ? "bg-white text-indigo-600 shadow-sm border border-gray-200" : "text-gray-500 hover:bg-gray-100"}`}><Truck className="w-5 h-5" /> فواتير المشتريات</button>
-          <button onClick={() => setActiveTab("payments")} className={`whitespace-nowrap flex-1 py-3 px-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${activeTab === "payments" ? "bg-white text-emerald-600 shadow-sm border border-gray-200" : "text-gray-500 hover:bg-gray-100"}`}><History className="w-5 h-5" /> سجل دفعات الموردين</button>
+          <button onClick={() => handleTabChange("expenses")} className={`whitespace-nowrap flex-1 py-3 px-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${activeTab === "expenses" ? "bg-white text-rose-600 shadow-sm border border-gray-200" : "text-gray-500 hover:bg-gray-100"}`}><Receipt className="w-5 h-5" /> المصاريف التشغيلية</button>
+          <button onClick={() => handleTabChange("purchases")} className={`whitespace-nowrap flex-1 py-3 px-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${activeTab === "purchases" ? "bg-white text-indigo-600 shadow-sm border border-gray-200" : "text-gray-500 hover:bg-gray-100"}`}><Truck className="w-5 h-5" /> فواتير المشتريات</button>
+          <button onClick={() => handleTabChange("payments")} className={`whitespace-nowrap flex-1 py-3 px-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${activeTab === "payments" ? "bg-white text-emerald-600 shadow-sm border border-gray-200" : "text-gray-500 hover:bg-gray-100"}`}><History className="w-5 h-5" /> سجل دفعات الموردين</button>
         </div>
 
         <div className="p-0">
-          {isAnyLoading ? (
+          {isAnyLoading && isCurrentListEmpty ? (
             <div className="py-20 flex justify-center"><Loader2 className="w-8 h-8 animate-spin text-gray-400" /></div>
-          ) : activeTab === "expenses" ? (
-            <ExpensesTable expenses={exp.expenses} onDelete={exp.actions.handleDelete} />
-          ) : activeTab === "purchases" ? (
-            <PurchasesTable purchases={pur.purchases} onOpenLedger={sup.setLedgerSupplierId} />
           ) : (
-            <PaymentsTable payments={sup.payments} onEdit={(pay) => sup.setPaymentModal({ isOpen: true, editingId: pay.id })} onDelete={sup.actions.handleDeletePayment} />
+            <>
+              {activeTab === "expenses" && <ExpensesTable expenses={exp.expenses} onDelete={exp.actions.handleDelete} />}
+              {activeTab === "purchases" && <PurchasesTable purchases={pur.purchases} onOpenLedger={sup.setLedgerSupplierId} />}
+              {activeTab === "payments" && <PaymentsTable payments={sup.payments} onEdit={(pay) => sup.setPaymentModal({ isOpen: true, editingId: pay.id })} onDelete={sup.actions.handleDeletePayment} />}
+              
+              <div className="pb-6">
+                <Pagination currentPage={currentPage} totalPages={currentMetadata.totalPages} onPageChange={setCurrentPage} />
+              </div>
+            </>
           )}
         </div>
       </div>
 
-      {/* النوافذ المنبثقة */}
       <ExpenseModal isOpen={exp.isModalOpen} onClose={() => exp.setIsModalOpen(false)} onSave={exp.actions.handleAdd} />
       
       <PurchaseModal 
@@ -78,7 +89,7 @@ export default function ExpensesPage() {
         spareParts={pur.spareParts} 
         onSave={async (data) => {
           const success = await pur.actions.handleAddInvoice(data);
-          if (success) { sup.actions.refresh(); exp.actions.refresh(); } // تحديث الإحصائيات والدفعات
+          if (success) { sup.actions.refresh(); exp.actions.refresh(); }
           return success;
         }} 
         onOpenSupplierModal={() => {
@@ -96,7 +107,7 @@ export default function ExpensesPage() {
         }} 
         onSave={async (data) => {
           const success = await sup.actions.handleAddSupplier(data);
-          if (success) { pur.actions.refresh(); } // تحديث قائمة التجار في المشتريات
+          if (success) { pur.actions.refresh(); } 
           return success;
         }} 
       />

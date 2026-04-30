@@ -1,44 +1,45 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
+import useSWR, { mutate as globalMutate } from "swr";
 import { toast } from "react-hot-toast";
 import { Supplier } from "@prisma/client";
-import { SupplierPaymentWithSupplier } from "@/src/types";
-import { getSuppliers, getSupplierPayments, addSupplier, addSupplierPayment, updateSupplierPayment, deleteSupplierPayment } from "@/src/server/actions/expenses.actions";
+import { SupplierPaymentWithSupplier, PaginationMetadata } from "@/src/types/expense.types";
+import { getPaginatedPayments, addSupplier, addSupplierPayment, updateSupplierPayment, deleteSupplierPayment, getSuppliers } from "@/src/server/actions/expenses.actions";
 import { SupplierFormValues, PaymentFormValues } from "../validations/validations";
 
-export function useSuppliers() {
-  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
-  const [payments, setPayments] = useState<SupplierPaymentWithSupplier[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+const paymentsFetcher = async (page: number) => {
+  const res = await getPaginatedPayments(page, 10);
+  if (res.error) throw new Error(res.error);
+  return res;
+};
 
-  // حالات النوافذ المنبثقة
+const suppliersFetcher = async () => {
+  const res = await getSuppliers();
+  return res.data as Supplier[];
+};
+
+export function useSuppliers(currentPage: number) {
   const [isSupplierModalOpen, setIsSupplierModalOpen] = useState(false);
   const [paymentModal, setPaymentModal] = useState<{ isOpen: boolean; editingId: string | null }>({ isOpen: false, editingId: null });
   const [ledgerSupplierId, setLedgerSupplierId] = useState<string | null>(null);
 
-  const fetchData = useCallback(async () => {
-    setIsLoading(true);
-    const [supRes, payRes] = await Promise.all([getSuppliers(), getSupplierPayments()]);
-    if (supRes.success) setSuppliers((supRes.data as Supplier[]) || []);
-    if (payRes.success) setPayments((payRes.data as SupplierPaymentWithSupplier[]) || []);
-    setIsLoading(false);
-  }, []);
+  const { data: suppliers } = useSWR("suppliers-list", suppliersFetcher, { revalidateOnFocus: false });
+  const { data: paymentsRes, isLoading, mutate: mutatePayments } = useSWR(["payments-list", currentPage], () => paymentsFetcher(currentPage), { keepPreviousData: true });
 
-  useEffect(() => { fetchData(); }, [fetchData]);
-
-  const handleAddSupplier = async (data: SupplierFormValues) => {
+  const handleAddSupplier = useCallback(async (data: SupplierFormValues) => {
     const res = await addSupplier({ name: data.name, phone: data.phone });
     if (res.success) {
       toast.success("تمت إضافة المورد بنجاح");
       setIsSupplierModalOpen(false);
-      fetchData();
+      globalMutate("suppliers-list"); 
       return true;
     }
-    toast.error(res.error || "خطأ"); return false;
-  };
+    toast.error(res.error || "خطأ"); 
+    return false;
+  }, []);
 
-  const handleSavePayment = async (data: PaymentFormValues) => {
+  const handleSavePayment = useCallback(async (data: PaymentFormValues) => {
     let res;
     if (paymentModal.editingId) {
       res = await updateSupplierPayment(paymentModal.editingId, { amount: data.amount, notes: data.notes || "" });
@@ -47,26 +48,39 @@ export function useSuppliers() {
     }
 
     if (res.success) {
-      toast.success(paymentModal.editingId ? "تم تعديل الدفعة بنجاح" : "تم تسجيل الدفعة وخصمها من الدين");
+      toast.success(paymentModal.editingId ? "تم تعديل الدفعة بنجاح" : "تم تسجيل الدفعة بنجاح");
       setPaymentModal({ isOpen: false, editingId: null });
-      fetchData();
+      mutatePayments(); 
+      globalMutate("financial-overview");
       return true;
     }
-    toast.error(res.error || "خطأ في تسجيل الدفعة"); return false;
-  };
+    toast.error(res.error || "خطأ في تسجيل الدفعة"); 
+    return false;
+  }, [paymentModal.editingId, mutatePayments]);
 
-  const handleDeletePayment = async (id: string) => {
+  const handleDeletePayment = useCallback(async (id: string) => {
     if (!confirm("تحذير: حذف الدفعة سيعيد المبلغ كدين على الورشة. هل أنت متأكد؟")) return;
     const res = await deleteSupplierPayment(id);
-    if (res.success) { toast.success("تم حذف الدفعة وتحديث الرصيد التلقائي"); fetchData(); }
-    else toast.error(res.error || "خطأ");
-  };
+    if (res.success) { 
+      toast.success("تم حذف الدفعة وتحديث الرصيد"); 
+      mutatePayments(); 
+      globalMutate("financial-overview"); 
+    } else {
+      toast.error(res.error || "خطأ");
+    }
+  }, [mutatePayments]);
 
   return {
-    suppliers, payments, isLoading,
-    isSupplierModalOpen, setIsSupplierModalOpen,
-    paymentModal, setPaymentModal,
-    ledgerSupplierId, setLedgerSupplierId,
-    actions: { handleAddSupplier, handleSavePayment, handleDeletePayment, refresh: fetchData }
+    suppliers: suppliers || [],
+    payments: (paymentsRes?.data as SupplierPaymentWithSupplier[]) || [], 
+    metadata: (paymentsRes?.metadata as PaginationMetadata) || { totalItems: 0, totalPages: 1, currentPage: 1 },
+    isLoading, 
+    isSupplierModalOpen, 
+    setIsSupplierModalOpen, 
+    paymentModal, 
+    setPaymentModal, 
+    ledgerSupplierId, 
+    setLedgerSupplierId,
+    actions: { handleAddSupplier, handleSavePayment, handleDeletePayment, refresh: mutatePayments }
   };
 }

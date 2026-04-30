@@ -74,9 +74,7 @@ export async function getPurchaseInvoices() {
       orderBy: { date: 'desc' }
     });
     return { success: true, data: invoices };
-  } catch (_error) { 
-    return { error: "فشل جلب فواتير المشتريات" }; 
-  }
+  } catch (_error) { return { error: "فشل جلب فواتير المشتريات" }; }
 }
 
 export async function addPurchaseInvoice(data: {
@@ -159,14 +157,12 @@ export async function addPurchaseInvoice(data: {
           });
         }
       }
-    }, { maxWait: 10000, timeout: 20000 });
+    });
 
     revalidatePath(ROUTES.EXPENSES);
     revalidatePath(ROUTES.INVENTORY);
     return { success: true };
-  } catch (_error) { 
-    return { error: "فشل إضافة الفاتورة وتحديث المخزون" }; 
-  }
+  } catch (_error) { return { error: "فشل إضافة الفاتورة وتحديث المخزون" }; }
 }
 
 // 5. إدارة الدفعات
@@ -240,4 +236,50 @@ export async function getSupplierStatement(supplierId: string) {
     if (!supplier) return { error: "التاجر غير موجود" };
     return { success: true, data: supplier };
   } catch (_error) { return { error: "فشل جلب كشف الحساب" }; }
+}
+
+// 🚀 7. دوال التقليب (Pagination) الجديدة 🚀
+export async function getPaginatedExpenses(page: number, limit: number = 10) {
+  try {
+    const skip = (page - 1) * limit;
+    const [totalItems, expenses] = await prisma.$transaction([
+      prisma.expense.count(),
+      prisma.expense.findMany({ skip, take: limit, orderBy: { date: 'desc' } })
+    ]);
+    return { 
+      success: true, 
+      data: expenses, 
+      metadata: { totalItems, totalPages: Math.ceil(totalItems / limit), currentPage: page } 
+    };
+  } catch (error) { return { error: "فشل جلب المصاريف" }; }
+}
+
+export async function getPaginatedPurchases(page: number, limit: number = 10) {
+  try {
+    const skip = (page - 1) * limit;
+    const [totalItems, purchases] = await prisma.$transaction([
+      prisma.purchaseInvoice.count(),
+      prisma.purchaseInvoice.findMany({ skip, take: limit, include: { supplier: { select: { name: true } } }, orderBy: { date: 'desc' } })
+    ]);
+    return { 
+      success: true, 
+      data: purchases, 
+      metadata: { totalItems, totalPages: Math.ceil(totalItems / limit), currentPage: page } 
+    };
+  } catch (error) { return { error: "فشل جلب المشتريات" }; }
+}
+
+export async function getPaginatedPayments(page: number, limit: number = 10) {
+  try {
+    const skip = (page - 1) * limit;
+    const [totalItems, payments] = await prisma.$transaction([
+      prisma.supplierPayment.count(),
+      prisma.supplierPayment.findMany({ skip, take: limit, include: { supplier: { select: { name: true } } }, orderBy: { date: 'desc' } })
+    ]);
+    return { 
+      success: true, 
+      data: payments, 
+      metadata: { totalItems, totalPages: Math.ceil(totalItems / limit), currentPage: page } 
+    };
+  } catch (error) { return { error: "فشل جلب الدفعات" }; }
 }

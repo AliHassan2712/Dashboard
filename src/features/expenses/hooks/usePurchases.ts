@@ -1,44 +1,57 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
+import useSWR from "swr";
 import { toast } from "react-hot-toast";
-import { Supplier, SparePart } from "@prisma/client";
-import { PurchaseInvoiceWithSupplier } from "@/src/types";
-import { getPurchaseInvoices, addPurchaseInvoice, getSuppliers } from "@/src/server/actions/expenses.actions";
+import { Supplier } from "@prisma/client";
+import { PurchaseInvoiceWithSupplier, PaginationMetadata, SparePartDropdownOption } from "@/src/types/expense.types";
+import { getPaginatedPurchases, addPurchaseInvoice, getSuppliers } from "@/src/server/actions/expenses.actions";
 import { getAllSparePartsForDropdown } from "@/src/server/actions/inventory.actions";
 import { InvoiceFormValues } from "../validations/validations";
 
-export function usePurchases() {
-  const [purchases, setPurchases] = useState<PurchaseInvoiceWithSupplier[]>([]);
-  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
-  const [spareParts, setSpareParts] = useState<SparePart[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+const purchasesFetcher = async (page: number) => {
+  const res = await getPaginatedPurchases(page, 10);
+  if (res.error) throw new Error(res.error);
+  return res;
+};
+
+const suppliersFetcher = async () => {
+  const res = await getSuppliers();
+  return res.data as Supplier[];
+};
+
+const partsFetcher = async () => {
+  const res = await getAllSparePartsForDropdown();
+  return res.data as SparePartDropdownOption[];
+};
+
+export function usePurchases(currentPage: number) {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const fetchData = useCallback(async () => {
-    setIsLoading(true);
-    const [purRes, supRes, partsRes] = await Promise.all([
-      getPurchaseInvoices(), getSuppliers(), getAllSparePartsForDropdown()
-    ]);
-    if (purRes.success) setPurchases((purRes.data as PurchaseInvoiceWithSupplier[]) || []);
-    if (supRes.success) setSuppliers((supRes.data as Supplier[]) || []);
-    if (partsRes.success) setSpareParts((partsRes.data as SparePart[]) || []);
-    setIsLoading(false);
-  }, []);
+  const { data: suppliers } = useSWR("suppliers-list", suppliersFetcher, { revalidateOnFocus: false });
+  const { data: spareParts } = useSWR("parts-dropdown", partsFetcher, { revalidateOnFocus: false });
+  const { data: purchasesRes, isLoading, mutate: mutatePurchases } = useSWR(["purchases-list", currentPage], () => purchasesFetcher(currentPage), { keepPreviousData: true });
 
-  useEffect(() => { fetchData(); }, [fetchData]);
-
-  const handleAddInvoice = async (data: InvoiceFormValues) => {
+  const handleAddInvoice = useCallback(async (data: InvoiceFormValues) => {
     const res = await addPurchaseInvoice(data);
     if (res.success) {
       toast.success("تم اعتماد الفاتورة وتحديث المخزن بنجاح");
       setIsModalOpen(false);
-      fetchData();
+      mutatePurchases();
       return true;
     }
-    toast.error(res.error || "حدث خطأ أثناء حفظ الفاتورة");
+    toast.error(res.error || "حدث خطأ أثناء حفظ الفاتورة"); 
     return false;
-  };
+  }, [mutatePurchases]);
 
-  return { purchases, suppliers, spareParts, isLoading, isModalOpen, setIsModalOpen, actions: { handleAddInvoice, refresh: fetchData } };
+  return { 
+    purchases: (purchasesRes?.data as PurchaseInvoiceWithSupplier[]) || [], 
+    metadata: (purchasesRes?.metadata as PaginationMetadata) || { totalItems: 0, totalPages: 1, currentPage: 1 },
+    suppliers: suppliers || [], 
+    spareParts: spareParts || [], 
+    isLoading, 
+    isModalOpen, 
+    setIsModalOpen, 
+    actions: { handleAddInvoice, refresh: mutatePurchases } 
+  };
 }
