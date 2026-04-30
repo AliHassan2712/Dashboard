@@ -1,50 +1,35 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
+import useSWR from "swr";
 import { toast } from "react-hot-toast";
 import { Compressor } from "@prisma/client";
-import { 
-  getCompressors, 
-  addCompressor, 
-  updateCompressorStatus, 
-  deleteCompressor 
-} from "@/src/server/actions/compressors.actions";
+import { getPaginatedCompressors, addCompressor, updateCompressorStatus, deleteCompressor } from "@/src/server/actions/compressors.actions";
 import { getAllSparePartsForDropdown } from "@/src/server/actions/inventory.actions"; 
 import { CompressorFormValues } from "../validations/validations";
+import { PaginationMetadata, SparePartDropdownOption } from "@/src/types/expense.types";
 
-export function useCompressors() {
-  const [compressors, setCompressors] = useState<Compressor[]>([]);
-  const [inventory, setInventory] = useState<any[]>([]); 
-  const [isLoading, setIsLoading] = useState(true);
+// دالة الجلب المخصصة لـ SWR
+const compressorsFetcher = async ([_, page, search]: [string, number, string]) => {
+  const res = await getPaginatedCompressors(page, 9, search); // 9 أجهزة لكل صفحة لتناسب الـ Grid
+  if (res.error) throw new Error(res.error);
+  return res;
+};
+
+export function useCompressors(currentPage: number, searchQuery: string) {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // 1. جلب البيانات (الكمبريسورات وقطع المخزون معاً)
-  const fetchData = useCallback(async () => {
-    setIsLoading(true);
-    const [compRes, invRes] = await Promise.all([
-      getCompressors(),
-      getAllSparePartsForDropdown()
-    ]);
+  // جلب الكمبريسورات المفلترة والمقسمة
+  const { data: compRes, isLoading, mutate: mutateCompressors } = useSWR(
+    ["compressors-list", currentPage, searchQuery], 
+    compressorsFetcher, 
+    { keepPreviousData: true, revalidateOnFocus: false }
+  );
 
-    if (compRes.success) {
-      setCompressors((compRes.data as Compressor[]) || []);
-    } else {
-      toast.error(compRes.error || "خطأ في الجلب");
-    }
+  // جلب قطع الغيار للقائمة المنسدلة بدون any
+  const { data: invRes } = useSWR("parts-dropdown", getAllSparePartsForDropdown, { revalidateOnFocus: false });
 
-    if (invRes.success) {
-      setInventory(invRes.data || []);
-    }
-
-    setIsLoading(false);
-  }, []);
-
-  useEffect(() => { 
-    fetchData(); 
-  }, [fetchData]);
-
-  // 2. إضافة كمبريسور جديد (تستقبل البيانات النظيفة من Zod مباشرة)
-  const handleAdd = async (data: CompressorFormValues) => {
+  const handleAdd = useCallback(async (data: CompressorFormValues) => {
     const res = await addCompressor({
       modelName: data.modelName, 
       serialNumber: data.serialNumber?.trim() || undefined,
@@ -57,45 +42,44 @@ export function useCompressors() {
 
     if (res.success) {
       toast.success("تمت إضافة الكمبريسور للمخزون وخصم القطع بنجاح");
-      setIsModalOpen(false); // إغلاق النافذة
-      await fetchData();     // تحديث الجدول
-      return true;           // إرجاع true للنافذة لكي تقوم بتصفير الحقول (reset)
+      setIsModalOpen(false); 
+      mutateCompressors(); 
+      return true;           
     } else {
       toast.error(res.error || "فشل الإضافة");
       return false;
     }
-  };
+  }, [mutateCompressors]);
 
-  // 3. تحديث حالة الكمبريسور (متاح، مباع، صيانة)
-  const handleStatusChange = async (id: string, status: string) => {
+  const handleStatusChange = useCallback(async (id: string, status: string) => {
     const res = await updateCompressorStatus(id, status);
     if (res.success) {
       toast.success("تم تحديث الحالة");
-      await fetchData();
+      mutateCompressors();
     } else {
       toast.error(res.error || "فشل التحديث");
     }
-  };
+  }, [mutateCompressors]);
 
-  // 4. حذف كمبريسور
-  const handleDelete = async (id: string) => {
+  const handleDelete = useCallback(async (id: string) => {
     if (!confirm("هل أنت متأكد من الحذف؟")) return;
     const res = await deleteCompressor(id);
     if (res.success) {
       toast.success("تم الحذف");
-      await fetchData();
+      mutateCompressors();
     } else {
       toast.error(res.error || "فشل الحذف");
     }
-  };
+  }, [mutateCompressors]);
 
   return { 
-    compressors,
-    inventory, // 👈 إرجاع المخزون لكي نمرره للـ Modal 
+    compressors: (compRes?.data as Compressor[]) || [],
+    metadata: (compRes?.metadata as PaginationMetadata) || { totalItems: 0, totalPages: 1, currentPage: 1 },
+    inventory: (invRes?.data as SparePartDropdownOption[]) || [], 
     isLoading, 
     isModalOpen, 
     setIsModalOpen, 
-    fetchData,
+    fetchData: mutateCompressors, 
     actions: { handleAdd, handleStatusChange, handleDelete } 
   };
 }

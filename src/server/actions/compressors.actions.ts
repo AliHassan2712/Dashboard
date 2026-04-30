@@ -147,3 +147,38 @@ export async function deleteCompressor(id: string) {
     return { error: "حدث خطأ أثناء محاولة حذف الكمبريسور واسترجاع القطع." }; 
   }
 }
+
+
+export async function getPaginatedCompressors(page: number, limit: number = 9, search?: string) {
+  try {
+    const skip = (page - 1) * limit;
+    
+    // بناء فلتر البحث
+    const whereClause: any = {};
+    if (search) {
+      whereClause.OR = [
+        { modelName: { contains: search, mode: "insensitive" } },
+        { serialNumber: { contains: search, mode: "insensitive" } }
+      ];
+    }
+
+    const [totalItems, compressors] = await prisma.$transaction([
+      prisma.compressor.count({ where: whereClause }),
+      prisma.compressor.findMany({
+        where: whereClause,
+        skip,
+        take: limit,
+        orderBy: { createdAt: 'desc' }
+      })
+    ]);
+
+    return { 
+      success: true, 
+      data: compressors, 
+      metadata: { totalItems, totalPages: Math.ceil(totalItems / limit), currentPage: page } 
+    };
+  } catch (error) {
+    console.error("Fetch Error:", error);
+    return { error: "فشل جلب قائمة الكمبريسورات" };
+  }
+}

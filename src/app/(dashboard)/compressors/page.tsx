@@ -1,33 +1,35 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { Plus, RefreshCw, Loader2, Package, Search, Filter } from "lucide-react";
 import { useCompressors } from "@/src/features/compressors/hooks/useCompressors";
 import { ExportButton } from "@/src/components/shared/ExportButton";
 import { CompressorModal } from "@/src/features/compressors/components/CompressorModal";
 import { CompressorTable } from "@/src/features/compressors/components/CompressorTable";
+import { Pagination } from "@/src/components/shared/Pagination";
 import { Compressor } from "@prisma/client";
-import { useState } from "react";
 
 export default function CompressorsPage() {
-  const { 
-    compressors, isLoading, isModalOpen, setIsModalOpen, 
-    fetchData, actions, inventory
-  } = useCompressors();
-
-  // 1. حالة البحث
+  const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
 
-  // 2. فلترة البيانات بناءً على البحث
-  const filteredCompressors = compressors.filter((c: Compressor) => {
-    const query = searchQuery.toLowerCase();
-    return (
-      c.modelName.toLowerCase().includes(query) || 
-      (c.serialNumber && c.serialNumber.toLowerCase().includes(query))
-    );
-  });
-  
-  // 3. تجهيز البيانات للتصدير (تم التعديل لتصدير البيانات المفلترة فقط)
-  const excelData = filteredCompressors.map((c: Compressor) => ({
+  // تطبيق التأخير (Debounce) لمنع الـ Lag أثناء البحث
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedQuery(searchQuery);
+      setCurrentPage(1); // إرجاع للصفحة الأولى عند البحث
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  const { 
+    compressors, metadata, isLoading, isModalOpen, setIsModalOpen, 
+    fetchData, actions, inventory
+  } = useCompressors(currentPage, debouncedQuery);
+
+  // تجهيز البيانات المصدرة للإكسل من الصفحة الحالية
+  const excelData = compressors.map((c: Compressor) => ({
     "الموديل/الوصف": c.modelName,
     "الرقم التسلسلي": c.serialNumber || "لا يوجد",
     "تكلفة الإنتاج (₪)": c.productionCost,
@@ -40,7 +42,6 @@ export default function CompressorsPage() {
   return (
     <div className="p-4 sm:p-8 max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500 pb-10">
       
-      {/* الترويسة (Header) */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white p-6 rounded-[2.5rem] border border-gray-100 shadow-sm">
         <div className="flex items-center gap-4">
           <div className="p-4 bg-indigo-600 text-white rounded-2xl shadow-lg shadow-indigo-100">
@@ -55,7 +56,7 @@ export default function CompressorsPage() {
         <div className="flex flex-wrap items-center gap-3">
           <ExportButton data={excelData} fileName="تقرير_مخزن_الكمبريسورات" sheetName="الأجهزة الجاهزة" />
 
-          <button onClick={fetchData} className="p-3 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all" title="تحديث البيانات">
+          <button onClick={() => fetchData()} className="p-3 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all" title="تحديث البيانات">
             <RefreshCw className={`w-5 h-5 ${isLoading ? 'animate-spin' : ''}`} />
           </button>
 
@@ -66,43 +67,48 @@ export default function CompressorsPage() {
         </div>
       </div>
 
-      {/* شريط الأدوات السريع (البحث والفلترة) */}
       <div className="flex flex-col sm:flex-row gap-4 items-center">
         <div className="relative flex-1 w-full">
           <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
           <input 
             type="text" 
             value={searchQuery} 
-            onChange={(e) => setSearchQuery(e.target.value)} // 👈 تم الربط هنا
+            onChange={(e) => setSearchQuery(e.target.value)} 
             placeholder="بحث بالموديل أو الرقم التسلسلي..." 
             className="w-full pr-12 pl-4 py-4 bg-white border border-gray-100 rounded-2xl focus:ring-2 focus:ring-indigo-500/20 outline-none font-bold text-sm transition-all shadow-sm" 
           />
         </div>
-        <button className="flex items-center gap-2 px-6 py-4 bg-white border border-gray-100 rounded-2xl text-gray-500 font-bold text-sm hover:bg-gray-50 transition-all shadow-sm">
-          <Filter className="w-4 h-4" /> تصفية
+        <button className="flex items-center gap-2 px-6 py-4 bg-white border border-gray-100 rounded-2xl text-gray-500 font-bold text-sm cursor-default shadow-sm">
+          <Filter className="w-4 h-4" /> تصفية تلقائية
         </button>
       </div>
 
-      {/* محتوى الصفحة الرئيسي */}
-      {isLoading ? (
+      {isLoading && compressors.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-32 gap-4">
           <Loader2 className="w-12 h-12 animate-spin text-indigo-600" />
           <p className="text-gray-400 font-bold animate-pulse">جاري جلب بيانات المخزن...</p>
         </div>
       ) : (
-        <CompressorTable 
-          compressors={filteredCompressors} 
-          onStatusChange={actions.handleStatusChange} 
-          onDelete={actions.handleDelete} 
-        />
+        <div className="space-y-8">
+          <CompressorTable 
+            compressors={compressors} 
+            onStatusChange={actions.handleStatusChange} 
+            onDelete={actions.handleDelete} 
+          />
+          <Pagination 
+            currentPage={metadata.currentPage} 
+            totalPages={metadata.totalPages} 
+            onPageChange={setCurrentPage} 
+          />
+        </div>
       )}
 
-      {/* النافذة المنبثقة للإضافة */}
+      {/* النافذة المنبثقة للإضافة (ممررين الـ Types الصح) */}
       <CompressorModal
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 
         onSave={actions.handleAdd} 
-        inventory={inventory}
+        inventory={inventory as any} // هنا استثناء بسيط لعدم تعديل Modal داخلياً
       />
     </div>
   );
