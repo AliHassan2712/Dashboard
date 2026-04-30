@@ -1,29 +1,35 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState } from "react";
+import useSWR from "swr";
 import { toast } from "react-hot-toast";
 import { getFinancialReport } from "@/src/server/actions/reports.actions";
 import { FinancialReportData } from "@/src/types";
 
+// دالة الجلب التي تقرأ تواريخ الفلتر مباشرة
+const fetcher = async ([_, startDate, endDate]: [string, string | undefined, string | undefined]) => {
+  const res = await getFinancialReport({ startDate, endDate });
+  if (res.error) throw new Error(res.error);
+  return res.data;
+};
+
 export function useReports() {
-  const [reportData, setReportData] = useState<FinancialReportData | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const [filters, setFilters] = useState<{ startDate?: string; endDate?: string }>({});
 
-  const fetchReport = useCallback(async () => {
-    setIsLoading(true);
-    const res = await getFinancialReport(filters);
-    if (res.success && res.data) {
-      setReportData(res.data as FinancialReportData);
-    } else {
-      toast.error(res.error || "خطأ في جلب البيانات");
+  const { data, isLoading } = useSWR(
+    ["financial-report", filters.startDate, filters.endDate],
+    fetcher,
+    { 
+      revalidateOnFocus: false, 
+      keepPreviousData: true,
+      onError: (err) => toast.error(err.message || "خطأ في جلب بيانات التقرير") 
     }
-    setIsLoading(false);
-  }, [filters]);
+  );
 
-  useEffect(() => {
-    fetchReport();
-  }, [fetchReport]);
-
-  return { reportData, isLoading, filters, setFilters };
+  return { 
+    reportData: data as FinancialReportData | undefined, 
+    isLoading, 
+    filters, 
+    setFilters 
+  };
 }
