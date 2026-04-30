@@ -1,24 +1,20 @@
 "use client";
 
+import { useState } from "react";
 import { ClipboardList, Plus, Loader2 } from "lucide-react";
 import { useTrials } from "@/src/features/trials/hooks/useTrials";
 import { TrialsTable } from "@/src/features/trials/components/TrialsTable";
 import { TrialModal } from "@/src/features/trials/components/TrialModal";
+import { Pagination } from "@/src/components/shared/Pagination";
 
 export default function TrialsPage() {
+  const [currentPage, setCurrentPage] = useState(1);
+
   const { 
-    trials, workers, parts, isLoading, 
+    trials, metadata, workers, parts, isLoading, 
     isModalOpen, setIsModalOpen, 
     actions 
-  } = useTrials();
-
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center min-h-[50vh]">
-        <Loader2 className="w-12 h-12 animate-spin text-indigo-600" />
-      </div>
-    );
-  }
+  } = useTrials(currentPage); 
 
   return (
     <div className="max-w-6xl mx-auto pb-20 animate-in fade-in duration-500 space-y-6">
@@ -36,7 +32,23 @@ export default function TrialsPage() {
         </button>
       </div>
 
-      <TrialsTable trials={trials} onReturn={actions.handleReturn} onConsume={actions.handleConsume} />
+      <div className="space-y-4">
+        {isLoading && trials.length === 0 ? (
+          <div className="flex justify-center items-center py-20">
+            <Loader2 className="w-12 h-12 animate-spin text-indigo-600" />
+          </div>
+        ) : (
+          <>
+            <TrialsTable trials={trials} onReturn={actions.handleReturn} onConsume={actions.handleConsume} />
+            
+            <Pagination 
+              currentPage={metadata.currentPage} 
+              totalPages={metadata.totalPages} 
+              onPageChange={setCurrentPage} 
+            />
+          </>
+        )}
+      </div>
       
       <TrialModal 
         isOpen={isModalOpen} 

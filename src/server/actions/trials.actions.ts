@@ -96,3 +96,33 @@ export async function consumeTrialItem(trialId: string) {
     return { error: "فشل تحديث الحالة" };
   }
 }
+
+
+// دالة الجلب مع التقسيم (Pagination)
+export async function getPaginatedTrialItems(page: number, limit: number = 10) {
+  try {
+    const skip = (page - 1) * limit;
+    const [totalItems, trials] = await prisma.$transaction([
+      prisma.trialItem.count(),
+      prisma.trialItem.findMany({
+        skip,
+        take: limit,
+        include: {
+          worker: { select: { name: true } },
+          sparePart: { select: { name: true } },
+          ticket: { select: { id: true, customerName: true } }
+        },
+        orderBy: { givenAt: 'desc' }
+      })
+    ]);
+
+    return { 
+      success: true, 
+      data: trials, 
+      metadata: { totalItems, totalPages: Math.ceil(totalItems / limit), currentPage: page } 
+    };
+  } catch (_error) {
+    return { error: "فشل جلب سجل العهد" };
+  }
+}
+

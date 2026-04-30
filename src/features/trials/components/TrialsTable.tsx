@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { RotateCcw, AlertTriangle } from "lucide-react";
 import { TrialItemData } from "@/src/types";
 
@@ -7,7 +8,7 @@ interface Props {
   onConsume: (id: string) => void;
 }
 
-export const TrialsTable = ({ trials, onReturn, onConsume }: Props) => (
+export const TrialsTable = memo(({ trials, onReturn, onConsume }: Props) => (
   <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
     <div className="overflow-x-auto">
       <table className="w-full text-right text-sm">
@@ -60,4 +61,6 @@ export const TrialsTable = ({ trials, onReturn, onConsume }: Props) => (
       </table>
     </div>
   </div>
-);
+));
+
+TrialsTable.displayName = "TrialsTable";
