@@ -35,7 +35,7 @@ export function LoginForm() {
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       {error && (
-        <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm text-center border border-red-200">
+        <div className="bg-danger-50 dark:bg-danger-900/20 text-danger-600 dark:text-danger-500 p-3 rounded-lg text-sm text-center border border-danger-100 dark:border-danger-900/50">
           {error}
         </div>
       )}
@@ -62,7 +62,7 @@ export function LoginForm() {
       <button
         type="submit"
         disabled={isLoading}
-        className="w-full bg-indigo-600 text-white py-2.5 rounded-lg font-bold hover:bg-indigo-700 focus:ring-4 focus:ring-indigo-100 transition disabled:opacity-70"
+        className="w-full bg-brand-600 text-white py-2.5 rounded-lg font-bold hover:bg-indigo-700 focus:ring-4 focus:ring-indigo-100 transition disabled:opacity-70"
       >
         {isLoading ? "جاري التحقق..." : "تسجيل الدخول"}
       </button>

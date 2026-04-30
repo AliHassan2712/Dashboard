@@ -12,8 +12,8 @@ interface CompressorTableProps {
 export const CompressorTable = memo(({ compressors, onStatusChange, onDelete }: CompressorTableProps) => {
   if (!compressors || compressors.length === 0) {
     return (
-      <div className="col-span-full text-center py-20 bg-white rounded-3xl border-2 border-dashed border-gray-100 text-gray-400 font-bold flex flex-col items-center gap-3">
-        <Package className="w-12 h-12 text-gray-200" />
+      <div className="col-span-full text-center py-20 bg-app-card-light dark:bg-app-card-dark rounded-3xl border-2 border-dashed border-app-border-light dark:border-app-border-dark text-app-text-muted-light dark:text-app-text-muted-dark font-bold flex flex-col items-center gap-3">
+        <Package className="w-12 h-12 text-zinc-200 dark:text-zinc-700" />
         <p>لا توجد كمبريسورات جاهزة للبيع حالياً أو مطابقة للبحث.</p>
       </div>
     );

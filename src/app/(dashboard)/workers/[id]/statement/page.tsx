@@ -26,7 +26,7 @@ export default async function WorkerStatementPage({ params }: { params: Promise<
       {/* زر العودة */}
       <Link 
         href={ROUTES.WORKERS} 
-        className="inline-flex items-center gap-2 text-gray-500 hover:text-indigo-600 transition-colors font-bold bg-white px-4 py-2 rounded-xl shadow-sm border border-gray-100 w-fit"
+        className="inline-flex items-center gap-2 text-app-text-secondary-light dark:text-app-text-secondary-dark hover:text-indigo-600 transition-colors font-bold bg-app-card-light dark:bg-app-card-dark px-4 py-2 rounded-xl shadow-sm border border-app-border-light dark:border-app-border-dark w-fit"
       >
         <ArrowRight className="w-5 h-5" />
         العودة لقائمة الفنيين

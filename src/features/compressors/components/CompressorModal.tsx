@@ -69,15 +69,15 @@ export const CompressorModal = ({ isOpen, onClose, onSave, inventory }: Props) =
 
 
   return (
-    <Modal isOpen={isOpen} onClose={handleSafeClose} title={<><Package className="w-5 h-5 text-indigo-600" /> إضافة كمبريسور للمخزون</>} maxWidth="lg">      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+    <Modal isOpen={isOpen} onClose={handleSafeClose} title={<><Package className="w-5 h-5 text-brand-600 dark:text-brand-400" /> إضافة كمبريسور للمخزون</>} maxWidth="lg">      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
 
       <div className="space-y-2">
-        <label className="text-sm font-bold text-gray-700 flex items-center gap-2">
+        <label className="text-sm font-bold text-app-text-primary-light dark:text-app-text-primary-dark flex items-center gap-2">
           <Camera className="w-4 h-4" /> صورة الجهاز
         </label>
 
         {imageUrl ? (
-          <div className="relative h-44 w-full rounded-2xl overflow-hidden border-2 border-indigo-100 group">
+          <div className="relative h-44 w-full rounded-2xl overflow-hidden border-2 border-brand-100 dark:border-brand-900/60 group">
             <Image src={imageUrl} fill className="object-cover" alt="Preview" />
             <button
               type="button"
@@ -94,11 +94,11 @@ export const CompressorModal = ({ isOpen, onClose, onSave, inventory }: Props) =
             </button>
           </div>
         ) : (
-          <div className="border-2 border-dashed border-gray-200 rounded-2xl p-6 bg-gray-50 flex flex-col items-center justify-center gap-2">
+          <div className="border-2 border-dashed border-app-border-light dark:border-app-border-dark rounded-2xl p-6 bg-zinc-50 dark:bg-zinc-900 flex flex-col items-center justify-center gap-2">
             <UploadButton
               endpoint="imageUploader"
               onClientUploadComplete={(res) => setValue("imageUrl", res[0].url)}
-              appearance={{ button: "bg-indigo-600 text-white px-6 py-2 rounded-xl font-bold text-sm" }}
+              appearance={{ button: "bg-brand-600 text-white px-6 py-2 rounded-xl font-bold text-sm" }}
             />
           </div>
         )}
@@ -116,13 +116,13 @@ export const CompressorModal = ({ isOpen, onClose, onSave, inventory }: Props) =
 
       <Textarea label="تفاصيل ومواصفات إضافية" rows={3} error={errors.description?.message} {...register("description")} />
 
-      <div className="border-t border-gray-100 pt-4 space-y-3">
+      <div className="border-t border-app-border-light dark:border-app-border-dark pt-4 space-y-3">
         <div className="flex justify-between items-center">
-          <label className="text-sm font-bold text-gray-700">قطع تم سحبها للكمبريسور</label>
+          <label className="text-sm font-bold text-app-text-primary-light dark:text-app-text-primary-dark">قطع تم سحبها للكمبريسور</label>
           <button
             type="button"
             onClick={() => append({ sparePartId: "", quantity: 1, unitCost: 0 })}
-            className="text-xs bg-indigo-50 text-indigo-600 px-3 py-1.5 rounded-lg font-bold flex items-center gap-1 hover:bg-indigo-100 transition"
+            className="text-xs bg-brand-50 dark:bg-brand-950/40 text-brand-600 dark:text-brand-400 px-3 py-1.5 rounded-lg font-bold flex items-center gap-1 hover:bg-indigo-100 transition"
           >
             <Plus className="w-4 h-4" /> إضافة قطعة
           </button>
@@ -130,15 +130,15 @@ export const CompressorModal = ({ isOpen, onClose, onSave, inventory }: Props) =
 
         <div className="space-y-2 max-h-40 overflow-y-auto pr-1 custom-scrollbar">
           {fields.length === 0 && (
-            <div className="text-center text-xs text-gray-400 py-2">لم يتم إضافة أي قطع. (اختياري)</div>
+            <div className="text-center text-xs text-app-text-muted-light dark:text-app-text-muted-dark py-2">لم يتم إضافة أي قطع. (اختياري)</div>
           )}
 
           {fields.map((field, index) => (
-            <div key={field.id} className="flex gap-2 items-start bg-gray-50 p-2 rounded-xl border border-gray-200">
+            <div key={field.id} className="flex gap-2 items-start bg-zinc-50 dark:bg-zinc-900 p-2 rounded-xl border border-app-border-light dark:border-app-border-dark">
               <div className="flex-1">
                 <select
                   {...register(`parts.${index}.sparePartId`)}
-                  className="w-full text-xs p-2 border border-gray-300 rounded-lg outline-none"
+                  className="w-full text-xs p-2 border border-zinc-300 dark:border-zinc-700 rounded-lg outline-none"
                 >
                   <option value="">-- اختر القطعة --</option>
                   {inventory?.map((p) => (
@@ -148,7 +148,7 @@ export const CompressorModal = ({ isOpen, onClose, onSave, inventory }: Props) =
                   ))}
                 </select>
                 {errors.parts?.[index]?.sparePartId && (
-                  <span className="text-[10px] text-red-500">{errors.parts[index]?.sparePartId?.message}</span>
+                  <span className="text-[10px] text-danger-500">{errors.parts[index]?.sparePartId?.message}</span>
                 )}
               </div>
               <div className="w-20">
@@ -170,7 +170,7 @@ export const CompressorModal = ({ isOpen, onClose, onSave, inventory }: Props) =
               <button
                 type="button"
                 onClick={() => remove(index)}
-                className="mt-1 p-1.5 text-red-500 hover:bg-red-100 rounded-lg transition"
+                className="mt-1 p-1.5 text-danger-500 hover:bg-red-100 rounded-lg transition"
               >
                 <Trash2 className="w-4 h-4" />
               </button>
@@ -179,7 +179,7 @@ export const CompressorModal = ({ isOpen, onClose, onSave, inventory }: Props) =
         </div>
       </div>
 
-      <button disabled={isSubmitting} type="submit" className="w-full bg-indigo-600 text-white py-4 rounded-2xl font-black transition-all flex justify-center items-center gap-2 shadow-lg hover:bg-indigo-700 hover:shadow-indigo-200">
+      <button disabled={isSubmitting} type="submit" className="w-full bg-brand-600 text-white py-4 rounded-2xl font-black transition-all flex justify-center items-center gap-2 shadow-lg hover:bg-indigo-700 hover:shadow-indigo-200">
         {isSubmitting ? <><Loader2 className="w-5 h-5 animate-spin" /><span>جاري الحفظ والخصم من المخزن...</span></> : "اعتماد وحفظ في المخزن"}
       </button>
     </form>

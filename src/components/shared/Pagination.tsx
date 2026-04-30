@@ -11,23 +11,23 @@ export const Pagination = memo(({ currentPage, totalPages, onPageChange }: Pagin
   if (totalPages <= 1) return null;
 
   return (
-    <div className="flex items-center justify-center gap-4 mt-8 bg-white p-4 rounded-2xl border border-gray-100 shadow-sm w-fit mx-auto print:hidden">
+    <div className="flex items-center justify-center gap-4 mt-8 bg-app-card-light p-4 rounded-2xl border border-app-border-light shadow-premium w-fit mx-auto print:hidden dark:bg-app-card-dark dark:border-app-border-dark dark:shadow-premium-dark">
       <button 
         disabled={currentPage === 1}
         onClick={() => onPageChange(currentPage - 1)}
-        className="p-2 rounded-lg bg-gray-50 text-gray-600 hover:bg-indigo-50 hover:text-indigo-600 disabled:opacity-50 transition-all"
+        className="p-2 rounded-lg bg-zinc-50 text-app-text-secondary-light hover:bg-brand-50 hover:text-brand-600 disabled:opacity-50 transition-all dark:bg-zinc-900 dark:text-app-text-secondary-dark dark:hover:bg-brand-950/40 dark:hover:text-brand-300"
       >
         <ChevronRight className="w-5 h-5" /> 
       </button>
       
-      <span className="text-sm font-bold text-gray-600">
-        صفحة <span className="text-indigo-600 font-black">{currentPage}</span> من {totalPages}
+      <span className="text-sm font-bold text-app-text-secondary-light dark:text-app-text-secondary-dark">
+        صفحة <span className="text-brand-600 font-black dark:text-brand-300">{currentPage}</span> من {totalPages}
       </span>
 
       <button 
         disabled={currentPage === totalPages}
         onClick={() => onPageChange(currentPage + 1)}
-        className="p-2 rounded-lg bg-gray-50 text-gray-600 hover:bg-indigo-50 hover:text-indigo-600 disabled:opacity-50 transition-all"
+        className="p-2 rounded-lg bg-zinc-50 text-app-text-secondary-light hover:bg-brand-50 hover:text-brand-600 disabled:opacity-50 transition-all dark:bg-zinc-900 dark:text-app-text-secondary-dark dark:hover:bg-brand-950/40 dark:hover:text-brand-300"
       >
         <ChevronLeft className="w-5 h-5" />
       </button>

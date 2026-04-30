@@ -13,7 +13,7 @@ export default function WorkersPage() {
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-[50vh]">
-        <Loader2 className="w-10 h-10 animate-spin text-indigo-600" />
+        <Loader2 className="w-10 h-10 animate-spin text-brand-600 dark:text-brand-400" />
       </div>
     );
   }

@@ -37,18 +37,18 @@ export default function ExpensesPage() {
 
   return (
     <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in duration-500 pb-10">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-app-card-light dark:bg-app-card-dark p-6 rounded-2xl border border-app-border-light dark:border-app-border-dark shadow-sm">
         <div>
-          <h1 className="text-2xl font-black text-gray-900 flex items-center gap-2">
-            <TrendingDown className="w-6 h-6 text-rose-500" /> إدارة المصاريف والمشتريات
+          <h1 className="text-2xl font-black text-app-text-primary-light dark:text-app-text-primary-dark flex items-center gap-2">
+            <TrendingDown className="w-6 h-6 text-danger-500" /> إدارة المصاريف والمشتريات
           </h1>
-          <p className="text-gray-500 text-sm mt-1">تابع التدفقات المالية، المشتريات، وتسديد دفعات التجار</p>
+          <p className="text-app-text-secondary-light dark:text-app-text-secondary-dark text-sm mt-1">تابع التدفقات المالية، المشتريات، وتسديد دفعات التجار</p>
         </div>
         <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-          <button onClick={() => sup.setPaymentModal({ isOpen: true, editingId: null })} className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold transition shadow-md">
+          <button onClick={() => sup.setPaymentModal({ isOpen: true, editingId: null })} className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-2.5 bg-success-600 hover:bg-emerald-700 text-white rounded-xl font-bold transition shadow-md">
             <Wallet className="w-5 h-5" /> تسديد دفعة للتاجر
           </button>
-          <button onClick={() => activeTab === "expenses" ? exp.setIsModalOpen(true) : pur.setIsModalOpen(true)} className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-2.5 bg-gray-900 hover:bg-black text-white rounded-xl font-bold transition shadow-md">
+          <button onClick={() => activeTab === "expenses" ? exp.setIsModalOpen(true) : pur.setIsModalOpen(true)} className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-2.5 bg-zinc-950 dark:bg-zinc-900 hover:bg-black text-white rounded-xl font-bold transition shadow-md">
             <Plus className="w-5 h-5" /> {activeTab === "expenses" ? "مصروف جديد" : "فاتورة مشتريات"}
           </button>
         </div>
@@ -56,16 +56,16 @@ export default function ExpensesPage() {
 
       <FinancialStats overview={exp.overview} />
 
-      <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
-        <div className="flex border-b border-gray-100 bg-gray-50/50 p-2 gap-2 overflow-x-auto">
-          <button onClick={() => handleTabChange("expenses")} className={`whitespace-nowrap flex-1 py-3 px-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${activeTab === "expenses" ? "bg-white text-rose-600 shadow-sm border border-gray-200" : "text-gray-500 hover:bg-gray-100"}`}><Receipt className="w-5 h-5" /> المصاريف التشغيلية</button>
-          <button onClick={() => handleTabChange("purchases")} className={`whitespace-nowrap flex-1 py-3 px-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${activeTab === "purchases" ? "bg-white text-indigo-600 shadow-sm border border-gray-200" : "text-gray-500 hover:bg-gray-100"}`}><Truck className="w-5 h-5" /> فواتير المشتريات</button>
-          <button onClick={() => handleTabChange("payments")} className={`whitespace-nowrap flex-1 py-3 px-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${activeTab === "payments" ? "bg-white text-emerald-600 shadow-sm border border-gray-200" : "text-gray-500 hover:bg-gray-100"}`}><History className="w-5 h-5" /> سجل دفعات الموردين</button>
+      <div className="bg-app-card-light dark:bg-app-card-dark rounded-3xl border border-app-border-light dark:border-app-border-dark shadow-sm overflow-hidden">
+        <div className="flex border-b border-app-border-light dark:border-app-border-dark bg-zinc-50/70 dark:bg-zinc-900/70 p-2 gap-2 overflow-x-auto">
+          <button onClick={() => handleTabChange("expenses")} className={`whitespace-nowrap flex-1 py-3 px-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${activeTab === "expenses" ? "bg-app-card-light dark:bg-app-card-dark text-danger-600 dark:text-danger-500 shadow-sm border border-app-border-light dark:border-app-border-dark" : "text-app-text-secondary-light dark:text-app-text-secondary-dark hover:bg-gray-100"}`}><Receipt className="w-5 h-5" /> المصاريف التشغيلية</button>
+          <button onClick={() => handleTabChange("purchases")} className={`whitespace-nowrap flex-1 py-3 px-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${activeTab === "purchases" ? "bg-app-card-light dark:bg-app-card-dark text-brand-600 dark:text-brand-400 shadow-sm border border-app-border-light dark:border-app-border-dark" : "text-app-text-secondary-light dark:text-app-text-secondary-dark hover:bg-gray-100"}`}><Truck className="w-5 h-5" /> فواتير المشتريات</button>
+          <button onClick={() => handleTabChange("payments")} className={`whitespace-nowrap flex-1 py-3 px-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${activeTab === "payments" ? "bg-app-card-light dark:bg-app-card-dark text-success-600 dark:text-success-400 shadow-sm border border-app-border-light dark:border-app-border-dark" : "text-app-text-secondary-light dark:text-app-text-secondary-dark hover:bg-gray-100"}`}><History className="w-5 h-5" /> سجل دفعات الموردين</button>
         </div>
 
         <div className="p-0">
           {isAnyLoading && isCurrentListEmpty ? (
-            <div className="py-20 flex justify-center"><Loader2 className="w-8 h-8 animate-spin text-gray-400" /></div>
+            <div className="py-20 flex justify-center"><Loader2 className="w-8 h-8 animate-spin text-app-text-muted-light dark:text-app-text-muted-dark" /></div>
           ) : (
             <>
               {activeTab === "expenses" && <ExpensesTable expenses={exp.expenses} onDelete={exp.actions.handleDelete} />}

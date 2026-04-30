@@ -6,10 +6,10 @@ import { DashboardStats } from '@/src/types';
 
 export function DashboardCharts({ data }: { data: DashboardStats['chartData'] }) {
   return (
-    <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+    <div className="bg-app-card-light dark:bg-app-card-dark p-6 rounded-2xl border border-app-border-light dark:border-app-border-dark shadow-sm">
       <div className="flex justify-between items-center mb-6 border-b pb-4">
-        <h3 className="font-bold flex items-center gap-2 text-gray-800">
-          <Activity className="w-5 h-5 text-indigo-500" /> نشاط الورشة (آخر 7 أيام)
+        <h3 className="font-bold flex items-center gap-2 text-app-text-primary-light dark:text-app-text-primary-dark">
+          <Activity className="w-5 h-5 text-brand-500 dark:text-brand-400" /> نشاط الورشة (آخر 7 أيام)
         </h3>
       </div>
       

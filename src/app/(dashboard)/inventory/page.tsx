@@ -40,7 +40,7 @@ export default function InventoryPage() {
 
       {isLoading && parts.length === 0 ? (
         <div className="flex justify-center items-center py-32">
-          <Loader2 className="w-12 h-12 animate-spin text-indigo-600" />
+          <Loader2 className="w-12 h-12 animate-spin text-brand-600 dark:text-brand-400" />
         </div>
       ) : (
         <>

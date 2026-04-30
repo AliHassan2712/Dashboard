@@ -8,7 +8,7 @@ export default function DashboardLayoutClient({ children }: { children: React.Re
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-gray-50 flex" dir="rtl">
+    <div className="min-h-screen bg-app-background-light text-app-text-primary-light flex transition-colors duration-300 dark:bg-app-background-dark dark:text-app-text-primary-dark" dir="rtl">
       {/* الشريط الجانبي */}
       <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
 

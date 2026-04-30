@@ -24,7 +24,7 @@ export default function TicketDetailsPage({ params }: { params: Promise<{ id: st
   if (isLoadingData || !ticketData) {
     return (
       <div className="flex justify-center min-h-[60vh] items-center">
-        <Loader2 className="animate-spin text-indigo-600 w-12 h-12" />
+        <Loader2 className="animate-spin text-brand-600 dark:text-brand-400 w-12 h-12" />
       </div>
     );
   }
@@ -38,7 +38,7 @@ export default function TicketDetailsPage({ params }: { params: Promise<{ id: st
       {/*  ترويسة الطباعة الرسمية */}
       <div className="hidden print:flex flex-col items-center border-b-2 border-gray-800 pb-4 mb-6 text-center">
         <h1 className="text-3xl font-black mb-1">{siteConfig.name}</h1>
-        <p className="text-gray-600 font-medium">{siteConfig.slogan}</p>
+        <p className="text-app-text-secondary-light dark:text-app-text-secondary-dark font-medium">{siteConfig.slogan}</p>
         <div className="flex gap-6 mt-2 text-sm font-bold">
           <span>{siteConfig.address}</span>
           <span>جوال: {siteConfig.phone}</span>
@@ -46,23 +46,23 @@ export default function TicketDetailsPage({ params }: { params: Promise<{ id: st
       </div>
 
       {/* الترويسة العادية وأزرار التحكم */}
-      <div className="print:hidden flex flex-col sm:flex-row justify-between items-center gap-4 bg-white p-4 rounded-2xl border shadow-sm">
+      <div className="print:hidden flex flex-col sm:flex-row justify-between items-center gap-4 bg-app-card-light dark:bg-app-card-dark p-4 rounded-2xl border shadow-sm">
         <div className="flex items-center gap-4">
-          <Link href={ROUTES.TICKETS} className="p-2 bg-gray-50 hover:bg-gray-100 rounded-xl text-gray-500 transition">
+          <Link href={ROUTES.TICKETS} className="p-2 bg-zinc-50 dark:bg-zinc-900 hover:bg-gray-100 rounded-xl text-app-text-secondary-light dark:text-app-text-secondary-dark transition">
             <ArrowRight className="w-5 h-5" />
           </Link>
           <div>
-            <h1 className="text-xl font-black text-gray-900">تذكرة صيانة #{id.slice(-6).toUpperCase()}</h1>
-            <p className="text-xs text-gray-400 font-bold">الفني المسؤول: {ticketData.worker?.name || "غير محدد"}</p>
+            <h1 className="text-xl font-black text-app-text-primary-light dark:text-app-text-primary-dark">تذكرة صيانة #{id.slice(-6).toUpperCase()}</h1>
+            <p className="text-xs text-app-text-muted-light dark:text-app-text-muted-dark font-bold">الفني المسؤول: {ticketData.worker?.name || "غير محدد"}</p>
           </div>
         </div>
 
         <div className="flex gap-3 w-full sm:w-auto">
-          <button onClick={() => window.print()} className="flex items-center gap-2 px-5 py-2.5 bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-xl font-bold transition">
+          <button onClick={() => window.print()} className="flex items-center gap-2 px-5 py-2.5 bg-zinc-100 dark:bg-zinc-800 text-app-text-primary-light dark:text-app-text-primary-dark hover:bg-gray-200 rounded-xl font-bold transition">
             <Printer className="w-4 h-4" /> طباعة الفاتورة
           </button>
           
-          <button onClick={actions.handleSaveTicket} disabled={isSaving} className="flex-1 sm:flex-none flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-2.5 rounded-xl font-bold shadow-md transition disabled:opacity-50">
+          <button onClick={actions.handleSaveTicket} disabled={isSaving} className="flex-1 sm:flex-none flex items-center gap-2 bg-brand-600 hover:bg-indigo-700 text-white px-8 py-2.5 rounded-xl font-bold shadow-md transition disabled:opacity-50">
             {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
             {isSaving ? "جاري الحفظ..." : "حفظ التغييرات"}
           </button>

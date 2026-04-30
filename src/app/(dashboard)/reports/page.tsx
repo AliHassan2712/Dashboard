@@ -43,7 +43,7 @@ export default function ReportsPage() {
   if (isLoading || !reportData) {
     return (
       <div className="flex justify-center items-center min-h-[60vh]">
-        <Loader2 className="w-12 h-12 animate-spin text-indigo-600" />
+        <Loader2 className="w-12 h-12 animate-spin text-brand-600 dark:text-brand-400" />
       </div>
     );
   }
@@ -64,16 +64,16 @@ export default function ReportsPage() {
       `}} />
 
       {/* لوحة التحكم العلوية والفلتر */}
-      <div className="flex flex-col mb-8 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm print:hidden">
+      <div className="flex flex-col mb-8 bg-app-card-light dark:bg-app-card-dark p-6 rounded-2xl border border-app-border-light dark:border-app-border-dark shadow-sm print:hidden">
         
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center w-full gap-4">
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-indigo-50 text-indigo-600 rounded-xl">
+            <div className="p-3 bg-brand-50 dark:bg-brand-950/40 text-brand-600 dark:text-brand-400 rounded-xl">
               <PieChart className="w-6 h-6" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">التقارير والميزانية العمومية</h1>
-              <p className="text-gray-500 text-sm mt-1 font-medium">نظرة شاملة على رأس المال، والتدفقات النقدية لفترة محددة</p>
+              <h1 className="text-2xl font-bold text-app-text-primary-light dark:text-app-text-primary-dark">التقارير والميزانية العمومية</h1>
+              <p className="text-app-text-secondary-light dark:text-app-text-secondary-dark text-sm mt-1 font-medium">نظرة شاملة على رأس المال، والتدفقات النقدية لفترة محددة</p>
             </div>
           </div>
           
@@ -91,20 +91,20 @@ export default function ReportsPage() {
         </div>
 
         {/* شريط فلترة التواريخ */}
-        <div className="mt-6 pt-6 border-t border-gray-100 flex flex-col md:flex-row items-end gap-4 bg-gray-50 p-4 rounded-xl">
+        <div className="mt-6 pt-6 border-t border-app-border-light dark:border-app-border-dark flex flex-col md:flex-row items-end gap-4 bg-zinc-50 dark:bg-zinc-900 p-4 rounded-xl">
           <div className="flex-1 w-full">
-            <Input type="date" label="من تاريخ" value={localStart} onChange={(e) => setLocalStart(e.target.value)} className="bg-white" />
+            <Input type="date" label="من تاريخ" value={localStart} onChange={(e) => setLocalStart(e.target.value)} className="bg-app-card-light dark:bg-app-card-dark" />
           </div>
           <div className="flex-1 w-full">
-            <Input type="date" label="إلى تاريخ" value={localEnd} onChange={(e) => setLocalEnd(e.target.value)} className="bg-white" />
+            <Input type="date" label="إلى تاريخ" value={localEnd} onChange={(e) => setLocalEnd(e.target.value)} className="bg-app-card-light dark:bg-app-card-dark" />
           </div>
           
           <div className="flex gap-2 w-full md:w-auto">
-            <button onClick={handleApplyFilter} className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-indigo-600 text-white px-6 h-[46px] rounded-xl font-bold hover:bg-indigo-700 transition">
+            <button onClick={handleApplyFilter} className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-brand-600 text-white px-6 h-[46px] rounded-xl font-bold hover:bg-indigo-700 transition">
               <Filter className="w-4 h-4" /> تصفية
             </button>
             {(localStart || localEnd) && (
-              <button onClick={handleResetFilter} className="flex items-center justify-center gap-2 bg-red-50 text-red-600 px-4 h-[46px] rounded-xl font-bold hover:bg-red-100 transition" title="إلغاء التصفية">
+              <button onClick={handleResetFilter} className="flex items-center justify-center gap-2 bg-danger-50 dark:bg-danger-900/20 text-danger-600 dark:text-danger-500 px-4 h-[46px] rounded-xl font-bold hover:bg-red-100 transition" title="إلغاء التصفية">
                 <X className="w-5 h-5" />
               </button>
             )}

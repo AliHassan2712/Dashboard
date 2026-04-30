@@ -50,10 +50,10 @@ export const ExpenseModal = ({ isOpen, onClose, onSave }: Props) => {
             {...register("amount", { valueAsNumber: true })}
           />
           <div className="space-y-1.5">
-            <label className="text-sm font-medium text-gray-700">نوع المصروف</label>
+            <label className="text-sm font-medium text-app-text-primary-light dark:text-app-text-primary-dark">نوع المصروف</label>
             <select 
               {...register("category")} 
-              className="w-full bg-white border border-gray-300 focus:ring-2 focus:ring-indigo-100 rounded-lg px-4 py-2.5 outline-none font-medium transition"
+              className="w-full bg-app-card-light dark:bg-app-card-dark border border-zinc-300 dark:border-zinc-700 focus:ring-2 focus:ring-indigo-100 rounded-lg px-4 py-2.5 outline-none font-medium transition"
             >
               <option value="STANDARD">أساسي تشغيلي</option>
               <option value="EXTRA">نثريات وطوارئ</option>
@@ -66,7 +66,7 @@ export const ExpenseModal = ({ isOpen, onClose, onSave }: Props) => {
           error={errors.notes?.message}
           {...register("notes")} 
         />
-        <button disabled={isSubmitting} type="submit" className="w-full bg-rose-600 text-white py-3 rounded-xl font-bold flex justify-center items-center mt-2">
+        <button disabled={isSubmitting} type="submit" className="w-full bg-danger-600 text-white py-3 rounded-xl font-bold flex justify-center items-center mt-2">
           {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : "حفظ المصروف"}
         </button>
       </form>

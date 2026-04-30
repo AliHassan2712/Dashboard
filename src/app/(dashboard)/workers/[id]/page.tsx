@@ -23,7 +23,7 @@ export default function WorkerProfilePage({ params }: { params: Promise<{ id: st
   if (isLoading && !worker) {
     return (
       <div className="flex justify-center items-center min-h-[50vh]">
-        <Loader2 className="w-10 h-10 animate-spin text-indigo-600" />
+        <Loader2 className="w-10 h-10 animate-spin text-brand-600 dark:text-brand-400" />
       </div>
     );
   }
@@ -31,7 +31,7 @@ export default function WorkerProfilePage({ params }: { params: Promise<{ id: st
   // إذا لم يتم العثور على العامل
   if (!worker) {
     return (
-      <div className="text-center py-20 text-gray-500 font-bold">
+      <div className="text-center py-20 text-app-text-secondary-light dark:text-app-text-secondary-dark font-bold">
         عذراً، لم يتم العثور على بيانات هذا الفني.
       </div>
     );
@@ -42,7 +42,7 @@ export default function WorkerProfilePage({ params }: { params: Promise<{ id: st
       
       {/* الترويسة وزر العودة */}
       <div className="flex items-center justify-between">
-        <Link href={ROUTES.WORKERS} className="flex items-center gap-2 text-gray-500 hover:text-indigo-600 transition font-bold bg-white px-4 py-2 rounded-xl shadow-sm border border-gray-100 w-fit">
+        <Link href={ROUTES.WORKERS} className="flex items-center gap-2 text-app-text-secondary-light dark:text-app-text-secondary-dark hover:text-indigo-600 transition font-bold bg-app-card-light dark:bg-app-card-dark px-4 py-2 rounded-xl shadow-sm border border-app-border-light dark:border-app-border-dark w-fit">
           <ArrowRight className="w-5 h-5" /> رجوع لقائمة العمال
         </Link>
       </div>

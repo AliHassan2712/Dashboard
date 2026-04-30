@@ -18,17 +18,17 @@ export const Modal = ({ isOpen, onClose, title, children, maxWidth = "md" }: Mod
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
       <div 
-        className={`bg-white rounded-3xl w-full ${maxWidthClasses[maxWidth]} shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200`}
+        className={`bg-app-card-light rounded-3xl w-full ${maxWidthClasses[maxWidth]} shadow-premium overflow-hidden animate-in zoom-in-95 duration-200 dark:bg-app-card-dark dark:shadow-premium-dark`}
         // إيقاف إغلاق النافذة عند النقر داخلها
         onClick={(e) => e.stopPropagation()} 
       >
-        <div className="flex justify-between items-center p-6 border-b border-gray-100 bg-gray-50/50">
-          <div className="text-xl font-bold text-gray-900 flex items-center gap-2">
+        <div className="flex justify-between items-center p-6 border-b border-app-border-light bg-zinc-50/70 dark:border-app-border-dark dark:bg-zinc-900/70">
+          <div className="text-xl font-bold text-app-text-primary-light flex items-center gap-2 dark:text-app-text-primary-dark">
             {title}
           </div>
           <button 
             onClick={onClose} 
-            className="text-gray-400 hover:text-rose-600 bg-white hover:bg-rose-50 p-2 rounded-full border border-gray-200 transition-colors shadow-sm"
+            className="text-app-text-muted-light hover:text-danger-600 bg-app-card-light hover:bg-danger-50 p-2 rounded-full border border-app-border-light transition-colors shadow-sm dark:text-app-text-muted-dark dark:bg-app-card-dark dark:border-app-border-dark dark:hover:text-danger-500 dark:hover:bg-danger-900/25"
           >
             <X className="w-5 h-5" />
           </button>

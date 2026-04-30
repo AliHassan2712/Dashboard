@@ -36,7 +36,7 @@ export const ExportButton = ({ data, fileName, sheetName = "Data" }: ExportButto
     <button
       onClick={handleExport}
       disabled={isExporting}
-      className="flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white rounded-xl font-bold transition-all text-sm border border-emerald-100 shadow-sm"
+      className="flex items-center gap-2 px-4 py-2 bg-success-50 dark:bg-success-900/20 text-success-700 dark:text-success-300 hover:bg-emerald-600 hover:text-white rounded-xl font-bold transition-all text-sm border border-success-100 dark:border-success-900/50 shadow-sm"
     >
       {isExporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileDown className="w-4 h-4" />}
       تصدير Excel

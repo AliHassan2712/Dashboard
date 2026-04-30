@@ -21,8 +21,8 @@ export const AddWorkerForm = ({ onAdd }: AddWorkerFormProps) => {
   };
 
   return (
-    <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-      <h2 className="text-lg font-bold mb-6 flex items-center gap-2 text-indigo-600">
+    <div className="bg-app-card-light dark:bg-app-card-dark p-6 rounded-2xl border border-app-border-light dark:border-app-border-dark shadow-sm">
+      <h2 className="text-lg font-bold mb-6 flex items-center gap-2 text-brand-600 dark:text-brand-400">
         <UserPlus className="w-5 h-5" /> تسجيل فني جديد
       </h2>
       
@@ -53,7 +53,7 @@ export const AddWorkerForm = ({ onAdd }: AddWorkerFormProps) => {
           <button 
             type="submit"
             disabled={isSubmitting} 
-            className="w-full bg-indigo-600 text-white h-[42px] rounded-xl font-bold hover:bg-indigo-700 transition flex items-center justify-center gap-2 disabled:opacity-70"
+            className="w-full bg-brand-600 text-white h-[42px] rounded-xl font-bold hover:bg-indigo-700 transition flex items-center justify-center gap-2 disabled:opacity-70"
           >
             {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />} إضافة
           </button>

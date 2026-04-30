@@ -33,34 +33,34 @@ export default function TicketsPage() {
   return (
     <div className="p-4 sm:p-8 max-w-7xl mx-auto space-y-6 animate-in fade-in duration-500 pb-10">
       
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-app-card-light dark:bg-app-card-dark p-6 rounded-2xl border border-app-border-light dark:border-app-border-dark shadow-sm">
         <div className="flex items-center gap-3">
-          <div className="p-3 bg-indigo-50 text-indigo-600 rounded-xl"><ClipboardList className="w-6 h-6" /></div>
+          <div className="p-3 bg-brand-50 dark:bg-brand-950/40 text-brand-600 dark:text-brand-400 rounded-xl"><ClipboardList className="w-6 h-6" /></div>
           <div>
-            <h1 className="text-2xl font-black text-gray-900">تذاكر الصيانة</h1>
-            <p className="text-sm text-gray-500 font-medium mt-1">إدارة ومتابعة طلبات صيانة الكمبريسورات</p>
+            <h1 className="text-2xl font-black text-app-text-primary-light dark:text-app-text-primary-dark">تذاكر الصيانة</h1>
+            <p className="text-sm text-app-text-secondary-light dark:text-app-text-secondary-dark font-medium mt-1">إدارة ومتابعة طلبات صيانة الكمبريسورات</p>
           </div>
         </div>
-        <Link href={ROUTES.NEW_TICKET} className="flex items-center justify-center gap-2 bg-indigo-600 text-white px-5 py-2.5 rounded-xl hover:bg-indigo-700 transition font-bold shadow-md w-full sm:w-auto">
+        <Link href={ROUTES.NEW_TICKET} className="flex items-center justify-center gap-2 bg-brand-600 text-white px-5 py-2.5 rounded-xl hover:bg-indigo-700 transition font-bold shadow-md w-full sm:w-auto">
           <Plus className="w-5 h-5" /> تذكرة جديدة
         </Link>
       </div>
 
       <div className="flex flex-col sm:flex-row gap-4">
         <div className="relative flex-1">
-          <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+          <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-app-text-muted-light dark:text-app-text-muted-dark w-5 h-5" />
           <input 
             type="text" 
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="بحث باسم الزبون أو رقم الجوال..." 
-            className="w-full pr-12 pl-4 py-4 bg-white border border-gray-100 rounded-2xl outline-none font-bold text-sm shadow-sm" 
+            className="w-full pr-12 pl-4 py-4 bg-app-card-light dark:bg-app-card-dark border border-app-border-light dark:border-app-border-dark rounded-2xl outline-none font-bold text-sm shadow-sm"
           />
         </div>
         <select 
           value={statusFilter}
           onChange={(e) => { setStatusFilter(e.target.value); setCurrentPage(1); }}
-          className="bg-white border border-gray-100 rounded-2xl px-6 py-4 outline-none font-bold text-sm text-gray-600 shadow-sm cursor-pointer"
+          className="bg-app-card-light dark:bg-app-card-dark border border-app-border-light dark:border-app-border-dark rounded-2xl px-6 py-4 outline-none font-bold text-sm text-app-text-secondary-light dark:text-app-text-secondary-dark shadow-sm cursor-pointer"
         >
           <option value="ALL">جميع الحالات</option>
           <option value="OPEN">مفتوحة (قيد الفحص)</option>
@@ -71,7 +71,7 @@ export default function TicketsPage() {
       </div>
 
       {isLoading && tickets.length === 0 ? (
-        <div className="flex justify-center py-32"><Loader2 className="w-12 h-12 animate-spin text-indigo-600" /></div>
+        <div className="flex justify-center py-32"><Loader2 className="w-12 h-12 animate-spin text-brand-600 dark:text-brand-400" /></div>
       ) : (
         <>
           <TicketsTable tickets={tickets} onEdit={openEditModal} onDelete={handleDelete} />
