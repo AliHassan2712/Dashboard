@@ -1,7 +1,7 @@
 import { Phone, User, Wallet } from "lucide-react";
-import { WorkerWithTransactions } from "@/src/types";
+import { WorkerDetailsData } from "@/src/types/worker.types";
 
-export const WorkerProfileCard = ({ worker }: { worker: WorkerWithTransactions }) => (
+export const WorkerProfileCard = ({ worker }: { worker: WorkerDetailsData }) => (
   <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
     <div className="flex items-center gap-5">
       <div className="w-16 h-16 bg-indigo-100 text-indigo-600 rounded-2xl flex items-center justify-center font-black text-2xl">

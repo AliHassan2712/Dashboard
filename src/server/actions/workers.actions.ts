@@ -77,16 +77,16 @@ export async function getWorkerDetails(userId: string) {
   try {
     const worker = await prisma.user.findUnique({
       where: { id: userId },
-      include: {
-        transactions: {
-          orderBy: { date: 'desc' }
-        }
-      }
     });
 
     if (!worker) return { error: "العامل غير موجود" };
 
-    const currentBalance = worker.transactions.reduce((acc, t) => {
+    // جلب الحركات المالية لحساب الرصيد (يمكن تحسينها بـ Aggregate لاحقاً)
+    const transactions = await prisma.workerTransaction.findMany({
+      where: { userId }
+    });
+
+    const currentBalance = transactions.reduce((acc, t) => {
       if (t.type === "STAKE" || t.type === "BONUS") return acc + t.amount;
       if (t.type === "ADVANCE" || t.type === "PAYOUT") return acc - t.amount;
       return acc;
@@ -95,5 +95,29 @@ export async function getWorkerDetails(userId: string) {
     return { success: true, data: { ...worker, currentBalance } };
   } catch (_error) {
     return { error: "فشل في جلب سجل العامل" };
+  }
+}
+
+
+export async function getPaginatedWorkerTransactions(userId: string, page: number, limit: number = 10) {
+  try {
+    const skip = (page - 1) * limit;
+    const [totalItems, transactions] = await prisma.$transaction([
+      prisma.workerTransaction.count({ where: { userId } }),
+      prisma.workerTransaction.findMany({
+        where: { userId },
+        skip,
+        take: limit,
+        orderBy: { date: 'desc' }
+      })
+    ]);
+
+    return {
+      success: true,
+      data: transactions,
+      metadata: { totalItems, totalPages: Math.ceil(totalItems / limit), currentPage: page }
+    };
+  } catch (_error) {
+    return { error: "فشل جلب الحركات المالية للعامل" };
   }
 }
