@@ -10,6 +10,7 @@ const config: Config = {
     "./src/features/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/providers/**/*.{js,ts,jsx,tsx,mdx}",
     "./node_modules/@uploadthing/react/dist**",
+    
   ],
   theme: {
     extend: {

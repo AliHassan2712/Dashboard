@@ -6,10 +6,9 @@ import { toast } from "react-hot-toast";
 import { getFinancialReport } from "@/src/server/actions/reports.actions";
 import { FinancialReportData } from "@/src/types";
 
-// دالة الجلب التي تقرأ تواريخ الفلتر مباشرة
 const fetcher = async ([_, startDate, endDate]: [string, string | undefined, string | undefined]) => {
   const res = await getFinancialReport({ startDate, endDate });
-  if (res.error) throw new Error(res.error);
+  if ("error" in res) throw new Error(String(res.error));
   return res.data;
 };
 

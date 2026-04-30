@@ -22,9 +22,9 @@ export function useNewTicket() {
     setIsLoading(true);
     try {
       const result = await createTicket(data);
-      if (result.error) {
-        toast.error(result.error); 
-      } else if (result.success && result.data) {
+      if ("error" in result) {
+        toast.error(String(result.error)); 
+      } else if (result.data) {
         toast.success("تم فتح التذكرة بنجاح!");
         router.push(ROUTES.TICKET_DETAILS(result.data.id)); 
       }

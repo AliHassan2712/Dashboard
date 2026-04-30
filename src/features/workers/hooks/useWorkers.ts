@@ -23,43 +23,40 @@ export function useWorkers() {
 
   const handleAddWorker = useCallback(async (data: AddWorkerValues) => {
     const res = await registerWorker({ ...data, baseSalary: data.baseSalary?.toString() });
-    if (res.success) {
-      toast.success("تم تسجيل الفني بنجاح");
-      setIsAddModalOpen(false);
-      mutate();
-      return true;
+    if ("error" in res) {
+      toast.error(String(res.error));
+      return false;
     }
-    toast.error(res.error || "حدث خطأ");
-    return false;
+    toast.success("تم تسجيل الفني بنجاح");
+    setIsAddModalOpen(false);
+    mutate();
+    return true;
   }, [mutate]);
 
   const handleAddTx = useCallback(async (data: WorkerTxValues, userId: string) => {
     const typeLabel = data.type === 'STAKE' ? 'استحقاق/راتب' : data.type === 'ADVANCE' ? 'سلفة/سحب' : data.type === 'BONUS' ? 'مكافأة' : 'خصم';
     const finalDesc = `${typeLabel}${data.notes ? ` - ${data.notes}` : ''}`;
-
     const res = await addWorkerTransaction({ userId, amount: data.amount, type: data.type, description: finalDesc });
 
-    if (res.success) {
-      toast.success("تم تسجيل العملية بنجاح");
-      setTxModal({ isOpen: false, userId: "", type: null }); 
-      mutate();
-      return true;
-    } 
-    toast.error(res.error || "فشل تسجيل العملية");
-    return false;
+    if ("error" in res) {
+      toast.error(String(res.error));
+      return false;
+    }
+    toast.success("تم تسجيل العملية بنجاح");
+    setTxModal({ isOpen: false, userId: "", type: null }); 
+    mutate();
+    return true;
   }, [mutate]);
 
   const handleDelete = useCallback(async (userId: string, name: string) => {
     if (!confirm(`هل أنت متأكد من حذف الفني (${name}) نهائياً؟`)) return;
     const res = await deleteWorker(userId);
-    if (res.success) { toast.success("تم الحذف"); mutate(); } 
-    else { toast.error(res.error || "لا يمكن الحذف لوجود حركات مالية"); }
+    if ("error" in res) toast.error(String(res.error));
+    else { toast.success("تم الحذف"); mutate(); } 
   }, [mutate]);
 
   return { 
-    workers: workersRes || [], isLoading, 
-    isAddModalOpen, setIsAddModalOpen, 
-    txModal, setTxModal, 
+    workers: workersRes || [], isLoading, isAddModalOpen, setIsAddModalOpen, txModal, setTxModal, 
     actions: { handleAddWorker, handleAddTx, handleDelete } 
   };
 }

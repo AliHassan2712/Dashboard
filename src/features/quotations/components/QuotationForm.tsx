@@ -1,4 +1,5 @@
 import { FileText, Camera, X } from "lucide-react";
+import Image from "next/image";
 import { Input } from "@/src/components/ui/Input";
 import { Textarea } from "@/src/components/ui/Textarea";
 import { UploadButton } from "@/src/lib/uploadthing";
@@ -39,7 +40,14 @@ export const QuotationForm = ({ form }: QuotationFormProps) => {
         </h2>
         {imageUrl ? (
           <div className="relative aspect-video rounded-xl overflow-hidden border border-app-border-light dark:border-app-border-dark bg-zinc-50 dark:bg-zinc-900 group">
-            <img src={imageUrl} className="w-full h-full object-contain" alt="Preview" />
+            {/* تم التعديل هنا واستخدام Image المطور من Next.js */}
+            <Image 
+              src={imageUrl} 
+              fill 
+              sizes="(max-width: 768px) 100vw, 33vw"
+              className="object-contain" 
+              alt="Preview" 
+            />
             <button 
               type="button" 
               onClick={async () => {
@@ -48,7 +56,7 @@ export const QuotationForm = ({ form }: QuotationFormProps) => {
                   await deleteFilesFromUploadThing(imageUrl).catch(console.error); // الحذف الفعلي من السحابة
                 }
               }} 
-              className="absolute top-2 right-2 bg-red-500 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-all"
+              className="absolute top-2 right-2 bg-red-500 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-all z-10"
             >
               <X className="w-4 h-4" />
             </button>

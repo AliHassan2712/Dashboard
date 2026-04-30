@@ -4,8 +4,8 @@ import prisma from "@/src/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { ExpenseCategory } from "@prisma/client";
 import { ROUTES } from "@/src/constants/paths";
+import { handleError } from "@/src/lib/errorHandler";
 
-// 1. جلب الإحصائيات المالية
 export async function getFinancialOverview() {
   try {
     const now = new Date();
@@ -23,15 +23,14 @@ export async function getFinancialOverview() {
         totalDebts: suppliers._sum.totalDebt || 0,
       }
     };
-  } catch (_error) { return { error: "فشل جلب الإحصائيات المالية" }; }
+  } catch (error) { return handleError(error, "فشل جلب الإحصائيات المالية"); }
 }
 
-// 2. إدارة المصاريف
 export async function getExpenses() {
   try {
     const expenses = await prisma.expense.findMany({ orderBy: { date: 'desc' } });
     return { success: true, data: expenses };
-  } catch (_error) { return { error: "فشل جلب المصاريف" }; }
+  } catch (error) { return handleError(error, "فشل جلب المصاريف"); }
 }
 
 export async function addExpense(data: { title: string; amount: number; notes: string; category: ExpenseCategory }) {
@@ -39,7 +38,7 @@ export async function addExpense(data: { title: string; amount: number; notes: s
     await prisma.expense.create({ data });
     revalidatePath(ROUTES.EXPENSES);
     return { success: true };
-  } catch (_error) { return { error: "فشل إضافة المصروف" }; }
+  } catch (error) { return handleError(error, "فشل إضافة المصروف"); }
 }
 
 export async function deleteExpense(id: string) {
@@ -47,15 +46,14 @@ export async function deleteExpense(id: string) {
     await prisma.expense.delete({ where: { id } });
     revalidatePath(ROUTES.EXPENSES);
     return { success: true };
-  } catch (_error) { return { error: "فشل الحذف" }; }
+  } catch (error) { return handleError(error, "فشل الحذف"); }
 }
 
-// 3. إدارة الموردين
 export async function getSuppliers() {
   try {
     const suppliers = await prisma.supplier.findMany({ orderBy: { name: 'asc' } });
     return { success: true, data: suppliers };
-  } catch (_error) { return { error: "فشل جلب الموردين" }; }
+  } catch (error) { return handleError(error, "فشل جلب الموردين"); }
 }
 
 export async function addSupplier(data: { name: string; phone?: string }) {
@@ -63,10 +61,9 @@ export async function addSupplier(data: { name: string; phone?: string }) {
     const newSupplier = await prisma.supplier.create({ data });
     revalidatePath(ROUTES.EXPENSES);
     return { success: true, data: newSupplier };
-  } catch (_error) { return { error: "فشل إضافة المورد" }; }
+  } catch (error) { return handleError(error, "فشل إضافة المورد"); }
 }
 
-// 4. إدارة فواتير المشتريات
 export async function getPurchaseInvoices() {
   try {
     const invoices = await prisma.purchaseInvoice.findMany({
@@ -74,7 +71,7 @@ export async function getPurchaseInvoices() {
       orderBy: { date: 'desc' }
     });
     return { success: true, data: invoices };
-  } catch (_error) { return { error: "فشل جلب فواتير المشتريات" }; }
+  } catch (error) { return handleError(error, "فشل جلب فواتير المشتريات"); }
 }
 
 export async function addPurchaseInvoice(data: {
@@ -82,15 +79,7 @@ export async function addPurchaseInvoice(data: {
   totalAmount: number;
   paidAmount: number;
   notes?: string;
-  items: { 
-    sparePartId: string; 
-    isNew?: boolean; 
-    newItemName?: string; 
-    newItemSellingPrice?: number;
-    quantity: number; 
-    unitCost: number;
-    notes?: string; 
-  }[]; 
+  items: { sparePartId: string; isNew?: boolean; newItemName?: string; newItemSellingPrice?: number; quantity: number; unitCost: number; notes?: string; }[]; 
 }) {
   try {
     await prisma.$transaction(async (tx) => {
@@ -162,10 +151,9 @@ export async function addPurchaseInvoice(data: {
     revalidatePath(ROUTES.EXPENSES);
     revalidatePath(ROUTES.INVENTORY);
     return { success: true };
-  } catch (_error) { return { error: "فشل إضافة الفاتورة وتحديث المخزون" }; }
+  } catch (error) { return handleError(error, "فشل إضافة الفاتورة وتحديث المخزون"); }
 }
 
-// 5. إدارة الدفعات
 export async function getSupplierPayments() {
   try {
     const payments = await prisma.supplierPayment.findMany({
@@ -173,7 +161,7 @@ export async function getSupplierPayments() {
       orderBy: { date: 'desc' }
     });
     return { success: true, data: payments };
-  } catch (_error) { return { error: "فشل جلب سجل الدفعات" }; }
+  } catch (error) { return handleError(error, "فشل جلب سجل الدفعات"); }
 }
 
 export async function addSupplierPayment(data: { supplierId: string; amount: number; notes: string }) {
@@ -184,7 +172,7 @@ export async function addSupplierPayment(data: { supplierId: string; amount: num
     });
     revalidatePath(ROUTES.EXPENSES);
     return { success: true };
-  } catch (_error) { return { error: "فشل تسجيل الدفعة" }; }
+  } catch (error) { return handleError(error, "فشل تسجيل الدفعة"); }
 }
 
 export async function updateSupplierPayment(paymentId: string, data: { amount: number; notes: string }) {
@@ -204,7 +192,7 @@ export async function updateSupplierPayment(paymentId: string, data: { amount: n
     });
     revalidatePath(ROUTES.EXPENSES);
     return { success: true };
-  } catch (_error) { return { error: "فشل تعديل الدفعة" }; }
+  } catch (error) { return handleError(error, "فشل تعديل الدفعة"); }
 }
 
 export async function deleteSupplierPayment(paymentId: string) {
@@ -220,10 +208,9 @@ export async function deleteSupplierPayment(paymentId: string) {
     });
     revalidatePath(ROUTES.EXPENSES);
     return { success: true };
-  } catch (_error) { return { error: "فشل حذف الدفعة" }; }
+  } catch (error) { return handleError(error, "فشل حذف الدفعة"); }
 }
 
-// 6. كشف الحساب
 export async function getSupplierStatement(supplierId: string) {
   try {
     const supplier = await prisma.supplier.findUnique({
@@ -235,10 +222,9 @@ export async function getSupplierStatement(supplierId: string) {
     });
     if (!supplier) return { error: "التاجر غير موجود" };
     return { success: true, data: supplier };
-  } catch (_error) { return { error: "فشل جلب كشف الحساب" }; }
+  } catch (error) { return handleError(error, "فشل جلب كشف الحساب"); }
 }
 
-// 🚀 7. دوال التقليب (Pagination) الجديدة 🚀
 export async function getPaginatedExpenses(page: number, limit: number = 10) {
   try {
     const skip = (page - 1) * limit;
@@ -251,7 +237,7 @@ export async function getPaginatedExpenses(page: number, limit: number = 10) {
       data: expenses, 
       metadata: { totalItems, totalPages: Math.ceil(totalItems / limit), currentPage: page } 
     };
-  } catch (error) { return { error: "فشل جلب المصاريف" }; }
+  } catch (error) { return handleError(error, "فشل جلب المصاريف"); }
 }
 
 export async function getPaginatedPurchases(page: number, limit: number = 10) {
@@ -266,7 +252,7 @@ export async function getPaginatedPurchases(page: number, limit: number = 10) {
       data: purchases, 
       metadata: { totalItems, totalPages: Math.ceil(totalItems / limit), currentPage: page } 
     };
-  } catch (error) { return { error: "فشل جلب المشتريات" }; }
+  } catch (error) { return handleError(error, "فشل جلب المشتريات"); }
 }
 
 export async function getPaginatedPayments(page: number, limit: number = 10) {
@@ -281,5 +267,5 @@ export async function getPaginatedPayments(page: number, limit: number = 10) {
       data: payments, 
       metadata: { totalItems, totalPages: Math.ceil(totalItems / limit), currentPage: page } 
     };
-  } catch (error) { return { error: "فشل جلب الدفعات" }; }
+  } catch (error) { return handleError(error, "فشل جلب الدفعات"); }
 }

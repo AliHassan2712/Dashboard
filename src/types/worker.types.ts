@@ -1,4 +1,4 @@
-import { User, WorkerTransaction } from "@prisma/client";
+import { User } from "@prisma/client";
 
 // تعريف العامل مع رصيده الحالي للقائمة الرئيسية
 export type WorkerWithCurrentBalance = User & {

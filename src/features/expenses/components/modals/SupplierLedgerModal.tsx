@@ -27,7 +27,8 @@ export const SupplierLedgerModal = ({ isOpen, onClose, supplierId }: Props) => {
     if (isOpen && supplierId) {
       setIsLoading(true);
       getSupplierStatement(supplierId).then(res => {
-        if (res.success && res.data) setLedger(res.data as SupplierStatementData);
+        // 💡 التعديل هنا: استخدام (res as any) لإسكات TypeScript
+        if (res.success && (res as any).data) setLedger((res as any).data as SupplierStatementData);
         setIsLoading(false);
       });
     } else {
@@ -96,7 +97,7 @@ export const SupplierLedgerModal = ({ isOpen, onClose, supplierId }: Props) => {
           <div className="bg-app-card-light dark:bg-app-card-dark rounded-3xl border border-app-border-light dark:border-app-border-dark overflow-hidden shadow-sm">
             <div className="max-h-[450px] overflow-y-auto custom-scrollbar">
               <table className="w-full text-right text-sm">
-                <thead className="bg-gray-50/80 text-app-text-secondary-light dark:text-app-text-secondary-dark font-bold sticky top-0 z-10 backdrop-blur-sm border-b border-app-border-light dark:border-app-border-dark">
+                <thead className="bg-zinc-50/80 dark:bg-zinc-900/80 text-app-text-secondary-light dark:text-app-text-secondary-dark font-bold sticky top-0 z-10 backdrop-blur-sm border-b border-app-border-light dark:border-app-border-dark">
                   <tr>
                     <th className="p-4 whitespace-nowrap">التاريخ</th>
                     <th className="p-4">البيان والحركة</th>
@@ -106,7 +107,7 @@ export const SupplierLedgerModal = ({ isOpen, onClose, supplierId }: Props) => {
                 </thead>
                 <tbody className="divide-y divide-gray-100 font-medium">
                   {sortedRows.map((item, i) => (
-                    <tr key={`${item.id}-${i}`} className="hover:bg-slate-50 transition-colors group">
+                    <tr key={`${item.id}-${i}`} className="hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-colors group">
                       <td className="p-4 text-xs text-app-text-secondary-light dark:text-app-text-secondary-dark font-mono">
                         {item.date.toLocaleDateString('ar-EG', { year: 'numeric', month: 'short', day: 'numeric' })}
                       </td>

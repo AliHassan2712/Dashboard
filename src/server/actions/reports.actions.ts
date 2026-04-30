@@ -2,15 +2,15 @@
 
 import prisma from "@/src/lib/prisma";
 import { FinancialReportData } from "@/src/types";
+import { handleError } from "@/src/lib/errorHandler";
 
 export async function getFinancialReport(filters: { startDate?: string; endDate?: string } = {}) {
   try {
     const { startDate: startInput, endDate: endInput } = filters;
 
-    // ضبط التواريخ
-    const startDate = startInput ? new Date(startInput) : new Date(2000, 0, 1); // من البداية
+    const startDate = startInput ? new Date(startInput) : new Date(2000, 0, 1);
     const endDate = endInput ? new Date(endInput) : new Date();
-    
+
     if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
       return { error: "تواريخ غير صالحة" };
     }
@@ -18,11 +18,6 @@ export async function getFinancialReport(filters: { startDate?: string; endDate?
     startDate.setHours(0, 0, 0, 0);
     endDate.setHours(23, 59, 59, 999);
 
-    // ==========================================
-    // 1. الإحصائيات التراكمية (لكل الأوقات - للميزانية)
-    // ==========================================
-    
-    // جلب كل التذاكر لحساب ديون الزبائن والسيولة الكلية
     const allTickets = await prisma.ticket.findMany({ include: { payments: true } });
     let totalCustomerDebts = 0;
     let allTimeTicketsRevenue = 0;
@@ -34,11 +29,9 @@ export async function getFinancialReport(filters: { startDate?: string; endDate?
       if (debt > 0) totalCustomerDebts += debt;
     });
 
-    // السيولة الكلية (الداخل)
     const allCompsSold = await prisma.compressor.aggregate({ where: { status: "SOLD" }, _sum: { sellingPrice: true } });
     const allTimeRevenue = allTimeTicketsRevenue + (allCompsSold._sum?.sellingPrice || 0);
 
-    // السيولة الكلية (الخارج)
     const allExpenses = await prisma.expense.aggregate({ _sum: { amount: true } });
     const allWorkerTx = await prisma.workerTransaction.aggregate({ where: { type: { in: ['PAYOUT', 'ADVANCE'] } }, _sum: { amount: true } });
     const allPurchasesCash = await prisma.purchaseInvoice.aggregate({ _sum: { paidAmount: true } });
@@ -46,25 +39,23 @@ export async function getFinancialReport(filters: { startDate?: string; endDate?
 
     const allTimeCosts = (allExpenses._sum?.amount || 0) + (allWorkerTx._sum?.amount || 0) + (allPurchasesCash._sum?.paidAmount || 0) + (allSupplierPayments._sum?.amount || 0);
     const totalNetCashAllTime = allTimeRevenue - allTimeCosts;
+    const inventory = await prisma.sparePart.findMany({ select: { quantity: true, averageCost: true, sellingPrice: true } });
 
-    // الميزانية الثابتة
-    const inventory = await prisma.sparePart.findMany({ select: { quantity: true, averageCost: true } });
-    const inventoryCost = inventory.reduce((acc, item) => acc + (item.quantity * item.averageCost), 0);
+    const inventoryCost = inventory.reduce((acc, item) => {
+      // إذا كانت التكلفة المتوسطة صفر، نستخدم سعر البيع مع خصم 30% كقيمة تقديرية لكي لا يظهر رأس المال صفر
+      const cost = item.averageCost > 0 ? item.averageCost : (item.sellingPrice * 0.7);
+      return acc + (item.quantity * cost);
+    }, 0);
     const supplierDebts = await prisma.supplier.aggregate({ _sum: { totalDebt: true } });
     const totalSupplierDebts = supplierDebts._sum?.totalDebt || 0;
 
-    // صافي أصول الورشة الحقيقية (المعادلة المحاسبية)
     const totalAssets = totalNetCashAllTime + totalCustomerDebts + inventoryCost - totalSupplierDebts;
 
-    // ==========================================
-    // 2. التدفقات النقدية خلال الفترة المحددة (للفلتر)
-    // ==========================================
-
     const [
-      periodPayments, 
+      periodPayments,
       periodTicketsAdvance,
-      periodCompressors, 
-      periodExpenses, 
+      periodCompressors,
+      periodExpenses,
       periodWorkers,
       periodPurchasesCash,
       periodSupplierPayments
@@ -96,7 +87,7 @@ export async function getFinancialReport(filters: { startDate?: string; endDate?
       totalNetCashAllTime,
       totalRevenue: allTimeRevenue,
       totalCosts: allTimeCosts,
-      netProfit: totalNetCashAllTime, // تراكمي
+      netProfit: totalNetCashAllTime,
       period: {
         startDate: startInput,
         endDate: endInput,
@@ -114,7 +105,7 @@ export async function getFinancialReport(filters: { startDate?: string; endDate?
     };
 
     return { success: true, data: reportData };
-  } catch (_error) {
-    return { error: "فشل في إنشاء التقرير المالي" };
+  } catch (error) {
+    return handleError(error, "فشل في إنشاء التقرير المالي");
   }
 }

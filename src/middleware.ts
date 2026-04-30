@@ -4,12 +4,14 @@ import { ROUTES } from "./constants/paths";
 
 export default withAuth(
   function middleware(req) {
-    //  فحص إذا كان المستخدم بحاول يدخل صفحة العمال وهو مش مدير
-    const isWorkerPage = req.nextUrl.pathname.startsWith("/workers");
-    const isExpensePage = req.nextUrl.pathname.startsWith("/expenses");
-    
-    if ((isWorkerPage || isExpensePage) && req.nextauth.token?.role !== "ADMIN") {
-      // اطرده للصفحة الرئيسية فوراً
+    const { pathname } = req.nextUrl;
+    const role = req.nextauth.token?.role;
+
+    // قائمة المسارات التي لا يدخلها إلا المسؤول (Admin)
+    const adminOnlyPaths = ["/workers", "/expenses", "/reports", "/transactions", "/compressors"];
+
+    const isSensitivePage = adminOnlyPaths.some(path => pathname.startsWith(path));
+    if (isSensitivePage && role !== "ADMIN") {
       return NextResponse.redirect(new URL(`${ROUTES.HOME}`, req.url));
     }
   },

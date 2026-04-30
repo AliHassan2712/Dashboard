@@ -1,5 +1,6 @@
 import { Trash2, Image as ImageIcon } from "lucide-react";
 import { Compressor } from "@prisma/client";
+import Image from "next/image";
 
 interface CompressorCardProps {
   comp: Compressor;
@@ -14,10 +15,12 @@ export const CompressorCard = ({ comp, onStatusChange, onDelete }: CompressorCar
     <div className="bg-app-card-light dark:bg-app-card-dark rounded-3xl border border-app-border-light dark:border-app-border-dark shadow-sm overflow-hidden hover:shadow-md transition-all group relative flex flex-col">
       <div className="relative h-48 w-full bg-zinc-50 dark:bg-zinc-900 border-b border-app-border-light dark:border-app-border-dark overflow-hidden">
         {comp.imageUrl ? (
-          <img 
-            src={comp.imageUrl} 
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
-            alt={comp.modelName} 
+          <Image
+            src={comp.imageUrl}
+            fill
+            sizes="(max-width: 768px) 100vw, 33vw"
+            className="object-cover group-hover:scale-105 transition-transform duration-500"
+            alt={comp.modelName}
           />
         ) : (
           <div className="w-full h-full flex flex-col items-center justify-center text-zinc-300 dark:text-zinc-600 gap-2">
@@ -25,14 +28,13 @@ export const CompressorCard = ({ comp, onStatusChange, onDelete }: CompressorCar
             <span className="text-[10px] font-bold">لا توجد صورة</span>
           </div>
         )}
-        
+
         <div className="absolute top-3 right-3">
-          <span className={`px-3 py-1 rounded-full text-[10px] font-black shadow-sm ${
-            comp.status === 'AVAILABLE' || comp.status === 'READY' ? 'bg-success-500 text-white' :
-            comp.status === 'SOLD' ? 'bg-slate-700 text-white' : 'bg-amber-500 text-white'
-          }`}>
-            {comp.status === 'AVAILABLE' || comp.status === 'READY' ? 'جاهز للبيع' : 
-             comp.status === 'SOLD' ? 'تم البيع' : 'تحت التجهيز'}
+          <span className={`px-3 py-1 rounded-full text-[10px] font-black shadow-sm ${comp.status === 'AVAILABLE' || comp.status === 'READY' ? 'bg-success-500 text-white' :
+              comp.status === 'SOLD' ? 'bg-slate-700 text-white' : 'bg-amber-500 text-white'
+            }`}>
+            {comp.status === 'AVAILABLE' || comp.status === 'READY' ? 'جاهز للبيع' :
+              comp.status === 'SOLD' ? 'تم البيع' : 'تحت التجهيز'}
           </span>
         </div>
       </div>
@@ -42,7 +44,7 @@ export const CompressorCard = ({ comp, onStatusChange, onDelete }: CompressorCar
           <h3 className="text-xl font-black text-app-text-primary-light dark:text-app-text-primary-dark mb-1">{comp.modelName}</h3>
           <p className="text-[10px] font-bold text-app-text-muted-light dark:text-app-text-muted-dark font-mono">S/N: {comp.serialNumber || "N/A"}</p>
         </div>
-        
+
         <div className="space-y-3 bg-zinc-50 dark:bg-zinc-900 p-4 rounded-2xl border border-app-border-light dark:border-app-border-dark mb-5 mt-auto">
           <div className="flex justify-between text-xs">
             <span className="text-app-text-secondary-light dark:text-app-text-secondary-dark font-bold">تكلفة الإنتاج:</span>
@@ -59,8 +61,8 @@ export const CompressorCard = ({ comp, onStatusChange, onDelete }: CompressorCar
         </div>
 
         <div className="flex gap-2">
-          <select 
-            value={comp.status} 
+          <select
+            value={comp.status}
             onChange={(e) => onStatusChange(comp.id, e.target.value)}
             className="flex-1 bg-zinc-100 dark:bg-zinc-800 rounded-xl px-3 py-2.5 text-xs font-bold outline-none border-none focus:ring-0 cursor-pointer"
           >
@@ -68,8 +70,8 @@ export const CompressorCard = ({ comp, onStatusChange, onDelete }: CompressorCar
             <option value="SOLD">مباع</option>
             <option value="MAINTENANCE">تحت التجهيز</option>
           </select>
-          <button 
-            onClick={() => onDelete(comp.id)} 
+          <button
+            onClick={() => onDelete(comp.id)}
             className="p-2.5 text-zinc-300 dark:text-zinc-600 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors"
           >
             <Trash2 className="w-5 h-5" />

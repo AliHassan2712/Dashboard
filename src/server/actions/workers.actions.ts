@@ -5,6 +5,7 @@ import bcrypt from "bcrypt";
 import { revalidatePath } from "next/cache";
 import { ROUTES } from "@/src/constants/paths";
 import { TypesWorkerTransaction } from "@prisma/client";
+import { handleError } from "@/src/lib/errorHandler";
 
 export async function registerWorker(data: { name: string; phone: string; password: string; baseSalary?: string | number }) {
   try {
@@ -20,8 +21,8 @@ export async function registerWorker(data: { name: string; phone: string; passwo
     });
     revalidatePath(ROUTES.WORKERS);
     return { success: true };
-  } catch (error: string  | any) {
-    return { error: "فشل إضافة العامل: " + (error.code === 'P2002' ? "الرقم مسجل مسبقاً" : "خطأ تقني") };
+  } catch (error: any) {
+    return handleError(error, "فشل إضافة العامل: " + (error.code === 'P2002' ? "الرقم مسجل مسبقاً" : "خطأ تقني"));
   }
 }
 
@@ -40,7 +41,10 @@ export async function getWorkersWithBalance() {
       }, 0);
       return { ...worker, currentBalance };
     });
-  } catch (_error) { return []; }
+  } catch (error) { 
+    handleError(error, "فشل جلب العمال");
+    return []; 
+  }
 }
 
 export async function addWorkerTransaction(data: { 
@@ -60,8 +64,8 @@ export async function addWorkerTransaction(data: {
     });
     revalidatePath(ROUTES.WORKERS);
     return { success: true };
-  } catch (_error) {
-    return { error: "فشل تسجيل العملية" };
+  } catch (error) {
+    return handleError(error, "فشل تسجيل العملية");
   }
 }
 
@@ -70,7 +74,9 @@ export async function deleteWorker(userId: string) {
     await prisma.user.delete({ where: { id: userId } });
     revalidatePath(ROUTES.WORKERS);
     return { success: true };
-  } catch (_error) { return { error: "فشل الحذف" }; }
+  } catch (error) { 
+    return handleError(error, "فشل الحذف"); 
+  }
 }
 
 export async function getWorkerDetails(userId: string) {
@@ -81,7 +87,6 @@ export async function getWorkerDetails(userId: string) {
 
     if (!worker) return { error: "العامل غير موجود" };
 
-    // جلب الحركات المالية لحساب الرصيد (يمكن تحسينها بـ Aggregate لاحقاً)
     const transactions = await prisma.workerTransaction.findMany({
       where: { userId }
     });
@@ -93,11 +98,10 @@ export async function getWorkerDetails(userId: string) {
     }, 0);
 
     return { success: true, data: { ...worker, currentBalance } };
-  } catch (_error) {
-    return { error: "فشل في جلب سجل العامل" };
+  } catch (error) {
+    return handleError(error, "فشل في جلب سجل العامل");
   }
 }
-
 
 export async function getPaginatedWorkerTransactions(userId: string, page: number, limit: number = 10) {
   try {
@@ -117,7 +121,7 @@ export async function getPaginatedWorkerTransactions(userId: string, page: numbe
       data: transactions,
       metadata: { totalItems, totalPages: Math.ceil(totalItems / limit), currentPage: page }
     };
-  } catch (_error) {
-    return { error: "فشل جلب الحركات المالية للعامل" };
+  } catch (error) {
+    return handleError(error, "فشل جلب الحركات المالية للعامل");
   }
 }

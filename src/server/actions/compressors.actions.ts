@@ -4,8 +4,8 @@ import prisma from "@/src/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { ROUTES } from "@/src/constants/paths";
 import { deleteFilesFromUploadThing } from "./uploadthing.actions";
+import { handleError } from "@/src/lib/errorHandler";
 
-// 1. جلب البيانات
 export async function getCompressors() {
   try {
     const compressors = await prisma.compressor.findMany({
@@ -13,12 +13,10 @@ export async function getCompressors() {
     });
     return { success: true, data: compressors };
   } catch (error) {
-    console.error("Fetch Error:", error);
-    return { error: "فشل جلب قائمة الكمبريسورات" };
+    return handleError(error, "فشل جلب قائمة الكمبريسورات");
   }
 }
 
-// 2. الإضافة
 export async function addCompressor(data: {
   serialNumber?: string;
   modelName: string; 
@@ -30,10 +28,8 @@ export async function addCompressor(data: {
 }) {
   try {
     await prisma.$transaction(async (tx) => {
-      // 1. حساب إجمالي تكلفة القطع
       const partsTotalCost = data.parts.reduce((sum, p) => sum + (p.quantity * p.unitCost), 0);
       
-      // 2. إنشاء الكمبريسور
       const compressor = await tx.compressor.create({
         data: {
           modelName: data.modelName,
@@ -53,20 +49,16 @@ export async function addCompressor(data: {
         }
       });
 
-      // 3. خصم القطع من المخزن مع حماية ضد المخزون السالب (Optimistic Locking)
       for (const part of data.parts) {
-        // جلب القطعة لمعرفة رصيدها الحالي
         const currentPart = await tx.sparePart.findUnique({
           where: { id: part.sparePartId },
-          select: { name: true, quantity: true } // نجلب الاسم والكمية فقط للأداء
+          select: { name: true, quantity: true } 
         });
 
-        // إذا القطعة غير موجودة أو كميتها لا تكفي
         if (!currentPart || currentPart.quantity < part.quantity) {
           throw new Error(`الكمية المتاحة من (${currentPart?.name || 'قطعة مجهولة'}) لا تكفي. المتاح فقط: ${currentPart?.quantity || 0}`);
         }
 
-        // الخصم الآمن
         await tx.sparePart.update({
           where: { id: part.sparePartId },
           data: { quantity: { decrement: part.quantity } }
@@ -78,11 +70,10 @@ export async function addCompressor(data: {
     revalidatePath(ROUTES.INVENTORY);
     return { success: true };
   } catch (error: any) {
-    // إرجاع رسالة الخطأ المخصصة التي رميناها (throw new Error) للمستخدم
-    return { error: error.message || "فشل إضافة الكمبريسور وخصم القطع" };
+    return handleError(error, error.message || "فشل إضافة الكمبريسور وخصم القطع");
   }
 }
-// 3. التحديث
+
 export async function updateCompressorStatus(id: string, status: string) {
   try {
     await prisma.compressor.update({
@@ -92,15 +83,12 @@ export async function updateCompressorStatus(id: string, status: string) {
     revalidatePath(ROUTES.COMPRESSORS); 
     return { success: true };
   } catch (error) { 
-    console.error("Update Error:", error);
-    return { error: "فشل التحديث" }; 
+    return handleError(error, "فشل التحديث"); 
   }
 }
 
-// 4. الحذف واسترجاع القطع للمخزن
 export async function deleteCompressor(id: string) {
   try {
-    // 1. جلب الكمبريسور مع القطع المرتبطة به لمعرفة الكميات المسحوبة
     const compressor = await prisma.compressor.findUnique({
       where: { id },
       include: { partsUsed: true } 
@@ -108,10 +96,7 @@ export async function deleteCompressor(id: string) {
 
     if (!compressor) return { error: "الكمبريسور غير موجود" };
 
-    // 2. استخدام Transaction لضمان تزامن العمليات (إرجاع القطع ثم الحذف)
     await prisma.$transaction(async (tx) => {
-      
-      // أ. إرجاع القطع إلى المخزن (Increment)
       for (const part of compressor.partsUsed) {
         await tx.sparePart.update({
           where: { id: part.sparePartId },
@@ -119,41 +104,34 @@ export async function deleteCompressor(id: string) {
         });
       }
 
-      // ب. حذف القطع المرتبطة من الجدول الوسيط (CompressorPart)
       await tx.compressorPart.deleteMany({
         where: { compressorId: id }
       });
 
-      // ج. حذف الكمبريسور نفسه
       await tx.compressor.delete({ 
         where: { id } 
       });
     });
 
-    // 3. تنظيف السحابة: الحذف الفيزيائي للصورة
     if (compressor.imageUrl) {
       deleteFilesFromUploadThing(compressor.imageUrl).catch(err => 
         console.error("Failed to delete compressor image in background:", err)
       );
     }
 
-    // 4. تحديث صفحة الكمبريسورات وصفحة المخزون لظهور القطع المسترجعة!
     revalidatePath(ROUTES.COMPRESSORS); 
     revalidatePath(ROUTES.INVENTORY); 
     return { success: true };
 
   } catch (error) { 
-    console.error("Delete Error:", error);
-    return { error: "حدث خطأ أثناء محاولة حذف الكمبريسور واسترجاع القطع." }; 
+    return handleError(error, "حدث خطأ أثناء محاولة حذف الكمبريسور واسترجاع القطع."); 
   }
 }
-
 
 export async function getPaginatedCompressors(page: number, limit: number = 9, search?: string) {
   try {
     const skip = (page - 1) * limit;
     
-    // بناء فلتر البحث
     const whereClause: any = {};
     if (search) {
       whereClause.OR = [
@@ -178,7 +156,6 @@ export async function getPaginatedCompressors(page: number, limit: number = 9, s
       metadata: { totalItems, totalPages: Math.ceil(totalItems / limit), currentPage: page } 
     };
   } catch (error) {
-    console.error("Fetch Error:", error);
-    return { error: "فشل جلب قائمة الكمبريسورات" };
+    return handleError(error, "فشل جلب قائمة الكمبريسورات");
   }
 }

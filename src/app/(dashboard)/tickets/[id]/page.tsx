@@ -30,8 +30,9 @@ export default function TicketDetailsPage({ params }: { params: Promise<{ id: st
   }
 
   // تحويل النص المخزن في الداتا بيز لمصفوفة صور
-  const imagesArray = ticketData.invoiceImageUrl ? ticketData.invoiceImageUrl.split(',') : [];
-
+const imagesArray = ticketData.invoiceImageUrl 
+  ? ticketData.invoiceImageUrl.split(',').filter(Boolean) 
+  : [];
   return (
     <div className="max-w-7xl mx-auto space-y-6 pb-20 print:bg-white print:p-0 print:m-0 print:text-black">
 

@@ -8,7 +8,7 @@ import { PaginationMetadata } from "@/src/types/expense.types";
 
 const fetcher = async ([_, page, startDate, endDate]: [string, number, string, string]) => {
   const res = await getTransactionsData(page, 10, { startDate, endDate });
-  if (res.error) throw new Error(res.error);
+  if ("error" in res) throw new Error(String(res.error));
   return res;
 };
 
@@ -16,12 +16,11 @@ export function useTransactions(currentPage: number, setCurrentPage: (page: numb
   const [filters, setFilters] = useState({ startDate: "", endDate: "" });
   const [debouncedFilters, setDebouncedFilters] = useState({ startDate: "", endDate: "" });
 
-  // تطبيق التأخير (Debounce) على الفلاتر لمنع طلبات السيرفر المتكررة
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedFilters(filters);
       if (filters.startDate !== debouncedFilters.startDate || filters.endDate !== debouncedFilters.endDate) {
-        setCurrentPage(1); // العودة للصفحة الأولى عند تغيير الفلتر
+        setCurrentPage(1); 
       }
     }, 500);
     return () => clearTimeout(timer);
@@ -43,9 +42,6 @@ export function useTransactions(currentPage: number, setCurrentPage: (page: numb
     summary: (resData?.summary as TransactionsSummary) || { totalIn: 0, totalOut: 0, net: 0 },
     metadata: (resData?.metadata as PaginationMetadata) || { totalItems: 0, totalPages: 1, currentPage: 1 },
     exportData: (resData?.allDataForExport as TransactionRecord[]) || [],
-    isLoading, 
-    filters, 
-    setFilters, 
-    handleReset 
+    isLoading, filters, setFilters, handleReset 
   };
 }

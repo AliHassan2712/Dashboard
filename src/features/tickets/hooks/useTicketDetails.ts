@@ -5,8 +5,7 @@ import { toast } from "react-hot-toast";
 import {
   getTicketById, updateTicket, addPartToTicket,
   removePartFromTicket, addPaymentToTicket, updateTicketInvoiceImage,
-  deleteTicketPayment,
-  updateTicketPayment
+  deleteTicketPayment, updateTicketPayment
 } from "@/src/server/actions/tickets.actions";
 import { TicketWithDetails } from "@/src/types";
 import { SparePart, TicketStatus } from "@prisma/client";
@@ -28,7 +27,9 @@ export function useTicketDetails(ticketId: string) {
     setIsLoadingData(true);
     try {
       const ticketResult = await getTicketById(ticketId);
-      if (ticketResult?.data) {
+      if ("error" in ticketResult) {
+        toast.error(String(ticketResult.error));
+      } else if (ticketResult.data) {
         const t = ticketResult.data as TicketWithDetails;
         setTicketData(t);
         setStatus(t.status);
@@ -36,8 +37,8 @@ export function useTicketDetails(ticketId: string) {
         setDiscountPercentage(t.discount || 0);
       }
       const inv = await getAllSparePartsForDropdown();
-      if (inv.data) setInventory(inv.data as SparePart[]);
-    } catch (_error) {
+      if (!("error" in inv) && inv.data) setInventory(inv.data as SparePart[]);
+    } catch {
       toast.error("خطأ في الاتصال بقاعدة البيانات");
     } finally {
       setIsLoadingData(false);
@@ -58,7 +59,8 @@ export function useTicketDetails(ticketId: string) {
   const handleSaveTicket = async () => {
     setIsSaving(true);
     const result = await updateTicket(ticketId, { status, laborCost, discount: discountPercentage });
-    if (result.success) toast.success("تم الحفظ");
+    if ("error" in result) toast.error(String(result.error));
+    else toast.success("تم الحفظ");
     setIsSaving(false);
   };
 
@@ -66,8 +68,8 @@ export function useTicketDetails(ticketId: string) {
     if (!sparePartId) return;
     setIsUpdatingPart(true);
     const result = await addPartToTicket({ ticketId, sparePartId, quantity: 1 });
-    if (result.success) { toast.success("تمت الإضافة"); fetchData(); }
-    else if (result.error) { toast.error(result.error); }
+    if ("error" in result) toast.error(String(result.error));
+    else { toast.success("تمت الإضافة"); fetchData(); }
     setIsUpdatingPart(false);
   };
 
@@ -80,7 +82,8 @@ export function useTicketDetails(ticketId: string) {
 
   const handleAddPayment = async (amount: number) => {
     const res = await addPaymentToTicket(ticketId, amount);
-    if (res.success) { toast.success("تم تسجيل الدفعة"); fetchData(); }
+    if ("error" in res) toast.error(String(res.error));
+    else { toast.success("تم تسجيل الدفعة"); fetchData(); }
   };
 
   const handleUpdateImage = async (url: string) => {
@@ -90,50 +93,40 @@ export function useTicketDetails(ticketId: string) {
     fetchData();
   };
 
-
   const handleRemoveImage = async (urlToRemove: string) => {
     setIsUpdatingPart(true); 
     try {
       const currentUrls = ticketData?.invoiceImageUrl || "";
       const newUrls = currentUrls.split(',').filter(u => u !== urlToRemove).join(',');
-
-      // 1. تحديث قاعدة البيانات (PostgreSQL)
       await updateTicketInvoiceImage(ticketId, newUrls);
-
-      // 2. الحذف الفيزيائي من السحابة (UploadThing)
       const deleteRes = await deleteFilesFromUploadThing(urlToRemove);
-
-      if (deleteRes.success) {
-        toast.success("تم مسح الصورة من النظام والسحابة بنجاح");
-      } else {
-        // في حال فشل الحذف من السحابة، نظهر تحذير ولكن تستمر العملية
-        toast.error("تم إزالة الصورة من التذكرة، ولكن حدث خطأ في السحابة");
-      }
-      
+      if ("error" in deleteRes) toast.error("تم إزالة الصورة من التذكرة، ولكن حدث خطأ في السحابة");
+      else toast.success("تم مسح الصورة من النظام والسحابة بنجاح");
       fetchData();
-    } catch (error) {
+    } catch {
       toast.error("حدث خطأ غير متوقع أثناء مسح الصورة");
     } finally {
       setIsUpdatingPart(false);
     }
   };
 
-const handleEditPayment = async (paymentId: string, newAmount: number) => {
-  const res = await updateTicketPayment(paymentId, newAmount, ticketId);
-  if (res.success) { toast.success("تم تعديل الدفعة"); fetchData(); }
-};
+  const handleEditPayment = async (paymentId: string, newAmount: number) => {
+    const res = await updateTicketPayment(paymentId, newAmount, ticketId);
+    if ("error" in res) toast.error(String(res.error));
+    else { toast.success("تم تعديل الدفعة"); fetchData(); }
+  };
 
-const handleDeletePayment = async (paymentId: string) => {
-  if(!confirm("هل أنت متأكد من حذف الدفعة؟")) return;
-  const res = await deleteTicketPayment(paymentId, ticketId);
-  if (res.success) { toast.success("تم حذف الدفعة"); fetchData(); }
-};
-
+  const handleDeletePayment = async (paymentId: string) => {
+    if(!confirm("هل أنت متأكد من حذف الدفعة؟")) return;
+    const res = await deleteTicketPayment(paymentId, ticketId);
+    if ("error" in res) toast.error(String(res.error));
+    else { toast.success("تم حذف الدفعة"); fetchData(); }
+  };
 
   return {
     ticketData, inventory, isLoadingData, isSaving, isUpdatingPart,
     status, setStatus, laborCost, setLaborCost, discountPercentage, setDiscountPercentage,
     finance,
-    actions: { handleSaveTicket, handleAddPart, handleRemovePart, handleAddPayment, handleUpdateImage, handleRemoveImage , handleDeletePayment , handleEditPayment }
+    actions: { handleSaveTicket, handleAddPart, handleRemovePart, handleAddPayment, handleUpdateImage, handleRemoveImage, handleDeletePayment, handleEditPayment }
   };
 }

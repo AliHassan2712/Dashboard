@@ -1,5 +1,6 @@
 import { Camera, X } from "lucide-react";
 import { UploadButton } from "@/src/lib/uploadthing";
+import Image from "next/image";
 
 interface TicketAttachmentsProps {
   imagesArray: string[];
@@ -28,8 +29,13 @@ export const TicketAttachments = ({ imagesArray, onAddImage, onRemoveImage }: Ti
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
           {imagesArray.map((img, index) => (
             <div key={index} className="relative group aspect-square rounded-xl overflow-hidden border-2 border-app-border-light dark:border-app-border-dark bg-zinc-50 dark:bg-zinc-900">
-              <img src={img} alt={`مرفق ${index + 1}`} className="w-full h-full object-cover" />
-              <button
+              <Image
+                src={img}
+                fill
+                sizes="(max-width: 768px) 50vw, 33vw"
+                alt={`مرفق ${index + 1}`}
+                className="object-cover"
+              />              <button
                 onClick={() => { if (confirm("هل أنت متأكد من حذف هذه الصورة؟")) onRemoveImage(img); }}
                 className="absolute top-2 right-2 bg-red-500/90 hover:bg-red-600 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-all shadow-lg"
               >

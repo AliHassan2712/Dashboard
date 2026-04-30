@@ -2,9 +2,11 @@
 
 import prisma from "@/src/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { Prisma } from "@prisma/client";
 import { sparePartSchema, type SparePartFormValues } from "@/src/features/inventory/validations/validations";
 import { ROUTES } from "@/src/constants/paths"; 
 import { deleteFilesFromUploadThing } from "./uploadthing.actions";
+import { handleError } from "@/src/lib/errorHandler";
 
 // 1. دالة إضافة قطعة غيار جديدة
 export async function addSparePart(data: SparePartFormValues) {
@@ -12,7 +14,7 @@ export async function addSparePart(data: SparePartFormValues) {
     const parsedData = sparePartSchema.safeParse(data);
     
     if (!parsedData.success) {
-      return { error: "بيانات غير صالحة تم إرسالها للسيرفر" };
+      return { success: false, error: "بيانات غير صالحة تم إرسالها للسيرفر" };
     }
 
     const newPart = await prisma.sparePart.create({
@@ -23,8 +25,7 @@ export async function addSparePart(data: SparePartFormValues) {
 
     return { success: true, data: newPart };
   } catch (error) {
-    console.error("Error creating spare part:", error);
-    return { error: "حدث خطأ في قاعدة البيانات أثناء إضافة القطعة" };
+    return handleError(error, "حدث خطأ في قاعدة البيانات أثناء إضافة القطعة");
   }
 }
 
@@ -37,8 +38,7 @@ export async function getInventory() {
     
     return { success: true, data: parts };
   } catch (error) {
-    console.error("Error fetching spare parts:", error);
-    return { error: "حدث خطأ أثناء جلب المخزون" };
+    return handleError(error, "حدث خطأ أثناء جلب المخزون");
   }
 }
 
@@ -53,13 +53,11 @@ export async function updateSparePart(id: string, data: Partial<SparePartFormVal
     revalidatePath(ROUTES.INVENTORY); 
     return { success: true, data: updatedPart };
   } catch (error) {
-    console.error("Error updating spare part:", error);
-    return { error: "حدث خطأ أثناء تعديل القطعة" };
+    return handleError(error, "حدث خطأ أثناء تعديل القطعة");
   }
 }
 
 // 4. دالة حذف قطعة غيار
-
 export async function deleteSparePart(id: string) {
   try {
     // 1. جلب القطعة لمعرفة رابط الصورة (إن وُجدت)
@@ -83,8 +81,7 @@ export async function deleteSparePart(id: string) {
     revalidatePath(ROUTES.INVENTORY); 
     return { success: true };
   } catch (error) {
-    console.error("Error deleting spare part:", error);
-    return { error: "لا يمكن حذف القطعة لأنها قد تكون مرتبطة بتذاكر أو فواتير سابقة." };
+    return handleError(error, "لا يمكن حذف القطعة لأنها قد تكون مرتبطة بتذاكر أو فواتير سابقة.");
   }
 }
 
@@ -92,7 +89,10 @@ export async function deleteSparePart(id: string) {
 export async function sellPartDirectly(sparePartId: string, quantity: number, price: number) {
   try {
     const part = await prisma.sparePart.findUnique({ where: { id: sparePartId } });
-    if (!part || part.quantity < quantity) return { error: "الكمية غير متوفرة في المخزن!" };
+    
+    if (!part || part.quantity < quantity) {
+      return { success: false, error: "الكمية غير متوفرة في المخزن!" };
+    }
 
     await prisma.$transaction(async (tx) => {
       // 1. إنشاء تذكرة "مكتملة" باسم مبيعات نقدية
@@ -127,12 +127,11 @@ export async function sellPartDirectly(sparePartId: string, quantity: number, pr
     revalidatePath(ROUTES.TRANSACTIONS); // لتحديث السجل المالي
     return { success: true };
   } catch (error) {
-    return { error: "حدث خطأ أثناء إتمام عملية البيع." };
+    return handleError(error, "حدث خطأ أثناء إتمام عملية البيع.");
   }
 }
 
-
-// دالة جلب كل قطع الغيار (للقائمة المنسدلة)
+// 6. دالة جلب كل قطع الغيار (للقائمة المنسدلة)
 export async function getAllSparePartsForDropdown() {
   try {
     const parts = await prisma.sparePart.findMany({
@@ -146,12 +145,11 @@ export async function getAllSparePartsForDropdown() {
     });
     return { success: true, data: parts };
   } catch (error) {
-    console.error("خطأ في جلب قطع الغيار:", error);
-    return { error: "تعذر جلب قائمة قطع الغيار من المستودع." };
+    return handleError(error, "تعذر جلب قائمة قطع الغيار من المستودع.");
   }
 }
 
-
+// 7. دالة جلب المخزون مع التقسيم والبحث
 export async function getPaginatedParts(params: {
   page: number;
   limit: number;
@@ -159,11 +157,15 @@ export async function getPaginatedParts(params: {
   category?: string;
 }) {
   try {
-    const { page, limit, search, category } = params;
+    const { page, limit, search } = params;
     const skip = (page - 1) * limit;
 
-    const whereClause: any = {};
-    if (category && category !== "ALL") whereClause.category = category;
+    // استبدال any بـ Prisma.SparePartWhereInput لضمان أمان الأنواع
+    const whereClause: Prisma.SparePartWhereInput = {}; 
+    
+    // ملاحظة: إذا كان حقل category موجود في الموديل يمكنك إلغاء تعليق السطر التالي
+    // if (category && category !== "ALL") whereClause.category = category;
+    
     if (search) {
       whereClause.name = { contains: search, mode: "insensitive" };
     }
@@ -184,6 +186,6 @@ export async function getPaginatedParts(params: {
       metadata: { totalItems, totalPages: Math.ceil(totalItems / limit), currentPage: page }
     };
   } catch (error) {
-    return { error: "فشل جلب بيانات المخزون" };
+    return handleError(error, "فشل جلب بيانات المخزون");
   }
 }

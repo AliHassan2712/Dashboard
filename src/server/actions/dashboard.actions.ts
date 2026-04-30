@@ -1,6 +1,7 @@
 "use server";
 
 import prisma from "@/src/lib/prisma";
+import { handleError } from "@/src/lib/errorHandler";
 
 export async function getDashboardStats() {
   try {
@@ -111,8 +112,8 @@ export async function getDashboardStats() {
         totalSupplierDebts,
       }
     };
-  } catch (_error) {
-    return { error: "فشل في جلب إحصائيات لوحة التحكم" };
+  } catch (error) {
+    return handleError(error, "فشل في جلب إحصائيات لوحة التحكم");
   }
 }
 
@@ -137,7 +138,7 @@ export async function getWorkerDashboardStats(workerId: string) {
     });
 
     return { success: true, data: { openTicketsCount, balance, activeTrials } };
-  } catch (_error) {
-    return { error: "فشل جلب بيانات الفني" };
+  } catch (error) {
+    return handleError(error, "فشل جلب بيانات الفني");
   }
 }

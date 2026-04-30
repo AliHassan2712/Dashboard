@@ -11,17 +11,19 @@ import { InvoiceFormValues } from "../validations/validations";
 
 const purchasesFetcher = async (page: number) => {
   const res = await getPaginatedPurchases(page, 10);
-  if (res.error) throw new Error(res.error);
+  if ("error" in res) throw new Error(String(res.error));
   return res;
 };
 
 const suppliersFetcher = async () => {
   const res = await getSuppliers();
+  if ("error" in res) throw new Error(String(res.error));
   return res.data as Supplier[];
 };
 
 const partsFetcher = async () => {
   const res = await getAllSparePartsForDropdown();
+  if ("error" in res) throw new Error(String(res.error));
   return res.data as SparePartDropdownOption[];
 };
 
@@ -34,14 +36,14 @@ export function usePurchases(currentPage: number) {
 
   const handleAddInvoice = useCallback(async (data: InvoiceFormValues) => {
     const res = await addPurchaseInvoice(data);
-    if (res.success) {
-      toast.success("تم اعتماد الفاتورة وتحديث المخزن بنجاح");
-      setIsModalOpen(false);
-      mutatePurchases();
-      return true;
+    if ("error" in res) {
+      toast.error(String(res.error)); 
+      return false;
     }
-    toast.error(res.error || "حدث خطأ أثناء حفظ الفاتورة"); 
-    return false;
+    toast.success("تم اعتماد الفاتورة وتحديث المخزن بنجاح");
+    setIsModalOpen(false);
+    mutatePurchases();
+    return true;
   }, [mutatePurchases]);
 
   return { 
@@ -49,9 +51,7 @@ export function usePurchases(currentPage: number) {
     metadata: (purchasesRes?.metadata as PaginationMetadata) || { totalItems: 0, totalPages: 1, currentPage: 1 },
     suppliers: suppliers || [], 
     spareParts: spareParts || [], 
-    isLoading, 
-    isModalOpen, 
-    setIsModalOpen, 
+    isLoading, isModalOpen, setIsModalOpen, 
     actions: { handleAddInvoice, refresh: mutatePurchases } 
   };
 }
