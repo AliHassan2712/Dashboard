@@ -27,12 +27,50 @@ export default function ExpensesPage() {
   const sup = useSuppliers(activeTab === "payments" ? currentPage : 1);
 
   const isAnyLoading = exp.isLoading || pur.isLoading || sup.isLoading;
-  const currentMetadata = activeTab === "expenses" ? exp.metadata : activeTab === "purchases" ? pur.metadata : sup.metadata;
-  const isCurrentListEmpty = activeTab === "expenses" ? exp.expenses.length === 0 : activeTab === "purchases" ? pur.purchases.length === 0 : sup.payments.length === 0;
+
+  // 1. استبدال الشروط المتداخلة بكائن (Object Map) لتقليل التعقيد
+  const tabDataMap = {
+    expenses: { metadata: exp.metadata, isEmpty: exp.expenses.length === 0 },
+    purchases: { metadata: pur.metadata, isEmpty: pur.purchases.length === 0 },
+    payments: { metadata: sup.metadata, isEmpty: sup.payments.length === 0 },
+  };
+
+  const currentMetadata = tabDataMap[activeTab].metadata;
+  const isCurrentListEmpty = tabDataMap[activeTab].isEmpty;
 
   const handleTabChange = (tab: "expenses" | "purchases" | "payments") => {
     setActiveTab(tab);
-    setCurrentPage(1); 
+    setCurrentPage(1);
+  };
+
+  // 2. دالة مساعدة للتعامل مع كلاسات الأزرار (لتنظيف الـ JSX)
+  const getTabClass = (tabName: string, activeColorClass: string) => {
+    const baseClass = "whitespace-nowrap flex-1 py-3 px-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all";
+    if (activeTab === tabName) {
+      return `${baseClass} bg-app-card-light dark:bg-app-card-dark ${activeColorClass} shadow-sm border border-app-border-light dark:border-app-border-dark`;
+    }
+    return `${baseClass} text-app-text-secondary-light dark:text-app-text-secondary-dark hover:bg-gray-100`;
+  };
+
+  // 3. دالة مساعدة لعمل ريندر للجدول المناسب (تغنينا عن && المتكررة)
+  const renderActiveTable = () => {
+    switch (activeTab) {
+      case "expenses":
+        return <ExpensesTable expenses={exp.expenses} onDelete={exp.actions.handleDelete} />;
+      case "purchases":
+        return <PurchasesTable purchases={pur.purchases} onOpenLedger={sup.setLedgerSupplierId} />;
+      case "payments":
+        return <PaymentsTable payments={sup.payments} onEdit={(pay) => sup.setPaymentModal({ isOpen: true, editingId: pay.id })} onDelete={sup.actions.handleDeletePayment} />;
+      default:
+        return null;
+    }
+  };
+
+  // 4. استخراج دالة جلب بيانات التعديل للمودال (لمنع الدوال المجهولة المعقدة)
+  const getPaymentEditData = () => {
+    if (!sup.paymentModal.editingId) return null;
+    const p = sup.payments.find(pay => pay.id === sup.paymentModal.editingId);
+    return p ? { supplierId: p.supplierId, amount: p.amount, notes: p.notes || "" } : null;
   };
 
   return (
@@ -58,9 +96,15 @@ export default function ExpensesPage() {
 
       <div className="bg-app-card-light dark:bg-app-card-dark rounded-3xl border border-app-border-light dark:border-app-border-dark shadow-sm overflow-hidden">
         <div className="flex border-b border-app-border-light dark:border-app-border-dark bg-zinc-50/70 dark:bg-zinc-900/70 p-2 gap-2 overflow-x-auto">
-          <button onClick={() => handleTabChange("expenses")} className={`whitespace-nowrap flex-1 py-3 px-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${activeTab === "expenses" ? "bg-app-card-light dark:bg-app-card-dark text-danger-600 dark:text-danger-500 shadow-sm border border-app-border-light dark:border-app-border-dark" : "text-app-text-secondary-light dark:text-app-text-secondary-dark hover:bg-gray-100"}`}><Receipt className="w-5 h-5" /> المصاريف التشغيلية</button>
-          <button onClick={() => handleTabChange("purchases")} className={`whitespace-nowrap flex-1 py-3 px-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${activeTab === "purchases" ? "bg-app-card-light dark:bg-app-card-dark text-brand-600 dark:text-brand-400 shadow-sm border border-app-border-light dark:border-app-border-dark" : "text-app-text-secondary-light dark:text-app-text-secondary-dark hover:bg-gray-100"}`}><Truck className="w-5 h-5" /> فواتير المشتريات</button>
-          <button onClick={() => handleTabChange("payments")} className={`whitespace-nowrap flex-1 py-3 px-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${activeTab === "payments" ? "bg-app-card-light dark:bg-app-card-dark text-success-600 dark:text-success-400 shadow-sm border border-app-border-light dark:border-app-border-dark" : "text-app-text-secondary-light dark:text-app-text-secondary-dark hover:bg-gray-100"}`}><History className="w-5 h-5" /> سجل دفعات الموردين</button>
+          <button onClick={() => handleTabChange("expenses")} className={getTabClass("expenses", "text-danger-600 dark:text-danger-500")}>
+            <Receipt className="w-5 h-5" /> المصاريف التشغيلية
+          </button>
+          <button onClick={() => handleTabChange("purchases")} className={getTabClass("purchases", "text-brand-600 dark:text-brand-400")}>
+            <Truck className="w-5 h-5" /> فواتير المشتريات
+          </button>
+          <button onClick={() => handleTabChange("payments")} className={getTabClass("payments", "text-success-600 dark:text-success-400")}>
+            <History className="w-5 h-5" /> سجل دفعات الموردين
+          </button>
         </div>
 
         <div className="p-0">
@@ -68,10 +112,7 @@ export default function ExpensesPage() {
             <div className="py-20 flex justify-center"><Loader2 className="w-8 h-8 animate-spin text-app-text-muted-light dark:text-app-text-muted-dark" /></div>
           ) : (
             <>
-              {activeTab === "expenses" && <ExpensesTable expenses={exp.expenses} onDelete={exp.actions.handleDelete} />}
-              {activeTab === "purchases" && <PurchasesTable purchases={pur.purchases} onOpenLedger={sup.setLedgerSupplierId} />}
-              {activeTab === "payments" && <PaymentsTable payments={sup.payments} onEdit={(pay) => sup.setPaymentModal({ isOpen: true, editingId: pay.id })} onDelete={sup.actions.handleDeletePayment} />}
-              
+              {renderActiveTable()}
               <div className="pb-6">
                 <Pagination currentPage={currentPage} totalPages={currentMetadata.totalPages} onPageChange={setCurrentPage} />
               </div>
@@ -117,10 +158,7 @@ export default function ExpensesPage() {
         onClose={() => sup.setPaymentModal({ isOpen: false, editingId: null })} 
         suppliers={sup.suppliers} 
         onSave={sup.actions.handleSavePayment} 
-        editData={sup.paymentModal.editingId ? (() => {
-          const p = sup.payments.find(pay => pay.id === sup.paymentModal.editingId);
-          return p ? { supplierId: p.supplierId, amount: p.amount, notes: p.notes || "" } : null;
-        })() : null} 
+        editData={getPaymentEditData()} 
       />
 
       <SupplierLedgerModal isOpen={!!sup.ledgerSupplierId} onClose={() => sup.setLedgerSupplierId(null)} supplierId={sup.ledgerSupplierId} />
