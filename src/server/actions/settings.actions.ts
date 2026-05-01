@@ -6,8 +6,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/src/lib/auth";
 import { revalidatePath } from "next/cache";
 import { ROUTES } from "@/src/constants/paths";
+import { handleError } from "@/src/lib/errorHandler";
 
-// 1. جلب بيانات المستخدم الحالي
 export async function getUserProfile() {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return { error: "غير مصرح لك" };
@@ -20,12 +20,11 @@ export async function getUserProfile() {
     
     if (!user) return { error: "المستخدم غير موجود" };
     return { success: true, data: user };
-  } catch (_error) {
-    return { error: "فشل جلب البيانات" };
+  } catch (error) {
+    return handleError(error, "فشل جلب البيانات");
   }
 }
 
-// 2. تحديث الاسم ورقم الهاتف
 export async function updateProfile(data: { name: string; phone: string }) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return { error: "غير مصرح لك" };
@@ -39,15 +38,13 @@ export async function updateProfile(data: { name: string; phone: string }) {
     revalidatePath(ROUTES.SETTINGS || "/settings");
     return { success: true };
   } catch (error: unknown) {
-    // فحص آمن لخطأ تكرار رقم الهاتف في Prisma
     if (typeof error === "object" && error !== null && "code" in error && (error as { code: string }).code === 'P2002') {
-      return { error: "رقم الهاتف هذا مستخدم لحساب آخر!" };
+      return handleError(error, "رقم الهاتف هذا مستخدم لحساب آخر!");
     }
-    return { error: "حدث خطأ أثناء حفظ البيانات" };
+    return handleError(error, "حدث خطأ أثناء حفظ البيانات");
   }
 }
 
-// 3. تغيير كلمة المرور
 export async function changePassword(data: { currentPass: string; newPass: string }) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) return { error: "غير مصرح لك" };
@@ -56,11 +53,9 @@ export async function changePassword(data: { currentPass: string; newPass: strin
     const user = await prisma.user.findUnique({ where: { id: session.user.id } });
     if (!user) return { error: "المستخدم غير موجود" };
 
-    // التحقق من كلمة المرور القديمة
     const isValid = await bcrypt.compare(data.currentPass, user.password);
     if (!isValid) return { error: "كلمة المرور الحالية غير صحيحة" };
 
-    // تشفير وحفظ الجديدة
     const hashedNewPassword = await bcrypt.hash(data.newPass, 10);
     await prisma.user.update({
       where: { id: session.user.id },
@@ -68,7 +63,7 @@ export async function changePassword(data: { currentPass: string; newPass: strin
     });
 
     return { success: true };
-  } catch (_error) {
-    return { error: "فشل تغيير كلمة المرور" };
+  } catch (error) {
+    return handleError(error, "فشل تغيير كلمة المرور");
   }
 }

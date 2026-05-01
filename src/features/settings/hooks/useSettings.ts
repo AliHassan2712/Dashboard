@@ -12,10 +12,10 @@ export function useSettings() {
   useEffect(() => {
     const loadProfile = async () => {
       const res = await getUserProfile();
-      if (res.success && res.data) {
-        setInitialProfile(res.data as any);
-      } else {
-        toast.error(res.error || "تعذر تحميل البيانات");
+      if ("error" in res) {
+        toast.error(String(res.error));
+      } else if (res.data) {
+        setInitialProfile(res.data);
       }
       setIsLoading(false);
     };
@@ -24,22 +24,22 @@ export function useSettings() {
 
   const handleProfileUpdate = async (data: ProfileFormValues) => {
     const res = await updateProfile(data);
-    if (res.success) {
-      toast.success("تم تحديث البيانات الشخصية بنجاح");
-      return true;
+    if ("error" in res) {
+      toast.error(String(res.error));
+      return false;
     }
-    toast.error(res.error || "فشل تحديث البيانات");
-    return false;
+    toast.success("تم تحديث البيانات الشخصية بنجاح");
+    return true;
   };
 
   const handlePasswordChange = async (data: PasswordFormValues) => {
     const res = await changePassword({ currentPass: data.currentPass, newPass: data.newPass });
-    if (res.success) {
-      toast.success("تم تغيير كلمة المرور بنجاح");
-      return true;
+    if ("error" in res) {
+      toast.error(String(res.error));
+      return false;
     }
-    toast.error(res.error || "فشل تغيير كلمة المرور");
-    return false;
+    toast.success("تم تغيير كلمة المرور بنجاح");
+    return true;
   };
 
   return { isLoading, initialProfile, actions: { handleProfileUpdate, handlePasswordChange } };

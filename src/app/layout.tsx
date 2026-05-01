@@ -16,8 +16,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ar" dir="rtl">
-      <body className={inter.className}>
+    <html lang="ar" dir="rtl" suppressHydrationWarning>
+      <body className={`${inter.className} bg-app-background-light text-app-text-primary-light antialiased dark:bg-app-background-dark dark:text-app-text-primary-dark`}>
         {/* تغليف التطبيق بمزود المصادقة */}
         <Providers>
           <Toaster position="top-center" />

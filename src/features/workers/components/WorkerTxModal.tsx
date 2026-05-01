@@ -32,7 +32,7 @@ export const WorkerTxModal = ({ isOpen, onClose, workerId, initialType, onSave }
   };
 
   const title = initialType === 'STAKE' ? "إضافة استحقاق / راتب" : initialType === 'ADVANCE' ? "تسجيل سلفة / سحب" : "عملية مالية";
-  const iconColor = initialType === 'STAKE' ? "text-emerald-600" : "text-rose-600";
+  const iconColor = initialType === 'STAKE' ? "text-success-600 dark:text-success-400" : "text-danger-600 dark:text-danger-500";
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={<><Banknote className={`w-5 h-5 ${iconColor}`} /> {title}</>}>
@@ -42,7 +42,7 @@ export const WorkerTxModal = ({ isOpen, onClose, workerId, initialType, onSave }
         <Input label="المبلغ (₪)" type="number" step="0.01" error={errors.amount?.message} {...register("amount", { valueAsNumber: true })} />
         <Input label="البيان / الملاحظات (اختياري)" placeholder="مثال: دفعة من الراتب، مكافأة إضافية..." error={errors.notes?.message} {...register("notes")} />
 
-        <button disabled={isSubmitting} type="submit" className={`w-full text-white py-3 rounded-xl font-bold flex justify-center items-center mt-2 transition ${initialType === 'STAKE' ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-rose-600 hover:bg-rose-700'}`}>
+        <button disabled={isSubmitting} type="submit" className={`w-full text-white py-3 rounded-xl font-bold flex justify-center items-center mt-2 transition ${initialType === 'STAKE' ? 'bg-success-600 hover:bg-emerald-700' : 'bg-danger-600 hover:bg-rose-700'}`}>
           {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : "اعتماد العملية وخصمها من الرصيد"}
         </button>
       </form>

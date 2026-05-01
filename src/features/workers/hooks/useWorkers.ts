@@ -1,78 +1,62 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
+import useSWR from "swr";
 import { toast } from "react-hot-toast";
 import { registerWorker, getWorkersWithBalance, addWorkerTransaction, deleteWorker } from "@/src/server/actions/workers.actions";
 import { TypesWorkerTransaction } from "@prisma/client";
 import { AddWorkerValues, WorkerTxValues } from "../validations/validations";
+import { WorkerWithCurrentBalance } from "@/src/types/worker.types";
+
+const fetchWorkers = async () => {
+  const res = await getWorkersWithBalance();
+  return res as WorkerWithCurrentBalance[];
+};
 
 export function useWorkers() {
-  const [workers, setWorkers] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  
-  // حالات النوافذ المنبثقة
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [txModal, setTxModal] = useState<{ isOpen: boolean; userId: string; type: TypesWorkerTransaction | null }>({ 
     isOpen: false, userId: "", type: null 
   });
 
-  const loadWorkers = useCallback(async () => {
-    setIsLoading(true);
-    const data = await getWorkersWithBalance();
-    setWorkers(data || []);
-    setIsLoading(false);
-  }, []);
+  const { data: workersRes, isLoading, mutate } = useSWR("workers-list", fetchWorkers, { revalidateOnFocus: false });
 
-  useEffect(() => { loadWorkers(); }, [loadWorkers]);
-
-  const handleAddWorker = async (data: AddWorkerValues) => {
+  const handleAddWorker = useCallback(async (data: AddWorkerValues) => {
     const res = await registerWorker({ ...data, baseSalary: data.baseSalary?.toString() });
-    if (res.success) {
-      toast.success("تم تسجيل الفني بنجاح");
-      setIsAddModalOpen(false);
-      loadWorkers();
-      return true;
+    if ("error" in res) {
+      toast.error(String(res.error));
+      return false;
     }
-    toast.error(res.error || "حدث خطأ");
-    return false;
-  };
+    toast.success("تم تسجيل الفني بنجاح");
+    setIsAddModalOpen(false);
+    mutate();
+    return true;
+  }, [mutate]);
 
-  const handleAddTx = async (data: WorkerTxValues, userId: string) => {
+  const handleAddTx = useCallback(async (data: WorkerTxValues, userId: string) => {
     const typeLabel = data.type === 'STAKE' ? 'استحقاق/راتب' : data.type === 'ADVANCE' ? 'سلفة/سحب' : data.type === 'BONUS' ? 'مكافأة' : 'خصم';
     const finalDesc = `${typeLabel}${data.notes ? ` - ${data.notes}` : ''}`;
+    const res = await addWorkerTransaction({ userId, amount: data.amount, type: data.type, description: finalDesc });
 
-    const res = await addWorkerTransaction({
-      userId,
-      amount: data.amount,
-      type: data.type,
-      description: finalDesc
-    });
+    if ("error" in res) {
+      toast.error(String(res.error));
+      return false;
+    }
+    toast.success("تم تسجيل العملية بنجاح");
+    setTxModal({ isOpen: false, userId: "", type: null }); 
+    mutate();
+    return true;
+  }, [mutate]);
 
-    if (res.success) {
-      toast.success("تم تسجيل العملية بنجاح");
-      setTxModal({ isOpen: false, userId: "", type: null }); // إغلاق النافذة
-      loadWorkers();
-      return true;
-    } 
-    toast.error(res.error || "فشل تسجيل العملية");
-    return false;
-  };
-
-  const handleDelete = async (userId: string, name: string) => {
+  const handleDelete = useCallback(async (userId: string, name: string) => {
     if (!confirm(`هل أنت متأكد من حذف الفني (${name}) نهائياً؟`)) return;
     const res = await deleteWorker(userId);
-    if (res.success) { 
-      toast.success("تم الحذف"); 
-      loadWorkers(); 
-    } else { 
-      toast.error(res.error || "لا يمكن الحذف لوجود حركات مالية"); 
-    }
-  };
+    if ("error" in res) toast.error(String(res.error));
+    else { toast.success("تم الحذف"); mutate(); } 
+  }, [mutate]);
 
   return { 
-    workers, isLoading, 
-    isAddModalOpen, setIsAddModalOpen, 
-    txModal, setTxModal, 
+    workers: workersRes || [], isLoading, isAddModalOpen, setIsAddModalOpen, txModal, setTxModal, 
     actions: { handleAddWorker, handleAddTx, handleDelete } 
   };
 }

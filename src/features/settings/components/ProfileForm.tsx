@@ -20,10 +20,10 @@ export const ProfileForm = ({ initialData, onSave }: Props) => {
   }, [initialData, reset]);
 
   return (
-    <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm h-fit">
+    <div className="bg-app-card-light dark:bg-app-card-dark p-6 rounded-3xl border border-app-border-light dark:border-app-border-dark shadow-sm h-fit">
       <div className="flex items-center gap-3 mb-6 border-b pb-4">
-        <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg"><User className="w-5 h-5" /></div>
-        <h2 className="text-lg font-bold text-gray-800">المعلومات الشخصية</h2>
+        <div className="p-2 bg-brand-50 dark:bg-brand-950/40 text-brand-600 dark:text-brand-400 rounded-lg"><User className="w-5 h-5" /></div>
+        <h2 className="text-lg font-bold text-app-text-primary-light dark:text-app-text-primary-dark">المعلومات الشخصية</h2>
       </div>
 
       <form onSubmit={handleSubmit(onSave)} className="space-y-5">
@@ -31,14 +31,14 @@ export const ProfileForm = ({ initialData, onSave }: Props) => {
         <Input label="رقم الهاتف (للدخول)" dir="ltr" className="text-right" error={errors.phone?.message} {...register("phone")} />
         
         <div className="pt-2">
-          <label className="block text-sm font-medium text-gray-700 mb-2">الدور / الصلاحية</label>
-          <div className="w-full bg-gray-50 border border-gray-200 text-gray-500 px-4 py-3 rounded-lg flex items-center gap-2 font-bold cursor-not-allowed">
-            <ShieldCheck className="w-4 h-4 text-emerald-500" />
+          <label className="block text-sm font-medium text-app-text-primary-light dark:text-app-text-primary-dark mb-2">الدور / الصلاحية</label>
+          <div className="w-full bg-zinc-50 dark:bg-zinc-900 border border-app-border-light dark:border-app-border-dark text-app-text-secondary-light dark:text-app-text-secondary-dark px-4 py-3 rounded-lg flex items-center gap-2 font-bold cursor-not-allowed">
+            <ShieldCheck className="w-4 h-4 text-success-500" />
             {initialData?.role === "ADMIN" ? "مدير النظام" : "فني / عامل"}
           </div>
         </div>
 
-        <button disabled={isSubmitting} className="w-full mt-4 bg-indigo-600 text-white py-3 rounded-xl font-bold hover:bg-indigo-700 transition flex justify-center items-center gap-2">
+        <button disabled={isSubmitting} className="w-full mt-4 bg-brand-600 text-white py-3 rounded-xl font-bold hover:bg-indigo-700 transition flex justify-center items-center gap-2">
           {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
           حفظ البيانات
         </button>

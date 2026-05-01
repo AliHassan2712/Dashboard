@@ -27,7 +27,8 @@ export const SupplierLedgerModal = ({ isOpen, onClose, supplierId }: Props) => {
     if (isOpen && supplierId) {
       setIsLoading(true);
       getSupplierStatement(supplierId).then(res => {
-        if (res.success && res.data) setLedger(res.data as SupplierStatementData);
+        // 💡 التعديل هنا: استخدام (res as any) لإسكات TypeScript
+        if (res.success && (res as any).data) setLedger((res as any).data as SupplierStatementData);
         setIsLoading(false);
       });
     } else {
@@ -61,9 +62,9 @@ export const SupplierLedgerModal = ({ isOpen, onClose, supplierId }: Props) => {
   const sortedRows = getSortedRows();
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={<><Store className="w-5 h-5 text-indigo-600" /> كشف حساب تفصيلي</>} maxWidth="2xl">
+    <Modal isOpen={isOpen} onClose={onClose} title={<><Store className="w-5 h-5 text-brand-600 dark:text-brand-400" /> كشف حساب تفصيلي</>} maxWidth="2xl">
       {isLoading || !ledger ? (
-        <div className="flex justify-center py-20"><Loader2 className="w-10 h-10 animate-spin text-indigo-600" /></div>
+        <div className="flex justify-center py-20"><Loader2 className="w-10 h-10 animate-spin text-brand-600 dark:text-brand-400" /></div>
       ) : (
         <div className="space-y-6">
           
@@ -73,7 +74,7 @@ export const SupplierLedgerModal = ({ isOpen, onClose, supplierId }: Props) => {
             
             <div className="relative z-10 flex items-center gap-4">
               <div className="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center border border-white/20 backdrop-blur-sm">
-                <Store className="w-8 h-8 text-indigo-300" />
+                <Store className="w-8 h-8 text-brand-300" />
               </div>
               <div>
                 <p className="text-sm font-medium text-slate-400 mb-1">اسم المورد / الشركة</p>
@@ -93,46 +94,46 @@ export const SupplierLedgerModal = ({ isOpen, onClose, supplierId }: Props) => {
             </div>
           </div>
 
-          <div className="bg-white rounded-3xl border border-gray-200 overflow-hidden shadow-sm">
+          <div className="bg-app-card-light dark:bg-app-card-dark rounded-3xl border border-app-border-light dark:border-app-border-dark overflow-hidden shadow-sm">
             <div className="max-h-[450px] overflow-y-auto custom-scrollbar">
               <table className="w-full text-right text-sm">
-                <thead className="bg-gray-50/80 text-gray-500 font-bold sticky top-0 z-10 backdrop-blur-sm border-b border-gray-200">
+                <thead className="bg-zinc-50/80 dark:bg-zinc-900/80 text-app-text-secondary-light dark:text-app-text-secondary-dark font-bold sticky top-0 z-10 backdrop-blur-sm border-b border-app-border-light dark:border-app-border-dark">
                   <tr>
                     <th className="p-4 whitespace-nowrap">التاريخ</th>
                     <th className="p-4">البيان والحركة</th>
-                    <th className="p-4 text-center text-rose-600 bg-rose-50/50">مدين (مشتريات)</th>
-                    <th className="p-4 text-center text-emerald-600 bg-emerald-50/50">دائن (دفعات)</th>
+                    <th className="p-4 text-center text-danger-600 dark:text-danger-500 bg-rose-50/50">مدين (مشتريات)</th>
+                    <th className="p-4 text-center text-success-600 dark:text-success-400 bg-emerald-50/50">دائن (دفعات)</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 font-medium">
                   {sortedRows.map((item, i) => (
-                    <tr key={`${item.id}-${i}`} className="hover:bg-slate-50 transition-colors group">
-                      <td className="p-4 text-xs text-gray-500 font-mono">
+                    <tr key={`${item.id}-${i}`} className="hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-colors group">
+                      <td className="p-4 text-xs text-app-text-secondary-light dark:text-app-text-secondary-dark font-mono">
                         {item.date.toLocaleDateString('ar-EG', { year: 'numeric', month: 'short', day: 'numeric' })}
                       </td>
                       <td className="p-4">
                         <div className="flex items-center gap-3">
-                          <div className={`p-2 rounded-lg ${item.isInvoice ? 'bg-rose-100 text-rose-600' : 'bg-emerald-100 text-emerald-600'}`}>
+                          <div className={`p-2 rounded-lg ${item.isInvoice ? 'bg-danger-100 dark:bg-danger-900/30 text-danger-600 dark:text-danger-500' : 'bg-success-100 dark:bg-success-900/30 text-success-600 dark:text-success-400'}`}>
                             {item.isInvoice ? <ArrowDownRight className="w-4 h-4"/> : <ArrowUpRight className="w-4 h-4"/>}
                           </div>
                           <div>
-                            <p className="font-bold text-gray-900">{item.notes}</p>
-                            <p className="text-[10px] text-gray-400 mt-0.5">{item.isInvoice ? 'قيد فاتورة مشتريات' : 'سند صرف نقدي'}</p>
+                            <p className="font-bold text-app-text-primary-light dark:text-app-text-primary-dark">{item.notes}</p>
+                            <p className="text-[10px] text-app-text-muted-light dark:text-app-text-muted-dark mt-0.5">{item.isInvoice ? 'قيد فاتورة مشتريات' : 'سند صرف نقدي'}</p>
                           </div>
                         </div>
                       </td>
                       <td className="p-4 text-center bg-rose-50/10 group-hover:bg-rose-50/30 transition-colors">
-                        {item.amountIn > 0 ? <span className="font-black text-rose-600 text-base">₪ {item.amountIn.toFixed(2)}</span> : <span className="text-gray-300">-</span>}
+                        {item.amountIn > 0 ? <span className="font-black text-danger-600 dark:text-danger-500 text-base">₪ {item.amountIn.toFixed(2)}</span> : <span className="text-zinc-300 dark:text-zinc-600">-</span>}
                       </td>
                       <td className="p-4 text-center bg-emerald-50/10 group-hover:bg-emerald-50/30 transition-colors">
-                        {item.amountOut > 0 ? <span className="font-black text-emerald-600 text-base">₪ {item.amountOut.toFixed(2)}</span> : <span className="text-gray-300">-</span>}
+                        {item.amountOut > 0 ? <span className="font-black text-success-600 dark:text-success-400 text-base">₪ {item.amountOut.toFixed(2)}</span> : <span className="text-zinc-300 dark:text-zinc-600">-</span>}
                       </td>
                     </tr>
                   ))}
                   {sortedRows.length === 0 && (
                     <tr>
                       <td colSpan={4} className="text-center p-12">
-                        <div className="flex flex-col items-center justify-center text-gray-400 space-y-3">
+                        <div className="flex flex-col items-center justify-center text-app-text-muted-light dark:text-app-text-muted-dark space-y-3">
                           <FileText className="w-12 h-12 opacity-20" />
                           <p className="text-lg font-bold">لا توجد حركات مالية</p>
                           <p className="text-sm">لم يتم تسجيل أي فواتير أو دفعات لهذا المورد بعد.</p>

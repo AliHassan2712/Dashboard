@@ -15,8 +15,9 @@
     "@uploadthing/react": "^7.3.3",
     "bcrypt": "^6.0.0",
     "lucide-react": "^1.7.0",
-    "next": "^16.2.2",
+    "next": "15.5.15",
     "next-auth": "^4.24.13",
+    "next-themes": "^0.4.6",
     "pg": "^8.20.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
@@ -24,6 +25,7 @@
     "react-hot-toast": "^2.6.0",
     "react-select": "^5.10.2",
     "recharts": "^3.8.1",
+    "swr": "^2.4.1",
     "uploadthing": "^7.7.4",
     "xlsx": "^0.18.5",
     "zod": "^4.3.6"
@@ -38,11 +40,14 @@
     "@types/react-dom": "^19",
     "dotenv": "^17.3.1",
     "eslint": "^9",
-    "eslint-config-next": "15.5.3",
+    "eslint-config-next": "15.5.15",
     "prisma": "^7.6.0",
     "raw-loader": "^4.0.2",
     "tailwindcss": "^4",
     "tsx": "^4.21.0",
     "typescript": "^5"
+  },
+  "optionalDependencies": {
+    "@next/swc-win32-x64-msvc": "15.5.15"
   }
 }

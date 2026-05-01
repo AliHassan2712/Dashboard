@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "@/src/components/ui/Input";
@@ -62,7 +62,7 @@ export const InventoryModal = ({ isOpen, onClose, editData, onSave }: InventoryM
           {...register("quantity")} 
         />
 
-        <div className="grid grid-cols-2 gap-4 border-t border-gray-100 pt-4 mt-2">
+        <div className="grid grid-cols-2 gap-4 border-t border-app-border-light dark:border-app-border-dark pt-4 mt-2">
           <Input 
             label="سعر التكلفة/الشراء (₪)" 
             type="number" step="0.01" 
@@ -86,7 +86,7 @@ export const InventoryModal = ({ isOpen, onClose, editData, onSave }: InventoryM
           />
         </div>
 
-        <button disabled={isSubmitting} type="submit" className="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold flex justify-center items-center hover:bg-indigo-700 mt-2 transition">
+        <button disabled={isSubmitting} type="submit" className="w-full bg-brand-600 text-white py-3 rounded-xl font-bold flex justify-center items-center hover:bg-indigo-700 mt-2 transition">
           {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : "حفظ بيانات القطعة"}
         </button>
       </form>

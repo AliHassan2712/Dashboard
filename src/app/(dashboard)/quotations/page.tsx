@@ -31,12 +31,12 @@ export default function QuotationPage() {
 
       <div className="flex justify-between items-center mb-6 print:hidden">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">إنشاء عرض السعر</h1>
-          <p className="text-gray-500 text-sm mt-1">تجهيز عرض فني ومالي رسمي ومعتمد للزبائن</p>
+          <h1 className="text-2xl font-bold text-app-text-primary-light dark:text-app-text-primary-dark">إنشاء عرض السعر</h1>
+          <p className="text-app-text-secondary-light dark:text-app-text-secondary-dark text-sm mt-1">تجهيز عرض فني ومالي رسمي ومعتمد للزبائن</p>
         </div>
         <button 
           onClick={handlePrint} 
-          className="flex items-center gap-2 px-8 py-3 bg-indigo-900 text-white hover:bg-black rounded-xl font-bold transition shadow-xl"
+          className="flex items-center gap-2 px-8 py-3 bg-brand-950 text-white hover:bg-black rounded-xl font-bold transition shadow-xl"
         >
           <Printer className="w-5 h-5" /> طباعة العرض الرسمي
         </button>

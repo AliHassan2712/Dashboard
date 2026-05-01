@@ -17,10 +17,10 @@ export const NewTicketForm = ({ form, isLoading, onSubmit }: NewTicketFormProps)
 
     return (
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+            <div className="bg-app-card-light dark:bg-app-card-dark p-6 rounded-2xl shadow-sm border border-app-border-light dark:border-app-border-dark">
                 <div className="flex items-center gap-2 mb-6 border-b pb-4">
-                    <div className="p-2 bg-indigo-50 rounded-lg text-indigo-600"><User className="w-5 h-5" /></div>
-                    <h2 className="text-lg font-bold text-gray-800">بيانات الزبون</h2>
+                    <div className="p-2 bg-brand-50 dark:bg-brand-950/40 rounded-lg text-brand-600 dark:text-brand-400"><User className="w-5 h-5" /></div>
+                    <h2 className="text-lg font-bold text-app-text-primary-light dark:text-app-text-primary-dark">بيانات الزبون</h2>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <Input label="اسم الزبون" placeholder="شركة المجد أو أحمد..." error={errors.customerName?.message} {...register("customerName")} />
@@ -28,10 +28,10 @@ export const NewTicketForm = ({ form, isLoading, onSubmit }: NewTicketFormProps)
                 </div>
             </div>
 
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+            <div className="bg-app-card-light dark:bg-app-card-dark p-6 rounded-2xl shadow-sm border border-app-border-light dark:border-app-border-dark">
                 <div className="flex items-center gap-2 mb-6 border-b pb-4">
-                    <div className="p-2 bg-indigo-50 rounded-lg text-indigo-600"><Wrench className="w-5 h-5" /></div>
-                    <h2 className="text-lg font-bold text-gray-800">تفاصيل الكمبريسور</h2>
+                    <div className="p-2 bg-brand-50 dark:bg-brand-950/40 rounded-lg text-brand-600 dark:text-brand-400"><Wrench className="w-5 h-5" /></div>
+                    <h2 className="text-lg font-bold text-app-text-primary-light dark:text-app-text-primary-dark">تفاصيل الكمبريسور</h2>
                 </div>
                 <div className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -48,8 +48,8 @@ export const NewTicketForm = ({ form, isLoading, onSubmit }: NewTicketFormProps)
             </div>
 
             <div className="flex justify-end gap-4 mt-8 pt-4">
-                <Link href={ROUTES.TICKETS} className="px-6 py-3 text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200 font-bold transition">إلغاء الرجوع</Link>
-                <button type="submit" disabled={isLoading} className="flex items-center gap-2 px-8 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 disabled:opacity-70 font-bold shadow-lg transition">
+                <Link href={ROUTES.TICKETS} className="px-6 py-3 text-app-text-secondary-light dark:text-app-text-secondary-dark bg-zinc-100 dark:bg-zinc-800 rounded-xl hover:bg-gray-200 font-bold transition">إلغاء الرجوع</Link>
+                <button type="submit" disabled={isLoading} className="flex items-center gap-2 px-8 py-3 bg-brand-600 text-white rounded-xl hover:bg-indigo-700 disabled:opacity-70 font-bold shadow-lg transition">
                     <Save className="w-5 h-5" /> {isLoading ? "جاري الحفظ والتحويل..." : "حفظ وفتح التذكرة"}
                 </button>
             </div>

@@ -36,18 +36,18 @@ export const PaymentModal = ({ isOpen, onClose, suppliers, editData, onSave }: P
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={<><Wallet className="w-5 h-5 text-emerald-600" /> {editData ? "تعديل دفعة التاجر" : "تسديد دفعة لتاجر"}</>}>
+    <Modal isOpen={isOpen} onClose={onClose} title={<><Wallet className="w-5 h-5 text-success-600 dark:text-success-400" /> {editData ? "تعديل دفعة التاجر" : "تسديد دفعة لتاجر"}</>}>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
         <div className="space-y-1.5">
-          <label className="text-sm font-medium text-gray-700">اختر التاجر المراد التسديد له</label>
+          <label className="text-sm font-medium text-app-text-primary-light dark:text-app-text-primary-dark">اختر التاجر المراد التسديد له</label>
           <select 
             {...register("supplierId")} 
-            className={`w-full bg-white border ${errors.supplierId ? 'border-red-300 focus:ring-red-100' : 'border-gray-300 focus:ring-indigo-100'} focus:ring-2 rounded-lg px-4 py-2.5 outline-none font-medium transition`}
+            className={`w-full bg-app-card-light dark:bg-app-card-dark border ${errors.supplierId ? 'border-danger-500 focus:ring-red-100' : 'border-zinc-300 dark:border-zinc-700 focus:ring-indigo-100'} focus:ring-2 rounded-lg px-4 py-2.5 outline-none font-medium transition`}
           >
             <option value="">-- اختر من القائمة --</option>
             {suppliers.map(s => <option key={s.id} value={s.id}>{s.name} (دين: ₪{s.totalDebt})</option>)}
           </select>
-          {errors.supplierId && <p className="mt-1.5 text-xs text-red-600 font-medium">{errors.supplierId.message}</p>}
+          {errors.supplierId && <p className="mt-1.5 text-xs text-danger-600 dark:text-danger-500 font-medium">{errors.supplierId.message}</p>}
         </div>
         
         <Input 
@@ -64,7 +64,7 @@ export const PaymentModal = ({ isOpen, onClose, suppliers, editData, onSave }: P
           {...register("notes")} 
         />
         
-        <button disabled={isSubmitting} type="submit" className="w-full bg-emerald-600 text-white py-3 rounded-xl font-bold flex justify-center items-center hover:bg-emerald-700 mt-2 transition">
+        <button disabled={isSubmitting} type="submit" className="w-full bg-success-600 text-white py-3 rounded-xl font-bold flex justify-center items-center hover:bg-emerald-700 mt-2 transition">
           {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : "اعتماد الدفعة وخصمها من الدين"}
         </button>
       </form>

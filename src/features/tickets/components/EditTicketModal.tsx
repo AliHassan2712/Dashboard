@@ -45,7 +45,7 @@ export const EditTicketModal = ({ isOpen, onClose, ticket, onSubmit }: Props) =>
         <Input label="موديل الجهاز" error={errors.compressorModel?.message} {...register("compressorModel")} />
         <Textarea label="وصف المشكلة" rows={3} error={errors.issueDescription?.message} {...register("issueDescription")} />
         
-        <button disabled={isSubmitting} type="submit" className="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold flex justify-center items-center hover:bg-indigo-700 mt-2 transition">
+        <button disabled={isSubmitting} type="submit" className="w-full bg-brand-600 text-white py-3 rounded-xl font-bold flex justify-center items-center hover:bg-indigo-700 mt-2 transition">
           {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : "حفظ التعديلات"}
         </button>
 

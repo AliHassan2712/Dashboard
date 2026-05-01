@@ -1,67 +1,78 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useCallback } from "react";
+import useSWR from "swr";
 import { toast } from "react-hot-toast";
 import { getAllSparePartsForDropdown } from "@/src/server/actions/inventory.actions";
 import { getWorkersWithBalance } from "@/src/server/actions/workers.actions";
-import { TrialItemData, WorkerOption, PartOption } from "@/src/types";
-import { getTrialItems, createTrialItem, returnTrialItem, consumeTrialItem } from "@/src/server/actions/trials.actions";
+import { TrialItemData, WorkerOption } from "@/src/types";
+import { getPaginatedTrialItems, createTrialItem, returnTrialItem, consumeTrialItem } from "@/src/server/actions/trials.actions";
 import { TrialFormValues } from "../validations/validations";
+import { PaginationMetadata, SparePartDropdownOption } from "@/src/types/expense.types";
 
-export function useTrials() {
-  const [trials, setTrials] = useState<TrialItemData[]>([]);
-  const [workers, setWorkers] = useState<WorkerOption[]>([]);
-  const [parts, setParts] = useState<PartOption[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+const trialsFetcher = async (page: number) => {
+  const res = await getPaginatedTrialItems(page, 10);
+  if ("error" in res) throw new Error(String(res.error));
+  return res;
+};
+
+// 💡 إضافة Fetcher مخصص لقطع الغيار
+const partsFetcher = async () => {
+  const res = await getAllSparePartsForDropdown();
+  if ("error" in res) throw new Error(String(res.error));
+  return res.data;
+};
+
+// 💡 إضافة Fetcher مخصص للعمال
+const workersFetcher = async () => {
+  const res = await getWorkersWithBalance();
+  // التأكد من عدم وجود خطأ (في حال تم إرجاعه ككائن بدل مصفوفة)
+  if (!Array.isArray(res) && (res as any).error) throw new Error(String((res as any).error));
+  return Array.isArray(res) ? res : [];
+};
+
+export function useTrials(currentPage: number) {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const fetchData = async () => {
-    setIsLoading(true);
-    const [trialsRes, workersRes, partsRes] = await Promise.all([
-      getTrialItems(), getWorkersWithBalance(), getAllSparePartsForDropdown()
-    ]);
-    if (trialsRes.success && trialsRes.data) setTrials(trialsRes.data as TrialItemData[]);
-    if (workersRes) setWorkers(workersRes as WorkerOption[]);
-    if (partsRes.success && partsRes.data) setParts(partsRes.data as PartOption[]);
-    setIsLoading(false);
-  };
+  const { data: trialsRes, isLoading, mutate: mutateTrials } = useSWR(["trials-list", currentPage], () => trialsFetcher(currentPage), { keepPreviousData: true });
+  // استخدام الـ Fetchers المخصصة
+  const { data: workersRes } = useSWR("workers-list", workersFetcher, { revalidateOnFocus: false });
+  const { data: partsRes } = useSWR("parts-dropdown", partsFetcher, { revalidateOnFocus: false });
 
-  useEffect(() => { fetchData(); }, []);
-
-  const handleAddTrial = async (data: TrialFormValues) => {
+  const handleAddTrial = useCallback(async (data: TrialFormValues) => {
     const res = await createTrialItem({
-      workerId: data.workerId,
-      sparePartId: data.sparePartId,
-      qty: data.qty,
-      notes: data.notes || ""
+      workerId: data.workerId, sparePartId: data.sparePartId, qty: data.qty, notes: data.notes || ""
     });
-
-    if (res.success) {
-      toast.success("تم تسليم العهدة بنجاح وخصمها من المخزن");
-      setIsModalOpen(false);
-      fetchData();
-      return true; // لإخبار النافذة بتصفير الحقول
+    if ("error" in res) {
+      toast.error(String(res.error));
+      return false;
     }
-    toast.error(res.error || "خطأ");
-    return false;
-  };
+    toast.success("تم تسليم العهدة بنجاح وخصمها من المخزن");
+    setIsModalOpen(false);
+    mutateTrials(); 
+    return true; 
+  }, [mutateTrials]);
 
-  const handleReturn = async (id: string) => {
+  const handleReturn = useCallback(async (id: string) => {
     if (!confirm("هل أنت متأكد من إرجاع هذه القطعة للمخزن؟")) return;
     const res = await returnTrialItem(id);
-    if (res.success) { toast.success("تم إرجاع القطعة للمخزن"); fetchData(); }
-    else toast.error(res.error || "خطأ");
-  };
+    if ("error" in res) toast.error(String(res.error));
+    else { toast.success("تم إرجاع القطعة للمخزن"); mutateTrials(); }
+  }, [mutateTrials]);
 
-  const handleConsume = async (id: string) => {
+  const handleConsume = useCallback(async (id: string) => {
     if (!confirm("هل تم استهلاك/تلف هذه القطعة نهائياً؟ (لن تعود للمخزن)")) return;
     const res = await consumeTrialItem(id);
-    if (res.success) { toast.success("تم تسجيل الاستهلاك"); fetchData(); }
-    else toast.error(res.error || "خطأ");
-  };
+    if ("error" in res) toast.error(String(res.error));
+    else { toast.success("تم تسجيل الاستهلاك"); mutateTrials(); }
+  }, [mutateTrials]);
+
   return {
-    trials, workers, parts, isLoading,
-    isModalOpen, setIsModalOpen,
+    trials: (trialsRes?.data as TrialItemData[]) || [], 
+    metadata: (trialsRes?.metadata as PaginationMetadata) || { totalItems: 0, totalPages: 1, currentPage: 1 },
+    workers: (workersRes as WorkerOption[]) || [], 
+    parts: (partsRes as SparePartDropdownOption[]) || [], 
+    isLoading, isModalOpen, setIsModalOpen,
     actions: { handleAddTrial, handleReturn, handleConsume }
   };
 }

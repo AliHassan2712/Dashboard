@@ -11,7 +11,7 @@ export default function SettingsPage() {
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-[50vh]">
-        <Loader2 className="w-10 h-10 animate-spin text-indigo-600" />
+        <Loader2 className="w-10 h-10 animate-spin text-brand-600 dark:text-brand-400" />
       </div>
     );
   }
@@ -20,13 +20,13 @@ export default function SettingsPage() {
     <div className="max-w-5xl mx-auto space-y-6 animate-in fade-in duration-500 pb-10">
 
       {/* الترويسة */}
-      <div className="flex items-center gap-3 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-        <div className="p-3 bg-indigo-50 text-indigo-600 rounded-xl">
+      <div className="flex items-center gap-3 bg-app-card-light dark:bg-app-card-dark p-6 rounded-2xl border border-app-border-light dark:border-app-border-dark shadow-sm">
+        <div className="p-3 bg-brand-50 dark:bg-brand-950/40 text-brand-600 dark:text-brand-400 rounded-xl">
           <Settings className="w-6 h-6" />
         </div>
         <div>
-          <h1 className="text-2xl font-black text-gray-900">إعدادات الحساب</h1>
-          <p className="text-sm text-gray-500 font-medium mt-1">إدارة معلومات الدخول وكلمة المرور</p>
+          <h1 className="text-2xl font-black text-app-text-primary-light dark:text-app-text-primary-dark">إعدادات الحساب</h1>
+          <p className="text-sm text-app-text-secondary-light dark:text-app-text-secondary-dark font-medium mt-1">إدارة معلومات الدخول وكلمة المرور</p>
         </div>
       </div>
 

@@ -1,6 +1,7 @@
 import { CheckCircle, Phone, MapPin, Building2, Quote } from "lucide-react";
 import { siteConfig } from "@/src/config/site";
-import { QuotationFormValues } from "../validations/validations"; 
+import { QuotationFormValues } from "../validations/validations";
+import Image from "next/image";
 
 interface QuotationPrintTemplateProps {
   quoteData: QuotationFormValues;
@@ -61,8 +62,13 @@ export const QuotationPrintTemplate = ({ quoteData, priceUsd, currentDate, quote
         {quoteData.imageUrl && (
           <div className="w-full sm:w-5/12 bg-white border-2 border-gray-100 rounded-xl overflow-hidden p-2 shadow-sm shrink-0 h-fit">
             <div className="aspect-square relative rounded-lg overflow-hidden bg-gray-50">
-              <img src={quoteData.imageUrl} className="w-full h-full object-contain" alt="Product" />
-            </div>
+              <Image
+                src={quoteData.imageUrl}
+                fill
+                sizes="(max-width: 768px) 100vw, 50vw"
+                className="object-contain"
+                alt={quoteData.modelName || "Product"}
+              />            </div>
           </div>
         )}
 
@@ -127,7 +133,7 @@ export const QuotationPrintTemplate = ({ quoteData, priceUsd, currentDate, quote
         </div>
       </div>
     </div>
-    
+
     <div className="h-2 w-full bg-indigo-900 shrink-0"></div>
   </div>
 );

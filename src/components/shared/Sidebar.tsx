@@ -31,15 +31,15 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
       )}
 
       <aside className={`
-        print:hidden bg-slate-900 text-white min-h-screen flex flex-col fixed right-0 top-0 bottom-0 z-40 w-64
+        print:hidden bg-zinc-950 text-white min-h-screen flex flex-col fixed right-0 top-0 bottom-0 z-40 w-64
         transition-transform duration-300 ease-in-out shadow-2xl
         ${isOpen ? "translate-x-0" : "translate-x-full lg:translate-x-0"}
       `}>
-        <div className="h-16 flex items-center justify-between px-4 border-b border-slate-800">
-          <h1 className="text-xl font-bold tracking-wider text-blue-400 mx-auto">
+        <div className="h-16 flex items-center justify-between px-4 border-b border-zinc-800">
+          <h1 className="text-xl font-bold tracking-wider text-transparent bg-clip-text bg-brand-gradient mx-auto">
             COMPRESSOR<span className="text-white">PRO</span>
           </h1>
-          <button onClick={onClose} className="lg:hidden p-1 text-gray-400 hover:text-white transition-colors rounded-lg hover:bg-slate-800">
+          <button onClick={onClose} className="lg:hidden p-1 text-zinc-400 hover:text-white transition-colors rounded-lg hover:bg-zinc-800">
             <X className="w-6 h-6" />
           </button>
         </div>
@@ -57,8 +57,8 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                 onClick={onClose} // إغلاق القائمة تلقائياً عند الضغط في الجوال
                 className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
                   isActive
-                    ? "bg-blue-600 text-white shadow-md"
-                    : "text-slate-400 hover:bg-slate-800 hover:text-white"
+                    ? "bg-brand-gradient text-white shadow-lg shadow-brand-950/30"
+                    : "text-zinc-400 hover:bg-zinc-900 hover:text-white"
                 }`}
               >
                 <Icon className="w-5 h-5" />
