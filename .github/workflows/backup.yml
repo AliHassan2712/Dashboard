@@ -5,6 +5,10 @@ on:
     - cron: '0 3 * * *'
   workflow_dispatch:
 
+# هذا السطر لإخفاء تحذير Node.js واستخدام الإصدار الجديد
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true 
+
 jobs:
   backup:
     runs-on: ubuntu-latest
@@ -18,7 +22,6 @@ jobs:
 
       - name: Generate Backup File
         run: |
-          # استخراج التاريخ الحالي
           DATE=$(date +'%Y-%m-%d_%H-%M')
           FILENAME="dashboard_backup_$DATE.sql"
           
@@ -26,15 +29,17 @@ jobs:
           pg_dump "${{ secrets.DATABASE_URL }}" > $FILENAME
           gzip $FILENAME
           
-          # حفظ اسم الملف للمرحلة القادمة
           echo "BACKUP_FILE=$FILENAME.gz" >> $GITHUB_ENV
 
       - name: Upload to Google Drive
+        env:
+          # تخزين الـ JSON كمتغير بيئة لتفادي مشاكل المسافات والأقواس
+          GDRIVE_JSON: ${{ secrets.GDRIVE_CREDENTIALS }}
         run: |
-          # 1. إنشاء ملف الصلاحيات السري (JSON) مؤقتاً
-          echo '${{ secrets.GDRIVE_CREDENTIALS }}' > sa.json
+          # كتابة ملف JSON
+          echo "$GDRIVE_JSON" > sa.json
           
-          # 2. إعداد Rclone للاتصال بمجلدك في Google Drive
+          # إعداد Rclone
           cat <<EOF > rclone.conf
           [gdrive]
           type = drive
@@ -43,5 +48,5 @@ jobs:
           root_folder_id = ${{ secrets.GDRIVE_FOLDER_ID }}
           EOF
           
-          # 3. رفع الملف فوراً
-          rclone --config rclone.conf copy ${{ env.BACKUP_FILE }} gdrive:
+          # الرفع مع طباعة التفاصيل في حالة الخطأ (-v)
+          rclone --config rclone.conf copy ${{ env.BACKUP_FILE }} gdrive: -v
