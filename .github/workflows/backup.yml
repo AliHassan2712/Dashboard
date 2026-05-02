@@ -16,18 +16,23 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install PostgreSQL Client & Rclone
-        run: sudo apt-get update && sudo apt-get install -y postgresql-client rclone
+      - name: Install PostgreSQL Client 17 & Rclone
+        run: |
+          # إضافة مستودع PostgreSQL الرسمي لتنزيل الإصدار 17
+          sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
+          wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client-17 rclone
 
       - name: Generate Backup File
         run: |
           DATE=$(date +'%Y-%m-%d_%H-%M')
           FILENAME="dashboard_backup_$DATE.sql"
           
-          # 1. تنظيف الرابط من الإضافات الخاصة بـ Prisma
+          # تنظيف الرابط من أي إضافات بتعمل مشاكل
           CLEAN_URL=$(echo "${{ secrets.DATABASE_URL }}" | cut -d'?' -f1)
           
-          # 2. سحب الداتا بيز باستخدام الرابط النظيف (مع تفعيل التشفير sslmode)
+          # سحب الداتا بيز
           pg_dump "${CLEAN_URL}?sslmode=require" > $FILENAME
           gzip $FILENAME
           
