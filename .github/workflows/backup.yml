@@ -5,7 +5,6 @@ on:
     - cron: '0 3 * * *'
   workflow_dispatch:
 
-# هذا السطر لإخفاء تحذير Node.js واستخدام الإصدار الجديد
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true 
 
@@ -25,21 +24,21 @@ jobs:
           DATE=$(date +'%Y-%m-%d_%H-%M')
           FILENAME="dashboard_backup_$DATE.sql"
           
-          # سحب الداتا بيز وضغطها
-          pg_dump "${{ secrets.DATABASE_URL }}" > $FILENAME
+          # 1. تنظيف الرابط من الإضافات الخاصة بـ Prisma
+          CLEAN_URL=$(echo "${{ secrets.DATABASE_URL }}" | cut -d'?' -f1)
+          
+          # 2. سحب الداتا بيز باستخدام الرابط النظيف (مع تفعيل التشفير sslmode)
+          pg_dump "${CLEAN_URL}?sslmode=require" > $FILENAME
           gzip $FILENAME
           
           echo "BACKUP_FILE=$FILENAME.gz" >> $GITHUB_ENV
 
       - name: Upload to Google Drive
         env:
-          # تخزين الـ JSON كمتغير بيئة لتفادي مشاكل المسافات والأقواس
           GDRIVE_JSON: ${{ secrets.GDRIVE_CREDENTIALS }}
         run: |
-          # كتابة ملف JSON
           echo "$GDRIVE_JSON" > sa.json
           
-          # إعداد Rclone
           cat <<EOF > rclone.conf
           [gdrive]
           type = drive
@@ -48,5 +47,4 @@ jobs:
           root_folder_id = ${{ secrets.GDRIVE_FOLDER_ID }}
           EOF
           
-          # الرفع مع طباعة التفاصيل في حالة الخطأ (-v)
           rclone --config rclone.conf copy ${{ env.BACKUP_FILE }} gdrive: -v
