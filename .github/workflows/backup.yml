@@ -29,11 +29,11 @@ jobs:
           DATE=$(date +'%Y-%m-%d_%H-%M')
           FILENAME="dashboard_backup_$DATE.sql"
           
-          # تنظيف الرابط من أي إضافات بتعمل مشاكل
+          # تنظيف الرابط
           CLEAN_URL=$(echo "${{ secrets.DATABASE_URL }}" | cut -d'?' -f1)
           
-          # سحب الداتا بيز
-          pg_dump "${CLEAN_URL}?sslmode=require" > $FILENAME
+          # السر هنا: استدعاء الأداة من مسار الإصدار 17 مباشرة غصباً عن السيرفر
+          /usr/lib/postgresql/17/bin/pg_dump "${CLEAN_URL}?sslmode=require" > $FILENAME
           gzip $FILENAME
           
           echo "BACKUP_FILE=$FILENAME.gz" >> $GITHUB_ENV
