@@ -1,0 +1,39 @@
+name: PostgreSQL Backup to Google Drive
+
+on:
+  schedule:
+    # سيتم التشغيل يومياً الساعة 3:00 فجراً بتوقيت جرينتش
+    - cron: '0 3 * * *'
+  workflow_dispatch: # هذا بيسمحلك تشغل السكربت يدوياً بضغطة زر لاختباره
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install PostgreSQL Client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      - name: Generate Backup File
+        run: |
+          # استخراج التاريخ الحالي لتسمية الملف
+          DATE=$(date +'%Y-%m-%d')
+          FILENAME="dashboard_backup_$DATE.sql"
+          
+          # سحب الداتا بيز وضغطها
+          pg_dump "${{ secrets.DATABASE_URL }}" > $FILENAME
+          gzip $FILENAME
+          
+          # حفظ اسم الملف كمتغير للخطوة القادمة
+          echo "BACKUP_FILE=$FILENAME.gz" >> $GITHUB_ENV
+
+      - name: Upload to Google Drive
+        uses: adityak74/google-drive-upload-action@main
+        with:
+          credentials: ${{ secrets.GDRIVE_CREDENTIALS }}
+          filename: ${{ env.BACKUP_FILE }}
+          folderId: ${{ secrets.GDRIVE_FOLDER_ID }}
+          overwrite: "false"
