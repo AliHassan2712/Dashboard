@@ -2,9 +2,8 @@ name: PostgreSQL Backup to Google Drive
 
 on:
   schedule:
-    # سيتم التشغيل يومياً الساعة 3:00 فجراً بتوقيت جرينتش
     - cron: '0 3 * * *'
-  workflow_dispatch: # هذا بيسمحلك تشغل السكربت يدوياً بضغطة زر لاختباره
+  workflow_dispatch:
 
 jobs:
   backup:
@@ -14,26 +13,35 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install PostgreSQL Client
-        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+      - name: Install PostgreSQL Client & Rclone
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client rclone
 
       - name: Generate Backup File
         run: |
-          # استخراج التاريخ الحالي لتسمية الملف
-          DATE=$(date +'%Y-%m-%d')
+          # استخراج التاريخ الحالي
+          DATE=$(date +'%Y-%m-%d_%H-%M')
           FILENAME="dashboard_backup_$DATE.sql"
           
           # سحب الداتا بيز وضغطها
           pg_dump "${{ secrets.DATABASE_URL }}" > $FILENAME
           gzip $FILENAME
           
-          # حفظ اسم الملف كمتغير للخطوة القادمة
+          # حفظ اسم الملف للمرحلة القادمة
           echo "BACKUP_FILE=$FILENAME.gz" >> $GITHUB_ENV
 
       - name: Upload to Google Drive
-        uses: adityak74/google-drive-upload-action@main
-        with:
-          credentials: ${{ secrets.GDRIVE_CREDENTIALS }}
-          filename: ${{ env.BACKUP_FILE }}
-          folderId: ${{ secrets.GDRIVE_FOLDER_ID }}
-          overwrite: "false"
+        run: |
+          # 1. إنشاء ملف الصلاحيات السري (JSON) مؤقتاً
+          echo '${{ secrets.GDRIVE_CREDENTIALS }}' > sa.json
+          
+          # 2. إعداد Rclone للاتصال بمجلدك في Google Drive
+          cat <<EOF > rclone.conf
+          [gdrive]
+          type = drive
+          scope = drive
+          service_account_file = sa.json
+          root_folder_id = ${{ secrets.GDRIVE_FOLDER_ID }}
+          EOF
+          
+          # 3. رفع الملف فوراً
+          rclone --config rclone.conf copy ${{ env.BACKUP_FILE }} gdrive:
